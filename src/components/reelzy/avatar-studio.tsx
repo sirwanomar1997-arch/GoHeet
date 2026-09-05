@@ -391,68 +391,157 @@ const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => 
   opts,
 });
 
-const SECTIONS: { id: string; label: string; blurb: string; groups: Group[] }[] = [
-  {
-    id: "face",
-    label: "Face",
-    blurb: "Shape the features that make you, you.",
-    groups: [
-      single("Age", "age", AGE),
-      single("Skin tone", "skin", SKIN),
-      single("Face shape", "face", FACE),
-      single("Eye colour", "eyeColor", EYE_COLOR),
-      single("Eye shape", "eyeShape", EYE_SHAPE),
-      single("Eyebrows", "brows", BROWS),
-      single("Nose", "nose", NOSE),
-      single("Lips", "lips", LIPS),
-      single("Ears", "ears", EARS),
-      single("Expression", "expression", EXPRESSION),
-      multi("Details", "extras", EXTRA),
-    ],
-  },
-  {
-    id: "hair",
-    label: "Hair",
-    blurb: "Cut, colour and everything on your face.",
-    groups: [
-      single("Hairstyle", "hair", HAIR),
-      single("Hair colour", "hairColor", HAIR_COLOR),
-      single("Facial hair", "facialHair", FACIAL_HAIR),
-    ],
-  },
-  {
-    id: "wardrobe",
-    label: "Wardrobe",
-    blurb: "Pick the fit. New drops land here.",
-    groups: [
-      single("Outfit", "outfit", OUTFIT),
-      single("Colour", "outfitColor", OUTFIT_COLOR),
-      single("Fabric", "fabric", FABRIC),
-    ],
-  },
-  {
-    id: "accessories",
-    label: "Accessories",
-    blurb: "Headwear, frames and hardware.",
-    groups: [
-      single("Headwear", "headwear", HEADWEAR),
-      single("Eyewear", "eyewear", EYEWEAR),
-      multi("Jewellery", "jewelry", JEWELRY),
-    ],
-  },
-  {
-    id: "makeup",
-    label: "Make-up",
-    blurb: "Stack as many looks as you like.",
-    groups: [multi("Make-up", "makeup", MAKEUP)],
-  },
-  {
-    id: "scene",
-    label: "Scene",
-    blurb: "The light you stand in.",
-    groups: [single("Backdrop", "background", BACKGROUND)],
-  },
+/** Options that only make sense for one gender. */
+const BROWS_F = ["Soft arched", "Sculpted arch", "Straight", "Feathered", "Thin", "Bold defined"];
+const LIPS_F = ["Full pout", "Heart-shaped", "Medium", "Wide smile", "Cupid's bow"];
+const HEADWEAR_F = [
+  "None",
+  "Headband",
+  "Silk scarf tied back",
+  "Beret",
+  "Wide-brim hat",
+  "Bucket hat",
+  "Beanie",
+  "Hair clips",
+  "Hair bow",
+  "Flower crown",
+  "Headscarf",
+  "Cap",
 ];
+const HEADWEAR_M = [
+  "None",
+  "Cap",
+  "Beanie",
+  "Bucket hat",
+  "Bandana",
+  "Durag",
+  "Wide-brim hat",
+  "Cowboy hat",
+  "Turban",
+  "Headphones around neck",
+];
+const JEWELRY_F = [
+  "Hoop earrings",
+  "Stud earrings",
+  "Drop earrings",
+  "Pearl set",
+  "Layered necklaces",
+  "Pendant necklace",
+  "Choker",
+  "Delicate chain",
+  "Nose ring",
+  "Statement rings",
+  "Gold bangles",
+  "Ear cuff",
+];
+const JEWELRY_M = [
+  "Stud earrings",
+  "Hoop earring",
+  "Chunky chain",
+  "Pendant necklace",
+  "Ear cuff",
+  "Signet ring",
+  "Leather cord necklace",
+  "Nose ring",
+];
+
+function sectionsFor(gender: string) {
+  const female = gender === "Female";
+  const sections: { id: string; label: string; blurb: string; groups: Group[] }[] = [
+    {
+      id: "face",
+      label: "Face",
+      blurb: "Shape the features that make you, you.",
+      groups: [
+        single("Age", "age", AGE),
+        single("Skin tone", "skin", SKIN),
+        single("Face shape", "face", FACE),
+        single("Eye colour", "eyeColor", EYE_COLOR),
+        single("Eye shape", "eyeShape", EYE_SHAPE),
+        single("Eyebrows", "brows", female ? BROWS_F : BROWS),
+        single("Nose", "nose", NOSE),
+        single("Lips", "lips", female ? LIPS_F : LIPS),
+        single("Ears", "ears", EARS),
+        single("Expression", "expression", EXPRESSION),
+        multi("Details", "extras", EXTRA),
+      ],
+    },
+    {
+      id: "hair",
+      label: "Hair",
+      blurb: female ? "Pick your style — tap a look to wear it." : "Cut, colour and beard.",
+      groups: [
+        single("Hairstyle", "hair", female ? HAIR_FEMALE : HAIR_MALE),
+        single("Hair colour", "hairColor", HAIR_COLOR),
+        ...(female ? [] : [single("Facial hair", "facialHair", FACIAL_HAIR)]),
+      ],
+    },
+    {
+      id: "wardrobe",
+      label: "Wardrobe",
+      blurb: "Pick the fit. New drops land here.",
+      groups: [
+        single("Outfit", "outfit", female ? OUTFIT_FEMALE : OUTFIT_MALE),
+        single("Colour", "outfitColor", OUTFIT_COLOR),
+        single("Fabric", "fabric", FABRIC),
+      ],
+    },
+    {
+      id: "accessories",
+      label: "Accessories",
+      blurb: "Headwear, frames and hardware.",
+      groups: [
+        single("Headwear", "headwear", female ? HEADWEAR_F : HEADWEAR_M),
+        single("Eyewear", "eyewear", EYEWEAR),
+        multi("Jewellery", "jewelry", female ? JEWELRY_F : JEWELRY_M),
+      ],
+    },
+    ...(female
+      ? [
+          {
+            id: "makeup",
+            label: "Make-up",
+            blurb: "Stack as many looks as you like.",
+            groups: [multi("Make-up", "makeup", MAKEUP)],
+          },
+        ]
+      : []),
+    {
+      id: "scene",
+      label: "Scene",
+      blurb: "The light you stand in.",
+      groups: [single("Backdrop", "background", BACKGROUND)],
+    },
+  ];
+  return sections;
+}
+
+/** Defaults that suit the chosen gender, applied when you switch. */
+function genderDefaults(gender: string): Partial<Traits> {
+  return gender === "Female"
+    ? {
+        hair: "Long loose waves",
+        outfit: "Soft knit sweater",
+        outfitColor: "Dusty pink",
+        facialHair: "Clean shaven",
+        brows: "Soft arched",
+        lips: "Full pout",
+        headwear: "None",
+        makeup: ["Natural glow"],
+        jewelry: ["Stud earrings"],
+      }
+    : {
+        hair: "Short swept-back",
+        outfit: "Oversized hoodie",
+        outfitColor: "Black",
+        brows: "Soft arched",
+        lips: "Medium",
+        headwear: "None",
+        makeup: [],
+        jewelry: [],
+      };
+}
+
 
 
 export function AvatarStudio({
