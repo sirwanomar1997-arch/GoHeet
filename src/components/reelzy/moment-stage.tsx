@@ -3,7 +3,18 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX, Play } from "lucide-react";
+import {
+  Flame,
+  MessageCircle,
+  Bookmark,
+  MoreHorizontal,
+  Send,
+  Volume2,
+  VolumeX,
+  Play,
+  Share2,
+  Music2,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +43,13 @@ import {
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { formatCount, timeAgo } from "./format";
+import {
+  filterCss,
+  overlayFontClass,
+  overlayPlaceClass,
+  overlayStyleClass,
+  parseOverlay,
+} from "./creative";
 
 const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "harassment", label: "Harassment" },
@@ -62,6 +80,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   const [reportOpen, setReportOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const look = filterCss(moment.styleFilter);
+  const overlay = parseOverlay(moment.overlay);
 
   const togglePlayback = useCallback(() => {
     const vid = videoRef.current;
@@ -149,6 +171,26 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
     return () => clearTimeout(timer);
   }, [moment.kind, flushView]);
 
+  // Music rides along with the frame: it starts, pauses and mutes with the video.
+  useEffect(() => {
+    const vid = videoRef.current;
+    const aud = audioRef.current;
+    if (!aud) return;
+    if (!vid) return;
+    const play = () => {
+      aud.currentTime = vid.currentTime % (aud.duration || 1);
+      void aud.play().catch(() => undefined);
+    };
+    const pause = () => aud.pause();
+    vid.addEventListener("play", play);
+    vid.addEventListener("pause", pause);
+    return () => {
+      vid.removeEventListener("play", play);
+      vid.removeEventListener("pause", pause);
+      aud.pause();
+    };
+  }, [moment.music?.url]);
+
   const likeMutation = useMutation({
     mutationFn: () => like({ data: { momentId: moment.id } }),
     onMutate: () => {
@@ -212,6 +254,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           src={moment.mediaUrl}
           poster={moment.posterUrl ?? undefined}
           className="size-full object-cover"
+          style={look ? { filter: look } : undefined}
           playsInline
           loop
           muted={muted}
@@ -223,6 +266,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           src={moment.mediaUrl}
           alt={moment.caption ?? `A moment by ${moment.author.username}`}
           className="size-full object-cover"
+          style={look ? { filter: look } : undefined}
         />
       ) : (
         <div className="grid size-full place-items-center text-sm text-muted-foreground">
@@ -233,6 +277,26 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       {/* Film treatment: vignette + grain so real footage reads cinematic. */}
       <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
       <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
+
+      {overlay ? (
+        <div
+          className={`pointer-events-none absolute inset-0 flex justify-center px-8 text-center ${overlayPlaceClass(
+            overlay.place,
+          )}`}
+        >
+          <p
+            className={`max-w-[85%] text-[26px] leading-tight ${overlayFontClass(
+              overlay.font,
+            )} ${overlayStyleClass(overlay.style)}`}
+          >
+            {overlay.text}
+          </p>
+        </div>
+      ) : null}
+
+      {moment.music?.url ? (
+        <audio ref={audioRef} src={moment.music.url} loop preload="none" muted={muted} />
+      ) : null}
 
       {moment.kind === "video" && paused ? (
         <button
@@ -349,6 +413,15 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
 
         ) : null}
 
+        {moment.music ? (
+          <div className="mt-2.5 flex items-center gap-2 text-[12px] text-foreground/80">
+            <Music2 className="size-3.5 shrink-0 text-primary" strokeWidth={2} />
+            <span className="truncate">
+              {moment.music.title} · {moment.music.artist}
+            </span>
+          </div>
+        ) : null}
+
         <div className="mt-4 flex gap-2">
           <button
             type="button"
@@ -370,6 +443,26 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           >
             <MessageCircle className="size-4" strokeWidth={1.8} />
             <span className="data-figure text-xs">{formatCount(moment.commentCount)}</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Share this moment"
+            onClick={async () => {
+              const url = `${window.location.origin}/u/${moment.author.username}`;
+              if (navigator.share) {
+                try {
+                  await navigator.share({ title: `@${moment.author.username} on Reelzy`, url });
+                  return;
+                } catch {
+                  return;
+                }
+              }
+              await navigator.clipboard?.writeText(url);
+              toast.success("Link copied.");
+            }}
+            className="tap-target grid w-14 place-items-center rounded-2xl border border-border bg-surface-raised active:scale-[0.97]"
+          >
+            <Share2 className="size-4" strokeWidth={1.8} />
           </button>
           <button
             type="button"
