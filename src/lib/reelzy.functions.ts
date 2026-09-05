@@ -528,7 +528,110 @@ export const publishMoment = createServerFn({ method: "POST" })
     return { id: moment.id };
   });
 
+const TRASH_DAYS = 30;
+
+/** Permanently removes the caller's trashed moments older than 30 days. */
+async function purgeExpiredTrash(userId: string) {
+  const sb = await admin();
+  const cutoff = new Date(Date.now() - TRASH_DAYS * 24 * 3600 * 1000).toISOString();
+  const { data: rows } = await sb
+    .from("moments")
+    .select("id, media_path, thumbnail_path")
+    .eq("author_id", userId)
+    .not("deleted_at", "is", null)
+    .lt("deleted_at", cutoff);
+  if (!rows?.length) return;
+  const paths = rows.flatMap((r) => [r.media_path, r.thumbnail_path]).filter(Boolean) as string[];
+  if (paths.length) await sb.storage.from("moments").remove(paths);
+  await sb
+    .from("moments")
+    .delete()
+    .in(
+      "id",
+      rows.map((r) => r.id),
+    );
+}
+
 export const deleteMoment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
+  .handler(async ({ data, context }) => {
+    const sb = await admin();
+    const { data: moment } = await sb
+      .from("moments")
+      .select("id, author_id")
+      .eq("id", data.momentId)
+      .maybeSingle();
+    if (!moment || moment.author_id !== context.userId) throw new Error("Not allowed.");
+    // Soft delete: the moment sits in Trash for 30 days before it is erased.
+    await sb
+      .from("moments")
+      .update({ status: "removed", deleted_at: new Date().toISOString() })
+      .eq("id", moment.id);
+    await track(context.userId, "moment_trashed");
+    return { ok: true };
+  });
+
+export const listTrash = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await purgeExpiredTrash(context.userId);
+    const sb = await admin();
+    const { data: rows } = await sb
+      .from("moments")
+      .select("id, caption, kind, media_path, thumbnail_path, created_at, deleted_at")
+      .eq("author_id", context.userId)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false })
+      .limit(100);
+    const list = rows ?? [];
+    const media = await signMedia(list.flatMap((r) => [r.media_path, r.thumbnail_path]));
+    return {
+      items: list.map((r) => {
+        const deletedAt = r.deleted_at as string;
+        const expiresAt = new Date(
+          new Date(deletedAt).getTime() + TRASH_DAYS * 24 * 3600 * 1000,
+        ).toISOString();
+        const daysLeft = Math.max(
+          0,
+          Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 3600 * 1000)),
+        );
+        return {
+          id: r.id,
+          caption: r.caption,
+          kind: r.kind,
+          createdAt: r.created_at,
+          deletedAt,
+          expiresAt,
+          daysLeft,
+          mediaUrl: media[r.media_path] ?? null,
+          thumbnailUrl: r.thumbnail_path ? (media[r.thumbnail_path] ?? null) : null,
+        };
+      }),
+    };
+  });
+
+export const restoreMoment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
+  .handler(async ({ data, context }) => {
+    const sb = await admin();
+    const { data: moment } = await sb
+      .from("moments")
+      .select("id, author_id, deleted_at")
+      .eq("id", data.momentId)
+      .maybeSingle();
+    if (!moment || moment.author_id !== context.userId || !moment.deleted_at)
+      throw new Error("Not allowed.");
+    await sb
+      .from("moments")
+      .update({ status: "published", deleted_at: null })
+      .eq("id", moment.id);
+    await track(context.userId, "moment_restored");
+    return { ok: true };
+  });
+
+export const deleteMomentForever = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
@@ -542,8 +645,33 @@ export const deleteMoment = createServerFn({ method: "POST" })
     const paths = [moment.media_path, moment.thumbnail_path].filter(Boolean) as string[];
     if (paths.length) await sb.storage.from("moments").remove(paths);
     await sb.from("moments").delete().eq("id", moment.id);
-    await track(context.userId, "moment_deleted");
+    await track(context.userId, "moment_deleted_forever");
     return { ok: true };
+  });
+
+export const emptyTrash = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = await admin();
+    const { data: rows } = await sb
+      .from("moments")
+      .select("id, media_path, thumbnail_path")
+      .eq("author_id", context.userId)
+      .not("deleted_at", "is", null);
+    const list = rows ?? [];
+    if (list.length) {
+      const paths = list.flatMap((r) => [r.media_path, r.thumbnail_path]).filter(Boolean) as string[];
+      if (paths.length) await sb.storage.from("moments").remove(paths);
+      await sb
+        .from("moments")
+        .delete()
+        .in(
+          "id",
+          list.map((r) => r.id),
+        );
+    }
+    await track(context.userId, "trash_emptied", { count: list.length });
+    return { ok: true, count: list.length };
   });
 
 export const setMomentVisibility = createServerFn({ method: "POST" })
