@@ -280,7 +280,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
 
 
       {/* Bottom information band + reaction rail */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-16">
+      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
         <div className="flex items-center gap-3">
           <Link to="/u/$username" params={{ username: moment.author.username }} className="shrink-0">
             <span className="ember-fill flex size-10 items-center justify-center rounded-2xl p-[2px]">
