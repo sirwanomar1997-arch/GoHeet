@@ -546,6 +546,19 @@ export function MomentStage({
   );
 }
 
+type CommentRow = {
+  id: string;
+  body: string;
+  createdAt: string;
+  parentId: string | null;
+  likeCount: number;
+  liked: boolean;
+  isOwn: boolean;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
 function CommentSheet({
   momentId,
   open,
@@ -560,8 +573,10 @@ function CommentSheet({
   const fetchComments = useServerFn(listComments);
   const create = useServerFn(addComment);
   const remove = useServerFn(deleteComment);
+  const likeComment = useServerFn(toggleCommentLike);
   const removeReport = useServerFn(submitReport);
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -571,13 +586,114 @@ function CommentSheet({
   });
 
   const post = useMutation({
-    mutationFn: () => create({ data: { momentId, body } }),
+    mutationFn: () => create({ data: { momentId, body, parentId: replyTo?.id ?? null } }),
     onSuccess: () => {
       setBody("");
+      setReplyTo(null);
       void qc.invalidateQueries({ queryKey: ["comments", momentId] });
     },
     onError: (e: Error) => toast.error(e.message || "Couldn't post that comment."),
   });
+
+  const like = useMutation({
+    mutationFn: (commentId: string) => likeComment({ data: { commentId } }),
+    onMutate: (commentId: string) => {
+      qc.setQueryData(
+        ["comments", momentId],
+        (old: { comments: CommentRow[] } | undefined) =>
+          old
+            ? {
+                comments: old.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, liked: !c.liked, likeCount: c.likeCount + (c.liked ? -1 : 1) }
+                    : c,
+                ),
+              }
+            : old,
+      );
+    },
+    onError: () => {
+      toast.error("Couldn't register that.");
+      void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+    },
+  });
+
+  const all = (data?.comments ?? []) as CommentRow[];
+  const roots = all
+    .filter((c) => !c.parentId)
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const repliesOf = (id: string) =>
+    all
+      .filter((c) => c.parentId === id)
+      .slice()
+      .sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
+
+  const renderComment = (c: CommentRow, isReply: boolean) => (
+    <div key={c.id} className={`flex gap-3 ${isReply ? "ml-11" : ""}`}>
+      <span
+        className={`grid ${isReply ? "size-7" : "size-8"} shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase`}
+      >
+        {c.avatarUrl ? (
+          <img src={c.avatarUrl} alt="" className="size-full object-cover" />
+        ) : (
+          c.username.slice(0, 1)
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground">
+          @{c.username} · {timeAgo(c.createdAt)}
+        </p>
+        <p className="text-sm text-foreground">{c.body}</p>
+        <div className="mt-1 flex items-center gap-3">
+          <button
+            type="button"
+            aria-pressed={c.liked}
+            aria-label={c.liked ? "Unlike comment" : "Like comment"}
+            onClick={() => like.mutate(c.id)}
+            className={`flex items-center gap-1 text-[11px] ${
+              c.liked ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <Heart className="size-3.5" strokeWidth={c.liked ? 2.6 : 1.8} fill={c.liked ? "currentColor" : "none"} />
+            {c.likeCount > 0 ? <span className="data-figure">{formatCount(c.likeCount)}</span> : null}
+          </button>
+          <button
+            type="button"
+            className="text-[11px] text-muted-foreground underline"
+            onClick={() => setReplyTo({ id: c.parentId ?? c.id, username: c.username })}
+          >
+            Reply
+          </button>
+          {c.isOwn ? (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground underline"
+              onClick={async () => {
+                await remove({ data: { commentId: c.id } });
+                void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+              }}
+            >
+              Delete
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground underline"
+              onClick={async () => {
+                await removeReport({
+                  data: { targetType: "comment", targetId: c.id, category: "harassment" },
+                });
+                toast.success("Reported.");
+              }}
+            >
+              Report
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -590,63 +706,34 @@ function CommentSheet({
         <div className="flex-1 space-y-4 overflow-y-auto pb-4">
           {isLoading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : (data?.comments.length ?? 0) === 0 ? (
+          ) : roots.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Nobody has said anything yet. Be first.
             </p>
           ) : (
-            data?.comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase">
-                  {c.avatarUrl ? (
-                    <img src={c.avatarUrl} alt="" className="size-full object-cover" />
-                  ) : (
-                    c.username.slice(0, 1)
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    @{c.username} · {timeAgo(c.createdAt)}
-                  </p>
-                  <p className="text-sm text-foreground">{c.body}</p>
-                  <div className="mt-1 flex gap-3">
-                    {c.isOwn ? (
-                      <button
-                        type="button"
-                        className="text-[11px] text-muted-foreground underline"
-                        onClick={async () => {
-                          await remove({ data: { commentId: c.id } });
-                          void qc.invalidateQueries({ queryKey: ["comments", momentId] });
-                        }}
-                      >
-                        Delete
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-[11px] text-muted-foreground underline"
-                        onClick={async () => {
-                          await removeReport({
-                            data: { targetType: "comment", targetId: c.id, category: "harassment" },
-                          });
-                          toast.success("Reported.");
-                        }}
-                      >
-                        Report
-                      </button>
-                    )}
-                  </div>
-                </div>
+            roots.map((c) => (
+              <div key={c.id} className="space-y-3">
+                {renderComment(c, false)}
+                {repliesOf(c.id).map((r) => renderComment(r, true))}
               </div>
             ))
           )}
         </div>
 
+        {replyTo ? (
+          <div className="flex items-center justify-between rounded-xl bg-surface-raised px-3 py-2 text-[12px] text-muted-foreground">
+            <span>Replying to @{replyTo.username}</span>
+            <button type="button" className="underline" onClick={() => setReplyTo(null)}>
+              Cancel
+            </button>
+          </div>
+        ) : null}
+
         <div className="flex items-end gap-2 border-t border-border pt-3">
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value.slice(0, 500))}
-            placeholder="Say something real…"
+            placeholder={replyTo ? `Reply to @${replyTo.username}…` : "Say something real…"}
             rows={1}
             className="min-h-11 resize-none bg-surface-raised"
           />
@@ -664,3 +751,4 @@ function CommentSheet({
     </Sheet>
   );
 }
+
