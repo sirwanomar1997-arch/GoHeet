@@ -117,17 +117,33 @@ function ProfilePage() {
             </p>
           ) : null}
 
-          {/* stats orbit the avatar as one quiet ring of numbers */}
-          <div className="mt-6 flex w-full items-center justify-between rounded-full border border-border bg-surface px-5 py-3">
+          {/* stat band — a premium segmented strip, brand accent on REELZ */}
+          <div className="mt-6 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
-              ["Moments", formatCount(p.momentCount)],
-              ["Followers", formatCount(p.followerCount)],
-              ["Following", formatCount(p.followingCount)],
-              ["Seen", formatCount(p.totalViews)],
-            ].map(([k, v]) => (
-              <div key={k} className="text-center">
-                <p className="data-figure text-base leading-none text-foreground">{v}</p>
-                <p className="data-figure mt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+              ["Reelz", formatCount(p.momentCount), true],
+              ["Followers", formatCount(p.followerCount), false],
+              ["Following", formatCount(p.followingCount), false],
+              ["Views", formatCount(p.totalViews), false],
+              ["Likes", formatCount(p.totalLikes), false],
+            ].map(([k, v, accent]) => (
+              <div
+                key={k as string}
+                className="relative flex flex-col items-center gap-1 px-1 py-3.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
+              >
+                {accent ? (
+                  <span
+                    aria-hidden
+                    className="ember-fill absolute inset-x-0 top-0 h-[3px]"
+                  />
+                ) : null}
+                <p
+                  className={`data-figure text-lg leading-none tabular-nums ${
+                    accent ? "text-primary" : "text-foreground"
+                  }`}
+                >
+                  {v}
+                </p>
+                <p className="data-figure text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
                   {k}
                 </p>
               </div>
