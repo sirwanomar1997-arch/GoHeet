@@ -855,7 +855,13 @@ export function AvatarStudio({
               </p>
               <button
                 type="button"
-                onClick={() => edit((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
+                onClick={() =>
+                  edit((t) => {
+                    const g = t.gender || "Male";
+                    return { ...randomTraits(g), gender: g };
+                  })
+                }
+
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
               >
                 <Dices className="size-3.5" /> Shuffle
