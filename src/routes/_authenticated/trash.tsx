@@ -37,7 +37,7 @@ function TrashPage() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["trash"],
-    queryFn: () => fetchTrash({ data: {} }),
+    queryFn: () => fetchTrash({}),
   });
 
   const items = data?.items ?? [];
@@ -87,7 +87,7 @@ function TrashPage() {
             disabled={busy === "all"}
             onClick={() => {
               if (!window.confirm("Erase everything in the trash? This cannot be undone.")) return;
-              void run("all", () => wipe({ data: {} }), "Trash emptied.");
+              void run("all", () => wipe({}), "Trash emptied.");
             }}
           >
             Empty trash now
