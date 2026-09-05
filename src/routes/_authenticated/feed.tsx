@@ -15,13 +15,11 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const [scope, setScope] = useState<"following" | "discover">("following");
-  const navigate = useNavigate();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const { data: me, isLoading: meLoading } = useMe();
   const fetchFeed = useServerFn(getFeed);
 
-  useEffect(() => {
-    if (!meLoading && me && !me.profile) void navigate({ to: "/onboarding" });
-  }, [me, meLoading, navigate]);
+  const showProfileBanner = !meLoading && !!me && !me.profile && !bannerDismissed;
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["feed", scope],
