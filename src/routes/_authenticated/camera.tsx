@@ -62,14 +62,20 @@ function CameraPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const startedAtRef = useRef(0);
+  const accumulatedRef = useRef(0);
+  const elapsedRef = useRef(0);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [withAudio, setWithAudio] = useState(true);
   const [ready, setReady] = useState(false);
   const [denied, setDenied] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [captured, setCaptured] = useState<Captured | null>(null);
+
   const [session, setSession] = useState<{ sessionId: string; storagePrefix: string } | null>(null);
   const [caption, setCaption] = useState("");
   const [place, setPlace] = useState("");
