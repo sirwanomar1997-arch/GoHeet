@@ -2,18 +2,38 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin } from "lucide-react";
-import { publishMoment, startCapture } from "@/lib/reelzy.functions";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check } from "lucide-react";
+import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { useQuery } from "@tanstack/react-query";
+import {
+  FILTERS,
+  OVERLAY_FONTS,
+  filterCss,
+  overlayFontClass,
+  overlayPlaceClass,
+  overlayStyleClass,
+  type FilterId,
+  type MomentOverlay,
+  type OverlayPlace,
+  type OverlayStyle,
+} from "@/components/reelzy/creative";
 
 export const Route = createFileRoute("/_authenticated/camera")({
   component: CameraPage,
 });
 
-const MAX_MS = 30_000;
+const MAX_MS = 300_000; // Reelzy caps a moment at five minutes.
 
 type Captured = {
   blob: Blob;
@@ -22,6 +42,11 @@ type Captured = {
   durationMs: number;
   poster: Blob | null;
 };
+
+function formatClock(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")} / 5:00`;
+}
 
 function pickMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
@@ -48,8 +73,19 @@ function CameraPage() {
   const [caption, setCaption] = useState("");
   const [place, setPlace] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [look, setLook] = useState<FilterId>("none");
+  const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
+  const [textOpen, setTextOpen] = useState(false);
+  const [musicOpen, setMusicOpen] = useState(false);
+  const [track, setTrack] = useState<{ id: string; title: string; artist: string } | null>(null);
 
   const openSession = useServerFn(startCapture);
+  const fetchTracks = useServerFn(listMusicTracks);
+  const { data: music, isLoading: musicLoading } = useQuery({
+    queryKey: ["music-library"],
+    queryFn: () => fetchTracks({ data: undefined }),
+    enabled: musicOpen,
+  });
   const publish = useServerFn(publishMoment);
 
   const stopStream = useCallback(() => {
@@ -171,6 +207,9 @@ function CameraPage() {
     setCaptured(null);
     setCaption("");
     setPlace("");
+    setOverlay(null);
+    setTrack(null);
+    setLook("none");
   }
 
   async function doPublish() {
@@ -203,6 +242,9 @@ function CameraPage() {
           ...(thumbnailPath ? { thumbnailPath } : {}),
           ...(caption.trim() ? { caption: caption.trim() } : {}),
           ...(place.trim() ? { locationLabel: place.trim() } : {}),
+          ...(look !== "none" ? { styleFilter: look } : {}),
+          ...(overlay?.text.trim() ? { overlay } : {}),
+          ...(track ? { musicTrackId: track.id } : {}),
         },
       });
       toast.success("Published. That's a real one.");
@@ -227,12 +269,84 @@ function CameraPage() {
             </p>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-[28px] bg-surface">
+          <div className="relative mt-3 overflow-hidden rounded-[28px] bg-surface">
             {captured.kind === "video" ? (
-              <video src={captured.url} className="aspect-[9/16] w-full object-cover" controls playsInline />
+              <video
+                src={captured.url}
+                className="aspect-[9/16] w-full object-cover"
+                style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+                controls
+                playsInline
+              />
             ) : (
-              <img src={captured.url} alt="Your capture" className="aspect-[9/16] w-full object-cover" />
+              <img
+                src={captured.url}
+                alt="Your capture"
+                className="aspect-[9/16] w-full object-cover"
+                style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+              />
             )}
+            {overlay?.text ? (
+              <div
+                className={`pointer-events-none absolute inset-0 flex justify-center px-6 text-center ${overlayPlaceClass(
+                  overlay.place,
+                )}`}
+              >
+                <p
+                  className={`max-w-[85%] text-[24px] leading-tight ${overlayFontClass(
+                    overlay.font,
+                  )} ${overlayStyleClass(overlay.style)}`}
+                >
+                  {overlay.text}
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Creative tools — a look, a line of type, a track. Nothing heavier. */}
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTextOpen(true)}
+              className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised text-sm font-medium"
+            >
+              <TypeIcon className="size-4" /> {overlay?.text ? "Edit text" : "Add text"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMusicOpen(true)}
+              className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised px-3 text-sm font-medium"
+            >
+              <Music2 className="size-4" />
+              <span className="truncate">{track ? track.title : "Add music"}</span>
+            </button>
+          </div>
+
+          <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setLook(f.id)}
+                aria-pressed={look === f.id}
+                className="shrink-0 text-center"
+              >
+                <span
+                  className={`block size-14 rounded-2xl border-2 transition-all ${
+                    look === f.id ? "border-primary scale-105" : "border-border"
+                  }`}
+                  style={{ backgroundImage: f.swatch }}
+                  aria-hidden
+                />
+                <span
+                  className={`data-figure mt-1.5 block text-[10px] uppercase tracking-[0.12em] ${
+                    look === f.id ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {f.label}
+                </span>
+              </button>
+            ))}
           </div>
 
           <div className="mt-5 space-y-4">
@@ -263,13 +377,157 @@ function CameraPage() {
             </Button>
           </div>
         </div>
+
+        <Sheet open={textOpen} onOpenChange={setTextOpen}>
+          <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
+            <SheetHeader className="px-0">
+              <SheetTitle className="font-display">Put a line on it</SheetTitle>
+              <SheetDescription>One line of type, styled to fit Reelzy.</SheetDescription>
+            </SheetHeader>
+            <div className="space-y-4 pb-8">
+              <Input
+                value={overlay?.text ?? ""}
+                autoFocus
+                onChange={(e) =>
+                  setOverlay({
+                    text: e.target.value.slice(0, 120),
+                    font: overlay?.font ?? "display",
+                    style: overlay?.style ?? "plain",
+                    place: overlay?.place ?? "middle",
+                  })
+                }
+                placeholder="Say it in a few words"
+                className="h-12 bg-surface-raised"
+              />
+              <div className="flex gap-2">
+                {OVERLAY_FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => overlay && setOverlay({ ...overlay, font: f.id })}
+                    className={`h-11 flex-1 rounded-xl border text-sm ${f.className} ${
+                      overlay?.font === f.id ? "border-primary text-primary" : "border-border"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                {(["plain", "ember", "block"] as OverlayStyle[]).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => overlay && setOverlay({ ...overlay, style: st })}
+                    className={`h-11 flex-1 rounded-xl border text-xs uppercase tracking-[0.14em] ${
+                      overlay?.style === st ? "border-primary text-primary" : "border-border"
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                {(["top", "middle", "bottom"] as OverlayPlace[]).map((pl) => (
+                  <button
+                    key={pl}
+                    type="button"
+                    onClick={() => overlay && setOverlay({ ...overlay, place: pl })}
+                    className={`h-11 flex-1 rounded-xl border text-xs uppercase tracking-[0.14em] ${
+                      overlay?.place === pl ? "border-primary text-primary" : "border-border"
+                    }`}
+                  >
+                    {pl}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  className="h-12 flex-1 rounded-2xl border border-border"
+                  onClick={() => {
+                    setOverlay(null);
+                    setTextOpen(false);
+                  }}
+                >
+                  Remove
+                </Button>
+                <Button
+                  className="ember-fill h-12 flex-1 rounded-2xl text-primary-foreground"
+                  onClick={() => setTextOpen(false)}
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
+          <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
+            <SheetHeader className="px-0">
+              <SheetTitle className="font-display">Add a track</SheetTitle>
+              <SheetDescription>Licensed music from the Reelzy library.</SheetDescription>
+            </SheetHeader>
+            <div className="flex-1 space-y-2 overflow-y-auto pb-6">
+              {musicLoading ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
+              ) : (music?.tracks.length ?? 0) === 0 ? (
+                <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+                  The music library is empty. Licensed tracks have to be added before anyone can
+                  put music on a moment.
+                </p>
+              ) : (
+                music?.tracks.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => {
+                      setTrack({ id: t.id, title: t.title, artist: t.artist });
+                      setMusicOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised px-3 py-3 text-left"
+                  >
+                    <span className="ember-fill grid size-10 shrink-0 place-items-center rounded-xl text-primary-foreground">
+                      <Music2 className="size-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{t.title}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{t.artist}</span>
+                    </span>
+                    {track?.id === t.id ? <Check className="size-4 text-primary" /> : null}
+                  </button>
+                ))
+              )}
+            </div>
+            {track ? (
+              <Button
+                variant="ghost"
+                className="h-12 rounded-2xl border border-border"
+                onClick={() => {
+                  setTrack(null);
+                  setMusicOpen(false);
+                }}
+              >
+                Remove music
+              </Button>
+            ) : null}
+          </SheetContent>
+        </Sheet>
       </main>
     );
   }
 
   return (
     <main className="relative h-svh overflow-hidden bg-black">
-      <video ref={videoRef} className="size-full object-cover" playsInline muted autoPlay />
+      <video
+        ref={videoRef}
+        className="size-full object-cover"
+        style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+        playsInline
+        muted
+        autoPlay
+      />
 
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
         <Link
@@ -280,7 +538,7 @@ function CameraPage() {
           <X className="size-5" />
         </Link>
         <span className="data-figure rounded-full bg-background/70 px-3 py-1.5 text-[11px] backdrop-blur">
-          {recording ? `${(elapsed / 1000).toFixed(1)}s / 30s` : "Reelzy camera"}
+          {recording ? formatClock(elapsed) : "Reelzy camera"}
         </span>
         <button
           type="button"
@@ -305,6 +563,21 @@ function CameraPage() {
       ) : null}
 
       <div className="absolute inset-x-0 bottom-0 pb-10">
+        <div className="mb-5 flex gap-2.5 overflow-x-auto px-5">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setLook(f.id)}
+              aria-label={f.label}
+              aria-pressed={look === f.id}
+              className={`size-11 shrink-0 rounded-2xl border-2 transition-transform ${
+                look === f.id ? "border-white scale-110" : "border-white/25"
+              }`}
+              style={{ backgroundImage: f.swatch }}
+            />
+          ))}
+        </div>
         <div className="flex items-center justify-around px-8">
           <button
             type="button"
@@ -342,7 +615,7 @@ function CameraPage() {
           </button>
         </div>
         <p className="mt-4 text-center text-[11px] text-white/60">
-          Captured live. Nothing can be uploaded from your camera roll.
+          Captured live, up to five minutes. Nothing can be uploaded from your camera roll.
         </p>
       </div>
     </main>
