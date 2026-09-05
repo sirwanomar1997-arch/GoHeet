@@ -650,7 +650,7 @@ export function AvatarStudio({
     active: boolean;
     onClick: () => void;
   }) => {
-    const cell = cellFor(group, value);
+    const cell = cellFor(group, value, traits.gender);
     return (
       <button
         type="button"
@@ -699,12 +699,12 @@ export function AvatarStudio({
         </button>
       </div>
 
-      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
+      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-gradient-to-b from-primary/15 to-background">
         {frame ? (
           <img
             src={frame}
             alt="Your avatar"
-            className={`size-full object-cover transition-[filter] duration-500 ${
+            className={`size-full object-contain transition-[filter] duration-500 ${
               isFinal && !busy ? "blur-0" : "blur-xl"
             }`}
           />
