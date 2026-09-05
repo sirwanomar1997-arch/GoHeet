@@ -112,11 +112,11 @@ function AuthPage() {
         </Link>
 
         <h1 className="mt-12 font-display text-3xl font-extrabold tracking-[-0.04em]">
-          {mode === "signup" ? "Start capturing." : "Welcome back."}
+          {mode === "signup" ? "Real moments." : "Welcome back."}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signup"
-            ? "Reelzy is for people aged 13 and over. We'll ask your date of birth next."
+            ? "Capture what's real, right as it happens. No filters, no camera roll, no do-overs — just life, pressed into a single honest frame."
             : "Your moments are waiting."}
         </p>
 
