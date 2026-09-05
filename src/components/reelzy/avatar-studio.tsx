@@ -57,8 +57,11 @@ function describe(t: Traits) {
     "60+": "older adult, age 60 or above, with natural dignified age detail",
   }[t.age];
   const bits = [
-    female ? "feminine female character" : "masculine male character",
+    female
+      ? "feminine female character"
+      : "handsome masculine male character with a clean youthful jawline, smooth skin, no wrinkles unless the age says otherwise",
     ageDescription,
+    female ? "" : `${t.beard.toLowerCase()} facial hair`,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -601,6 +604,15 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           value={traits.mouth}
           onPick={(v) => update({ mouth: v })}
         />
+        {traits.gender === "Male" ? (
+          <SheetRow
+            title="Beard"
+            sheet={SHEETS.beard}
+            opts={BEARDS}
+            value={traits.beard}
+            onPick={(v) => update({ beard: v })}
+          />
+        ) : null}
         </div> : null}
         {category === "Hair" ? <div className="space-y-5">
         <SheetRow
