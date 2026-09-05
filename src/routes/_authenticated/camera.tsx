@@ -93,13 +93,20 @@ function CameraPage() {
   const [textOpen, setTextOpen] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const dragMovedRef = useRef(false);
 
   const startDrag = (e: React.PointerEvent<HTMLElement>) => {
     draggingRef.current = true;
+    dragMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.hypot(dx, dy) > 6) dragMovedRef.current = true;
     const box = stageRef.current?.getBoundingClientRect();
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
@@ -108,6 +115,10 @@ function CameraPage() {
   };
   const endDrag = () => {
     draggingRef.current = false;
+  };
+  const onTextTap = () => {
+    // A tap without a drag opens the editor; a drag just moves the text.
+    if (!dragMovedRef.current) setTextOpen(true);
   };
 
   const [musicOpen, setMusicOpen] = useState(false);
@@ -436,9 +447,13 @@ function CameraPage() {
               >
                 <p
                   onPointerDown={startDrag}
+                  onClick={onTextTap}
                   role="button"
                   tabIndex={0}
-                  aria-label="Drag to move your text"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setTextOpen(true);
+                  }}
+                  aria-label="Tap to edit, drag to move your text"
                   className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
                     overlayStyleProps(overlay.style, overlay.color).className
                   }`}
@@ -458,7 +473,7 @@ function CameraPage() {
           </div>
           {overlay?.text ? (
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Drag the text anywhere on the frame.
+              Tap the text to style it — drag to move it.
             </p>
           ) : null}
 
@@ -564,15 +579,25 @@ function CameraPage() {
           </div>
         </div>
 
-        <Sheet open={textOpen} onOpenChange={setTextOpen}>
-          <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
-            <SheetHeader className="px-0">
-              <SheetTitle className="font-display">Say it loud</SheetTitle>
-              <SheetDescription>
-                Pick a voice, a colour and a finish — then drag it onto the frame.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="max-h-[70svh] space-y-5 overflow-y-auto pb-8">
+        {textOpen ? (
+          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg rounded-t-[28px] border border-border bg-surface p-5 shadow-[0_-18px_60px_rgba(0,0,0,0.55)]">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display text-lg">Say it loud</p>
+                <p className="text-xs text-muted-foreground">
+                  Everything updates live on your video as you tap.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTextOpen(false)}
+                aria-label="Close text editor"
+                className="tap-target -mr-1 -mt-1 text-muted-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="max-h-[46svh] space-y-5 overflow-y-auto pb-6">
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
@@ -698,8 +723,8 @@ function CameraPage() {
                 </Button>
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        ) : null}
 
         <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
           <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
