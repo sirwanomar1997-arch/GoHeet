@@ -97,7 +97,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
     C${cx + f.jaw} ${chin - 18} ${cx + f.cheek} ${eyeY + 44} ${cx + f.cheek} ${eyeY}
     C${cx + f.cheek} ${eyeY - 40} ${cx + f.cheek} ${headTop} ${cx} ${headTop} Z`;
 
-  const earR = has(t.ears, "large") ? 17 : has(t.ears, "small") ? 11 : 14;
+  const earR = has(t.ears, "large") ? 13 : has(t.ears, "small") ? 8 : 10.5;
   const earTilt = has(t.ears, "protrud") ? 4 : 0;
 
   const feminine = has(t.gender, "female") || has(t.gender, "non");
@@ -592,8 +592,8 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
       {outfit}
 
       <g>
-        <circle cx={cx - f.cheek + 2} cy={eyeY + 26 + earTilt} r={earR} fill={skin} stroke={skinShade} strokeWidth="1.5" />
-        <circle cx={cx + f.cheek - 2} cy={eyeY + 26 + earTilt} r={earR} fill={skin} stroke={skinShade} strokeWidth="1.5" />
+        <circle cx={cx - f.cheek + 5} cy={eyeY + 26 + earTilt} r={earR} fill={skin} stroke={skinShade} strokeWidth="1.5" />
+        <circle cx={cx + f.cheek - 5} cy={eyeY + 26 + earTilt} r={earR} fill={skin} stroke={skinShade} strokeWidth="1.5" />
       </g>
 
       <path d={headPath} fill={`url(#${id("rz-skin")})`} />
