@@ -337,29 +337,7 @@ function ProfilePage() {
 
       {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
       <section className="pb-12 pt-8">
-        <div className="mb-4 flex items-center gap-2 px-5">
-          {(
-            [
-              { key: "new", label: "Newest" },
-              { key: "views", label: "Most viewed" },
-              { key: "old", label: "Oldest" },
-            ] as const
-          ).map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => setSort(o.key)}
-              aria-pressed={sort === o.key}
-              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
-                sort === o.key
-                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
-                  : "border-border bg-surface text-muted-foreground"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+        <ProfileSort sort={sort} onChange={setSort} />
         {(() => {
           const list: MomentCard[] = data.isSelf
             ? tab === "reelz"
