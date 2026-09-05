@@ -528,6 +528,11 @@ export function AvatarStudio({
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // The last finished render — reused as the reference image so edits keep the
+  // same character instead of generating a brand new person.
+  const [baseImage, setBaseImage] = useState<string | null>(null);
+  // The traits the current render actually shows.
+  const [appliedTraits, setAppliedTraits] = useState<Traits | null>(null);
   // Fixed pose + seed keep the character consistent between edits.
   const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
   const runRef = useRef(0);
