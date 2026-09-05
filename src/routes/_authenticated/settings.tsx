@@ -10,6 +10,7 @@ import {
   History,
   MessageCircle,
   Pencil,
+  Trash2,
   UserPlus,
 } from "lucide-react";
 import {
@@ -18,6 +19,7 @@ import {
   listBlocked,
   listMyComments,
   toggleBlock,
+  updateBirthDate,
   updateProfile,
 } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
@@ -42,6 +44,7 @@ function SettingsPage() {
   const fetchBlocked = useServerFn(listBlocked);
   const fetchMyComments = useServerFn(listMyComments);
   const unblock = useServerFn(toggleBlock);
+  const saveBirthDate = useServerFn(updateBirthDate);
 
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -51,6 +54,12 @@ function SettingsPage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [discoverable, setDiscoverable] = useState(true);
   const [allowComments, setAllowComments] = useState("everyone");
+  const [allowMessages, setAllowMessages] = useState("everyone");
+  const [showFollowing, setShowFollowing] = useState(true);
+  const [showLikes, setShowLikes] = useState(true);
+  const [showSaves, setShowSaves] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [clearing, setClearing] = useState(false);
   const [confirm, setConfirm] = useState("");
   const [showComments, setShowComments] = useState(false);
 
@@ -64,6 +73,11 @@ function SettingsPage() {
     setIsPrivate(!!p.is_private);
     setDiscoverable(p.discoverable !== false);
     setAllowComments(p.allow_comments ?? "everyone");
+    setAllowMessages(p.allow_messages ?? "everyone");
+    setShowFollowing(p.show_following !== false);
+    setShowLikes(p.show_likes !== false);
+    setShowSaves(!!p.show_saves);
+    setBirthDate(p.birth_date ?? "");
   }, [me]);
 
   const blocked = useQuery({
@@ -78,13 +92,62 @@ function SettingsPage() {
   });
 
   const privacyMutation = useMutation({
-    mutationFn: () => save({ data: { isPrivate, discoverable, allowComments } }),
+    mutationFn: () =>
+      save({
+        data: {
+          isPrivate,
+          discoverable,
+          allowComments,
+          allowMessages,
+          showFollowing,
+          showLikes,
+          showSaves,
+        },
+      }),
     onSuccess: () => {
       toast.success("Privacy settings saved.");
       void qc.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const birthDateMutation = useMutation({
+    mutationFn: () => saveBirthDate({ data: { birthDate } }),
+    onSuccess: () => {
+      toast.success("Date of birth updated.");
+      void qc.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function clearCaches() {
+    setClearing(true);
+    try {
+      await qc.cancelQueries();
+      qc.clear();
+      if (typeof caches !== "undefined") {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      try {
+        const keep = Object.keys(localStorage).filter(
+          (k) => k.startsWith("sb-") || k.includes("supabase") || k.includes("auth"),
+        );
+        const saved = keep.map((k) => [k, localStorage.getItem(k)] as const);
+        localStorage.clear();
+        for (const [k, v] of saved) if (v !== null) localStorage.setItem(k, v);
+        sessionStorage.clear();
+      } catch {
+        /* storage may be blocked */
+      }
+      await qc.invalidateQueries();
+      toast.success("Cache cleared. Everything will reload fresh.");
+    } catch {
+      toast.error("Couldn't clear the cache. Try again.");
+    } finally {
+      setClearing(false);
+    }
+  }
 
   const passwordMutation = useMutation({
     mutationFn: async () => {
@@ -323,6 +386,46 @@ function SettingsPage() {
                 <option value="nobody">Nobody</option>
               </select>
             </div>
+            <div>
+              <Label htmlFor="messages">Who can send you a message</Label>
+              <select
+                id="messages"
+                value={allowMessages}
+                onChange={(e) => setAllowMessages(e.target.value)}
+                className="mt-1.5 h-11 w-full rounded-xl border border-border bg-surface-raised px-3 text-sm"
+              >
+                <option value="everyone">Everyone</option>
+                <option value="followers">Only people who follow me</option>
+                <option value="nobody">Nobody</option>
+              </select>
+            </div>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm">
+                Show who I follow
+                <span className="block text-xs text-muted-foreground">
+                  Your following list stays hidden when this is off.
+                </span>
+              </span>
+              <Switch checked={showFollowing} onCheckedChange={setShowFollowing} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm">
+                Show what I like
+                <span className="block text-xs text-muted-foreground">
+                  Hide your liked Reelz from everyone else.
+                </span>
+              </span>
+              <Switch checked={showLikes} onCheckedChange={setShowLikes} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm">
+                Show what I save
+                <span className="block text-xs text-muted-foreground">
+                  Saved Reelz are private unless you turn this on.
+                </span>
+              </span>
+              <Switch checked={showSaves} onCheckedChange={setShowSaves} />
+            </label>
             <Button
               onClick={() => privacyMutation.mutate()}
               disabled={privacyMutation.isPending}
@@ -331,6 +434,44 @@ function SettingsPage() {
               {privacyMutation.isPending ? "Saving…" : "Save privacy settings"}
             </Button>
           </div>
+        </section>
+
+        <section className={section}>
+          <h2 className="font-display text-base font-semibold">Date of birth</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Used for age checks. You must be 13 or over to use Reelzy.
+          </p>
+          <Input
+            type="date"
+            value={birthDate}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={(e) => setBirthDate(e.target.value)}
+            className="mt-3 h-11 bg-surface-raised"
+          />
+          <Button
+            variant="secondary"
+            disabled={!birthDate || birthDateMutation.isPending}
+            onClick={() => birthDateMutation.mutate()}
+            className="mt-3 h-11 w-full rounded-2xl"
+          >
+            {birthDateMutation.isPending ? "Saving…" : "Save date of birth"}
+          </Button>
+        </section>
+
+        <section className={section}>
+          <h2 className="font-display text-base font-semibold">Storage & cache</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Frees up space and reloads fresh Reelz. You stay signed in.
+          </p>
+          <Button
+            variant="secondary"
+            disabled={clearing}
+            onClick={() => void clearCaches()}
+            className="mt-3 h-11 w-full rounded-2xl"
+          >
+            <Trash2 className="mr-2 size-4" />
+            {clearing ? "Clearing…" : "Clear cache"}
+          </Button>
         </section>
 
         <section className={section}>
