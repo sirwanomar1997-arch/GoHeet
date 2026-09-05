@@ -232,7 +232,6 @@ export const updateProfile = createServerFn({ method: "POST" })
     isPrivate?: boolean;
     discoverable?: boolean;
     allowComments?: string;
-    avatarPath?: string;
   }) => ({
     displayName: z.string().trim().max(40).optional().parse(d.displayName),
     bio: z.string().trim().max(160).optional().parse(d.bio),
@@ -242,7 +241,6 @@ export const updateProfile = createServerFn({ method: "POST" })
     allowComments: d.allowComments
       ? z.enum(["everyone", "followers", "nobody"]).parse(d.allowComments)
       : undefined,
-    avatarPath: z.string().max(300).optional().parse(d.avatarPath),
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
@@ -253,10 +251,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.isPrivate !== undefined) patch["is_private"] = data.isPrivate;
     if (data.discoverable !== undefined) patch["discoverable"] = data.discoverable;
     if (data.allowComments !== undefined) patch["allow_comments"] = data.allowComments;
-    if (data.avatarPath !== undefined) {
-      if (!data.avatarPath.startsWith(`${context.userId}/`)) throw new Error("Invalid avatar path.");
-      patch["avatar_url"] = data.avatarPath;
-    }
+    // Profile pictures are avatars only — avatar_url is set exclusively by saveAvatar.
     if (data.username) {
       const { data: current } = await sb
         .from("profiles")
