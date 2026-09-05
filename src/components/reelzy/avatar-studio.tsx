@@ -46,7 +46,7 @@ type Traits = {
 };
 
 
-const GENDER = ["Male", "Female", "Non-binary"];
+const GENDER = ["Male", "Female"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
 const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
 const FACE = ["Oval", "Round", "Square jaw", "Heart", "Long", "Sharp cheekbones"];
@@ -260,7 +260,7 @@ const some = (arr: readonly string[], chance: number, max: number) =>
 
 function randomTraits(): Traits {
   return {
-    gender: pick(["Male", "Female", "Non-binary"]),
+    gender: pick(["Male", "Female"]),
     age: pick(AGE),
     skin: pick(SKIN),
     face: pick(FACE),
