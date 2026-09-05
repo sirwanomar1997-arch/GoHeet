@@ -10,13 +10,26 @@ import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, warm friendly gaze straight into camera, " +
-  "slightly stylized proportions with large expressive photoreal eyes, crisp catchlights and detailed irises, " +
+  "exactly like a modern CGI movie hero render: head-and-shoulders close-up, three-quarter turn, " +
+  "warm friendly gaze straight into camera, soft genuine smile, " +
+  "slightly stylized proportions with big glossy photoreal eyes, crisp catchlights, detailed irises and eyelashes, " +
   "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on the cheeks and nose, " +
   "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
   "soft cinematic studio key light from the upper left with warm rim light, " +
-  "smooth vertical gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
+  "smooth warm orange-to-pink gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
+
+/** Age reads honestly in the render — keeps a 30s avatar from looking 50. */
+const AGE_LOOK: Record<string, string> = {
+  Teen: "16 to 18 years old, fresh youthful face, completely smooth skin, no wrinkles, no grey hair",
+  "20s": "about 25 years old, young adult, smooth taut skin, no wrinkles at all, no grey hair",
+  "30s":
+    "about 32 years old, clearly youthful adult, smooth firm skin, no wrinkles, no eye bags, no grey hair",
+  "40s": "about 44 years old, only very faint smile lines, still firm skin, barely any grey",
+  "50s": "about 55 years old, light natural wrinkles, a little grey at the temples",
+  "60+": "about 66 years old, silver hair and gentle natural wrinkles",
+};
+
 
 
 type Traits = {
@@ -288,7 +301,7 @@ function randomTraits(): Traits {
 
 function buildPrompt(t: Traits, pose: string, seed: number) {
   const bits = [
-    `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
+    `${t.gender.toLowerCase()} character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -358,6 +371,7 @@ function diffTraits(a: Traits, b: Traits): (keyof Traits)[] {
 function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
   const describe = (k: keyof Traits) => {
     const v = t[k];
+    if (k === "age") return `age: ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`;
     const value = Array.isArray(v) ? (v.length ? v.join(", ") : "none") : v;
     return `${TRAIT_LABEL[k] ?? k}: ${String(value).toLowerCase()}`;
   };
@@ -617,7 +631,6 @@ export function AvatarStudio({
     [],
   );
 
-  const pending = appliedTraits ? diffTraits(appliedTraits, traits) : [];
 
   const renderLook = useCallback(
     (t: Traits, l: { pose: string; seed: number }, base: string | null, changed: (keyof Traits)[]) => {
@@ -631,12 +644,20 @@ export function AvatarStudio({
     [generate],
   );
 
-  // The very first render happens as soon as you pick male or female. After
-  // that nothing re-renders until you tap Update, so styling stays instant.
+  // The first render fires the moment you pick male or female, and every tap
+  // after that re-renders the same character automatically (short debounce so
+  // rapid taps collapse into one render).
   useEffect(() => {
-    if (mode !== "build" || !traits.gender || appliedTraits) return;
-    renderLook(traits, look, null, []);
-  }, [mode, traits, look, appliedTraits, renderLook]);
+    if (mode !== "build" || !traits.gender) return;
+    if (!appliedTraits) {
+      renderLook(traits, look, null, []);
+      return;
+    }
+    const changed = diffTraits(appliedTraits, traits);
+    if (changed.length === 0 || busy) return;
+    const t = setTimeout(() => renderLook(traits, look, baseImage, changed), 450);
+    return () => clearTimeout(t);
+  }, [mode, traits, look, appliedTraits, baseImage, busy, renderLook]);
 
 
 
@@ -736,16 +757,10 @@ export function AvatarStudio({
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
               Pick male or female below and your avatar appears here in full 3D. Style as much as you
-              like, then tap Update — it stays the same person.
+              like — every tap updates the same person instantly.
             </p>
           </div>
         )}
-
-        {!busy && pending.length > 0 && frame ? (
-          <div className="absolute inset-x-0 bottom-0 bg-background/70 px-4 py-3 text-xs backdrop-blur">
-            {pending.length} change{pending.length > 1 ? "s" : ""} ready — tap Update my avatar.
-          </div>
-        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
@@ -885,39 +900,27 @@ export function AvatarStudio({
             <Camera className="size-4" /> Take the shot
           </button>
         ) : mode === "build" ? (
-          pending.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => renderLook(traits, look, baseImage, pending)}
-              disabled={busy || !buildReady}
-              className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            >
-              <Sparkles className="size-4" />
-              {busy ? "Updating…" : `Update my avatar (${pending.length})`}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
-                setLook(l);
-                void generate({
-                  prompt: baseImage
-                    ? "Keep the EXACT same character from the reference image — identical face, hair, " +
-                      `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
-                      "feature-film render style and lighting. No text, no watermark."
-                    : buildPrompt(traits, l.pose, l.seed),
-                  reference: baseImage,
-                  traits,
-                });
-              }}
-              disabled={busy || !buildReady}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
-            >
-              <RefreshCw className="size-4" />
-              {busy ? "Rendering…" : "Try another take"}
-            </button>
-          )
+          <button
+            type="button"
+            onClick={() => {
+              const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
+              setLook(l);
+              void generate({
+                prompt: baseImage
+                  ? "Keep the EXACT same character from the reference image — identical face, hair, " +
+                    `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
+                    "feature-film render style and lighting. No text, no watermark."
+                  : buildPrompt(traits, l.pose, l.seed),
+                reference: baseImage,
+                traits,
+              });
+            }}
+            disabled={busy || !buildReady}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+          >
+            <RefreshCw className="size-4" />
+            {busy ? "Rendering…" : "Try another take"}
+          </button>
         ) : (
           <button
             type="button"
