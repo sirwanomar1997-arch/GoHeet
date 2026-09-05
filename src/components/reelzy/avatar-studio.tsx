@@ -357,8 +357,10 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         const base = fresh ? null : baseRef.current;
-        void generate(base ? buildEditPrompt(next) : buildPrompt(next, seed), base);
-      }, fresh ? 0 : 1100);
+        const changes = renderedRef.current ? changeLabels(renderedRef.current, next) : [];
+        renderedRef.current = next;
+        void generate(base ? buildEditPrompt(next, changes) : buildPrompt(next, seed), base);
+      }, fresh ? 0 : 900);
     },
     [generate, seed],
   );
@@ -368,6 +370,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   function update(patch: Partial<Traits>) {
     setTraits((t) => {
       const next = { ...t, ...patch };
+      const unchanged = (Object.keys(patch) as (keyof Traits)[]).every((k) => t[k] === next[k]);
+      if (unchanged) return t;
       queueRender(next);
       return next;
     });
@@ -382,6 +386,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       return next;
     });
   }
+
 
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
