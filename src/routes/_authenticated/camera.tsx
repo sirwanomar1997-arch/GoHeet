@@ -666,9 +666,19 @@ function CameraPage() {
         >
           <X className="size-5" />
         </Link>
-        <span className="data-figure rounded-full bg-background/70 px-3 py-1.5 text-[11px] backdrop-blur">
-          {recording ? formatClock(elapsed) : "Reelzy camera"}
+        <span className="data-figure flex items-center gap-2 rounded-full bg-background/70 px-3 py-1.5 text-[11px] backdrop-blur">
+          {recording ? (
+            <>
+              <span
+                className={`size-2 rounded-full bg-[image:var(--gradient-ember)] ${paused ? "opacity-50" : "animate-ember-pulse"}`}
+              />
+              {paused ? "Paused" : null} {formatClock(elapsed)}
+            </>
+          ) : (
+            "Reelzy camera"
+          )}
         </span>
+
         <button
           type="button"
           onClick={() => setWithAudio((a) => !a)}
