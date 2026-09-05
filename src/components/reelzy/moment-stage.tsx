@@ -12,6 +12,7 @@ import {
   Volume2,
   VolumeX,
   Play,
+  Heart,
   Share2,
   Music2,
 } from "lucide-react";
@@ -38,6 +39,7 @@ import {
   recordView,
   submitReport,
   toggleBlock,
+  toggleCommentLike,
   toggleLike,
   toggleSave,
   type MomentCard,
