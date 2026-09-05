@@ -154,12 +154,7 @@ function ProfilePage() {
             @{p.username}
           </p>
 
-          {/* nickname — smaller, sits where the bio area was */}
-          <h1 className="mt-1 text-center font-display text-xl font-bold tracking-[-0.03em]">
-            {p.displayName || p.username}
-          </h1>
-
-          {/* bio lives under the nickname, only when the user adds one */}
+          {/* bio lives under the username, only when the user adds one */}
           {p.bio ? (
             <p className="mt-2 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
               {p.bio}
