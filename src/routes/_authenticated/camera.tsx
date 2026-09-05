@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2 } from "lucide-react";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -96,10 +96,17 @@ function CameraPage() {
   const dragStartRef = useRef({ x: 0, y: 0 });
   const dragMovedRef = useRef(false);
 
+  const [draggingText, setDraggingText] = useState(false);
+  const [trashHot, setTrashHot] = useState(false);
+  const trashHotRef = useRef(false);
+
   const startDrag = (e: React.PointerEvent<HTMLElement>) => {
     draggingRef.current = true;
     dragMovedRef.current = false;
+    trashHotRef.current = false;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
+    setDraggingText(true);
+    setTrashHot(false);
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -111,10 +118,23 @@ function CameraPage() {
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
     const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
+    const overTrash = y > 84 && x > 28 && x < 72;
+    if (overTrash !== trashHotRef.current) {
+      trashHotRef.current = overTrash;
+      setTrashHot(overTrash);
+    }
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
   const endDrag = () => {
+    if (draggingRef.current && trashHotRef.current) {
+      setOverlay(null);
+      setTextOpen(false);
+      toast("Text binned.", { duration: 1500 });
+    }
     draggingRef.current = false;
+    trashHotRef.current = false;
+    setDraggingText(false);
+    setTrashHot(false);
   };
   const onTextTap = () => {
     // A tap without a drag opens the editor; a drag just moves the text.
@@ -468,6 +488,20 @@ function CameraPage() {
                 >
                   {overlay.text}
                 </p>
+                {draggingText ? (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-4">
+                    <div
+                      className={`flex size-14 items-center justify-center rounded-full border-2 transition-all duration-150 ${
+                        trashHot
+                          ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
+                          : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
+                      }`}
+                      aria-hidden
+                    >
+                      <Trash2 className="size-6" />
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
