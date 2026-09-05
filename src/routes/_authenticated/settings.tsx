@@ -260,7 +260,7 @@ function SettingsPage() {
             </div>
             <Button
               variant="secondary"
-              disabled={!newPassword || passwordMutation.isPending}
+              disabled={!currentPassword || !newPassword || passwordMutation.isPending}
               onClick={() => passwordMutation.mutate()}
               className="h-11 w-full rounded-2xl"
             >
