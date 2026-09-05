@@ -616,12 +616,7 @@ export function AvatarStudio({
 
   const buildReady = !!traits.gender;
 
-  // Any change flips the stage back to the live preview so the user always
-  // sees what they just picked, straight away.
-  const edit = (fn: (t: Traits) => Traits) => {
-    setShowRender(false);
-    setTraits(fn);
-  };
+  const edit = (fn: (t: Traits) => Traits) => setTraits(fn);
 
 
   return (
@@ -636,12 +631,12 @@ export function AvatarStudio({
       </div>
 
       <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
-        {frame && (mode === "selfie" || showRender) ? (
+        {frame ? (
           <img
             src={frame}
             alt="Your avatar"
             className={`size-full object-cover transition-[filter] duration-500 ${
-              isFinal ? "blur-0" : "blur-2xl"
+              isFinal && !busy ? "blur-0" : "blur-xl"
             }`}
           />
         ) : mode === "selfie" && selfie ? (
@@ -654,39 +649,19 @@ export function AvatarStudio({
             className={`size-full object-cover ${facing === "user" ? "-scale-x-100" : ""}`}
           />
         ) : buildReady ? (
-          <AvatarPreview t={traits} className="size-full object-cover" />
+          <div className="grid size-full animate-pulse place-items-center bg-gradient-to-b from-primary/25 to-background">
+            <Sparkles className="size-8 text-primary" />
+          </div>
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Pick who you are below — your avatar appears here straight away, and changes with
+              Pick who you are below — your avatar is rendered here in full 3D, and re-renders with
               every single thing you tap.
             </p>
           </div>
         )}
 
 
-        {mode === "build" && frame && !busy ? (
-          <div className="absolute left-1/2 top-3 flex -translate-x-1/2 gap-1 rounded-full bg-background/70 p-1 backdrop-blur">
-            <button
-              type="button"
-              onClick={() => setShowRender(false)}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                showRender ? "text-muted-foreground" : "ember-fill text-primary-foreground"
-              }`}
-            >
-              Editing
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRender(true)}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                showRender ? "ember-fill text-primary-foreground" : "text-muted-foreground"
-              }`}
-            >
-              3D render
-            </button>
-          </div>
-        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
