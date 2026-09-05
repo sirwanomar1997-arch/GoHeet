@@ -1061,9 +1061,10 @@ export const toggleCommentLike = createServerFn({ method: "POST" })
 
 export const addComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { momentId: string; body: string }) => ({
+  .inputValidator((d: { momentId: string; body: string; parentId?: string | null }) => ({
     momentId: z.string().uuid().parse(d.momentId),
     body: z.string().trim().min(1).max(500).parse(d.body),
+    parentId: d.parentId ? z.string().uuid().parse(d.parentId) : null,
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
