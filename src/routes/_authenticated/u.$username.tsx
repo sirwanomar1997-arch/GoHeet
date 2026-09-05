@@ -57,7 +57,7 @@ function ProfilePage() {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <LoadingRail label="Opening timeline" />
       </AppShell>
     );
@@ -65,7 +65,7 @@ function ProfilePage() {
 
   if (!data?.profile) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <EmptyState title="No one by that name." line={`@${username} doesn't exist on Reelzy.`} />
       </AppShell>
     );
