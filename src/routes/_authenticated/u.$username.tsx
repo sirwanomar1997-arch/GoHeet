@@ -77,7 +77,7 @@ function ProfilePage() {
 
   if (open) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <div className="px-3 pt-3">
           <button type="button" onClick={() => setOpen(null)} className="mb-3 text-sm underline">
             ← Back to timeline
@@ -95,7 +95,7 @@ function ProfilePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell hideNav>
       {/* --- Avatar stage: the character is the page, not a tiny circle --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
         <div
