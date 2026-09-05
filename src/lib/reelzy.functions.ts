@@ -1179,3 +1179,20 @@ export const saveAvatar = createServerFn({ method: "POST" })
     await track(context.userId, "avatar_created");
     return { path, url: signed[path] ?? null };
   });
+
+/* ------------------------------------------------------------------ */
+/* Activity history                                                    */
+/* ------------------------------------------------------------------ */
+
+export const listMyComments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("comments")
+      .select("id, body, created_at, moment_id")
+      .eq("author_id", context.userId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { comments: data ?? [] };
+  });
