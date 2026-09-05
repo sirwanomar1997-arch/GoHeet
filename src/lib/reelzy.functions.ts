@@ -246,7 +246,7 @@ export const getMe = createServerFn({ method: "POST" })
     };
   });
 
-const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat"] as const;
+const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp"] as const;
 const SOCIAL_DOMAINS: Record<(typeof SOCIAL_KEYS)[number], string[]> = {
   instagram: ["instagram.com"],
   tiktok: ["tiktok.com"],
@@ -254,6 +254,7 @@ const SOCIAL_DOMAINS: Record<(typeof SOCIAL_KEYS)[number], string[]> = {
   twitter: ["x.com", "twitter.com"],
   facebook: ["facebook.com", "fb.com"],
   snapchat: ["snapchat.com"],
+  whatsapp: ["wa.me", "whatsapp.com", "api.whatsapp.com"],
 };
 const socialSchema = z
   .record(z.enum(SOCIAL_KEYS), z.string().trim().max(300))
