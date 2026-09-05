@@ -684,6 +684,19 @@ export function MomentStage({
         author={moment.author.username}
       />
 
+      <ShareSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={
+          typeof window === "undefined"
+            ? ""
+            : `${window.location.origin}/u/${moment.author.username}?r=${moment.id}`
+        }
+        text={`@${moment.author.username} on Reelzy`}
+      />
+
+
+
       <Sheet open={reportOpen} onOpenChange={setReportOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
           <SheetHeader className="px-0">
