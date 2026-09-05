@@ -143,6 +143,9 @@ export type MomentCard = {
   commentCount: number;
   liked: boolean;
   saved: boolean;
+  styleFilter: string | null;
+  overlay: unknown;
+  music: { id: string; title: string; artist: string; url: string | null } | null;
   author: {
     id: string;
     username: string;
@@ -323,14 +326,28 @@ export const publishMoment = createServerFn({ method: "POST" })
     durationMs?: number;
     caption?: string;
     locationLabel?: string;
+    styleFilter?: string;
+    overlay?: { text: string; font: string; style: string; place: string };
+    musicTrackId?: string;
   }) => ({
     sessionId: z.string().uuid().parse(d.sessionId),
     mediaPath: z.string().max(300).parse(d.mediaPath),
     thumbnailPath: z.string().max(300).optional().parse(d.thumbnailPath),
     kind: z.enum(["video", "photo"]).parse(d.kind),
-    durationMs: z.number().int().min(0).max(120_000).optional().parse(d.durationMs),
+    durationMs: z.number().int().min(0).max(300_000).optional().parse(d.durationMs),
     caption: z.string().trim().max(300).optional().parse(d.caption),
     locationLabel: z.string().trim().max(60).optional().parse(d.locationLabel),
+    styleFilter: z.string().max(24).optional().parse(d.styleFilter),
+    overlay: z
+      .object({
+        text: z.string().trim().min(1).max(120),
+        font: z.string().max(16),
+        style: z.string().max(16),
+        place: z.string().max(16),
+      })
+      .optional()
+      .parse(d.overlay),
+    musicTrackId: z.string().uuid().optional().parse(d.musicTrackId),
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
@@ -385,6 +402,9 @@ export const publishMoment = createServerFn({ method: "POST" })
         duration_ms: data.durationMs ?? null,
         caption: data.caption ?? null,
         location_label: data.locationLabel ?? null,
+        style_filter: data.styleFilter ?? null,
+        overlay: data.overlay ?? null,
+        music_track_id: data.musicTrackId ?? null,
       })
       .select("id")
       .single();
@@ -450,12 +470,17 @@ type FeedRow = {
   like_count: number;
   comment_count: number;
   author_id: string;
+  style_filter?: string | null;
+  overlay?: unknown;
+  music_tracks?: { id: string; title: string; artist: string; audio_path: string } | null;
   profiles?: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
 };
 
 async function decorate(rows: FeedRow[], viewerId: string | null): Promise<MomentCard[]> {
   const media = await signMedia(rows.flatMap((r) => [r.media_path, r.thumbnail_path]));
   const avatars = await signAvatars(rows.map((r) => r.profiles?.avatar_url ?? null));
+
+  const musicUrls = await signMusic(rows.map((r) => r.music_tracks?.audio_path ?? null));
 
   let liked = new Set<string>();
   let saved = new Set<string>();
@@ -484,6 +509,16 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
     commentCount: r.comment_count ?? 0,
     liked: liked.has(r.id),
     saved: saved.has(r.id),
+    styleFilter: r.style_filter ?? null,
+    overlay: r.overlay ?? null,
+    music: r.music_tracks
+      ? {
+          id: r.music_tracks.id,
+          title: r.music_tracks.title,
+          artist: r.music_tracks.artist,
+          url: musicUrls[r.music_tracks.audio_path] ?? null,
+        }
+      : null,
     isOwn: viewerId === r.author_id,
     author: {
       id: r.profiles?.id ?? r.author_id,
@@ -495,7 +530,42 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
 }
 
 const MOMENT_SELECT =
-  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, profiles!moments_author_profile_fkey(id, username, display_name, avatar_url)";
+  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, music_tracks(id, title, artist, audio_path), profiles!moments_author_profile_fkey(id, username, display_name, avatar_url)";
+
+/** Music lives in a private bucket; playback uses short-lived signed URLs. */
+async function signMusic(paths: Array<string | null>): Promise<Record<string, string>> {
+  const unique = [...new Set(paths.filter(Boolean) as string[])];
+  if (!unique.length) return {};
+  const sb = await admin();
+  const { data } = await sb.storage.from("music").createSignedUrls(unique, 60 * 60);
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) if (row.path && row.signedUrl) out[row.path] = row.signedUrl;
+  return out;
+}
+
+/** The Reelzy music library. Only licensed tracks loaded by staff appear here. */
+export const listMusicTracks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const sb = await admin();
+    const { data } = await sb
+      .from("music_tracks")
+      .select("id, title, artist, audio_path, duration_ms, mood")
+      .eq("active", true)
+      .order("title");
+    const rows = data ?? [];
+    const urls = await signMusic(rows.map((r) => r.audio_path));
+    return {
+      tracks: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        artist: r.artist,
+        mood: r.mood,
+        durationMs: r.duration_ms,
+        url: urls[r.audio_path] ?? null,
+      })),
+    };
+  });
 
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
