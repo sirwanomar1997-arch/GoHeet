@@ -250,6 +250,9 @@ const POSES = [
 
 const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
+const some = (arr: readonly string[], chance: number, max: number) =>
+  arr.filter(() => Math.random() < chance).slice(0, max);
+
 function randomTraits(): Traits {
   return {
     gender: pick(["Male", "Female", "Non-binary"]),
@@ -268,9 +271,13 @@ function randomTraits(): Traits {
     expression: pick(EXPRESSION),
     outfit: pick(OUTFIT),
     outfitColor: pick(OUTFIT_COLOR),
+    fabric: pick(FABRIC),
     headwear: pick(HEADWEAR),
+    eyewear: pick(EYEWEAR),
+    makeup: some(MAKEUP, 0.15, 3),
+    jewelry: some(JEWELRY, 0.15, 3),
     background: pick(BACKGROUND),
-    extras: EXTRA.filter(() => Math.random() < 0.18).slice(0, 2),
+    extras: some(EXTRA, 0.15, 2),
   };
 }
 
@@ -287,8 +294,11 @@ function buildPrompt(t: Traits) {
     `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
     t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
     `${t.expression.toLowerCase()} expression`,
-    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
+    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()} in ${t.fabric.toLowerCase()}`,
     t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
+    t.eyewear !== "None" ? `wearing ${t.eyewear.toLowerCase()}` : "",
+    t.makeup.length ? `makeup: ${t.makeup.join(", ").toLowerCase()}` : "",
+    t.jewelry.length ? `jewellery: ${t.jewelry.join(", ").toLowerCase()}` : "",
     ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
   // A unique pose + variation seed keeps every single render one of a kind,
@@ -307,24 +317,108 @@ const SELFIE_PROMPT =
   `facial hair and glasses clearly recognizable — it must look unmistakably like the same person, ` +
   `only rendered in the animated film style.`;
 
-const GROUPS = [
-  ["Skin tone", SKIN, "skin"],
-  ["Face shape", FACE, "face"],
-  ["Eye colour", EYE_COLOR, "eyeColor"],
-  ["Eye shape", EYE_SHAPE, "eyeShape"],
-  ["Eyebrows", BROWS, "brows"],
-  ["Nose", NOSE, "nose"],
-  ["Lips", LIPS, "lips"],
-  ["Ears", EARS, "ears"],
-  ["Hair", HAIR, "hair"],
-  ["Hair colour", HAIR_COLOR, "hairColor"],
-  ["Facial hair", FACIAL_HAIR, "facialHair"],
-  ["Expression", EXPRESSION, "expression"],
-  ["Outfit", OUTFIT, "outfit"],
-  ["Outfit colour", OUTFIT_COLOR, "outfitColor"],
-  ["Headwear", HEADWEAR, "headwear"],
-  ["Background", BACKGROUND, "background"],
-] as const;
+type SingleKey =
+  | "age"
+  | "skin"
+  | "face"
+  | "eyeColor"
+  | "eyeShape"
+  | "brows"
+  | "nose"
+  | "lips"
+  | "ears"
+  | "hair"
+  | "hairColor"
+  | "facialHair"
+  | "expression"
+  | "outfit"
+  | "outfitColor"
+  | "fabric"
+  | "headwear"
+  | "eyewear"
+  | "background";
+type MultiKey = "makeup" | "jewelry" | "extras";
+
+type Group =
+  | { kind: "single"; label: string; key: SingleKey; opts: readonly string[] }
+  | { kind: "multi"; label: string; key: MultiKey; opts: readonly string[] };
+
+const single = (label: string, key: SingleKey, opts: readonly string[]): Group => ({
+  kind: "single",
+  label,
+  key,
+  opts,
+});
+const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => ({
+  kind: "multi",
+  label,
+  key,
+  opts,
+});
+
+const SECTIONS: { id: string; label: string; blurb: string; groups: Group[] }[] = [
+  {
+    id: "face",
+    label: "Face",
+    blurb: "Shape the features that make you, you.",
+    groups: [
+      single("Age", "age", AGE),
+      single("Skin tone", "skin", SKIN),
+      single("Face shape", "face", FACE),
+      single("Eye colour", "eyeColor", EYE_COLOR),
+      single("Eye shape", "eyeShape", EYE_SHAPE),
+      single("Eyebrows", "brows", BROWS),
+      single("Nose", "nose", NOSE),
+      single("Lips", "lips", LIPS),
+      single("Ears", "ears", EARS),
+      single("Expression", "expression", EXPRESSION),
+      multi("Details", "extras", EXTRA),
+    ],
+  },
+  {
+    id: "hair",
+    label: "Hair",
+    blurb: "Cut, colour and everything on your face.",
+    groups: [
+      single("Hairstyle", "hair", HAIR),
+      single("Hair colour", "hairColor", HAIR_COLOR),
+      single("Facial hair", "facialHair", FACIAL_HAIR),
+    ],
+  },
+  {
+    id: "wardrobe",
+    label: "Wardrobe",
+    blurb: "Pick the fit. New drops land here.",
+    groups: [
+      single("Outfit", "outfit", OUTFIT),
+      single("Colour", "outfitColor", OUTFIT_COLOR),
+      single("Fabric", "fabric", FABRIC),
+    ],
+  },
+  {
+    id: "accessories",
+    label: "Accessories",
+    blurb: "Headwear, frames and hardware.",
+    groups: [
+      single("Headwear", "headwear", HEADWEAR),
+      single("Eyewear", "eyewear", EYEWEAR),
+      multi("Jewellery", "jewelry", JEWELRY),
+    ],
+  },
+  {
+    id: "makeup",
+    label: "Make-up",
+    blurb: "Stack as many looks as you like.",
+    groups: [multi("Make-up", "makeup", MAKEUP)],
+  },
+  {
+    id: "scene",
+    label: "Scene",
+    blurb: "The light you stand in.",
+    groups: [single("Backdrop", "background", BACKGROUND)],
+  },
+];
+
 
 export function AvatarStudio({
   onDone,
