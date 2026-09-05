@@ -735,18 +735,22 @@ export function AvatarStudio({
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Pick who you are below — your avatar is rendered here in full 3D, and re-renders with
-              every single thing you tap.
+              Pick male or female below and your avatar appears here in full 3D. Style as much as you
+              like, then tap Update — it stays the same person.
             </p>
           </div>
         )}
 
-
+        {!busy && pending.length > 0 && frame ? (
+          <div className="absolute inset-x-0 bottom-0 bg-background/70 px-4 py-3 text-xs backdrop-blur">
+            {pending.length} change{pending.length > 1 ? "s" : ""} ready — tap Update my avatar.
+          </div>
+        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
             <Sparkles className="size-3.5 animate-pulse text-primary" />
-            Rendering your avatar…
+            {appliedTraits ? "Updating your avatar…" : "Rendering your avatar…"}
           </div>
         ) : null}
 
