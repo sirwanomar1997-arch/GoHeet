@@ -16,6 +16,58 @@ export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
 });
 
+const SORT_OPTIONS = [
+  { key: "new", label: "Newest" },
+  { key: "views", label: "Most viewed" },
+  { key: "old", label: "Oldest" },
+] as const;
+
+function ProfileSort({
+  sort,
+  onChange,
+}: {
+  sort: "new" | "views" | "old";
+  onChange: (s: "new" | "views" | "old") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = SORT_OPTIONS.find((o) => o.key === sort);
+  return (
+    <div className="mb-4 px-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="data-figure inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <span className="uppercase tracking-[0.12em]">Sort by:</span>
+        <span className="font-semibold text-foreground">{current?.label}</span>
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {SORT_OPTIONS.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => {
+                onChange(o.key);
+                setOpen(false);
+              }}
+              aria-pressed={sort === o.key}
+              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                sort === o.key
+                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                  : "border-border bg-surface text-muted-foreground"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ProfilePage() {
   const { username } = Route.useParams();
   const fetchProfile = useServerFn(getProfile);
