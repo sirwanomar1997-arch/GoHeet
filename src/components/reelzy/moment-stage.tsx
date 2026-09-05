@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX } from "lucide-react";
+import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX, Play } from "lucide-react";
 import {
   Sheet,
   SheetContent,
