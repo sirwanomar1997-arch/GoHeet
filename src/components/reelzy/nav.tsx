@@ -1,5 +1,6 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search, Heart } from "lucide-react";
+import { useRef } from "react";
 import { useMe } from "@/lib/use-me";
 
 function ReelzIcon({ className }: { className?: string }) {
@@ -115,9 +116,48 @@ export function ReelzyNav() {
 }
 
 
+/** Swipeable destinations, left → right. Camera stays tap-only (it needs the screen). */
+function useSwipeNav() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const { data } = useMe();
+  const username = data?.profile?.username;
+  const touch = useRef<{ x: number; y: number } | null>(null);
+
+  const routes: string[] = username
+    ? ["/feed", "/discover", "/activity", `/u/${username}`]
+    : ["/feed", "/discover", "/activity"];
+  const index = routes.findIndex((r) =>
+    r.startsWith("/u/") ? pathname.startsWith("/u/") : pathname === r,
+  );
+
+  return {
+    onTouchStart: (e: React.TouchEvent) => {
+      const t = e.touches[0];
+      if (t) touch.current = { x: t.clientX, y: t.clientY };
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      const start = touch.current;
+      touch.current = null;
+      const t = e.changedTouches[0];
+      if (!start || !t || index === -1) return;
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const next = dx < 0 ? routes[index + 1] : routes[index - 1];
+      if (next) void navigate({ to: next });
+    },
+  };
+}
+
 export function AppShell({ children, hideNav = false }: { children: React.ReactNode; hideNav?: boolean }) {
+  const swipe = useSwipeNav();
   return (
-    <div className={`min-h-screen bg-background ${hideNav ? "pb-10" : "pb-24"}`}>
+    <div
+      className={`min-h-screen bg-background ${hideNav ? "pb-10" : "pb-24"}`}
+      onTouchStart={swipe.onTouchStart}
+      onTouchEnd={swipe.onTouchEnd}
+    >
       <div className="mx-auto max-w-lg">{children}</div>
       {hideNav ? null : <ReelzyNav />}
     </div>
