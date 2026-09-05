@@ -126,7 +126,10 @@ function CameraPage() {
 
   async function takePhoto() {
     const poster = await grabPoster();
-    if (!poster) return toast.error("Couldn't capture that frame.");
+    if (!poster) {
+      toast.error("Couldn't capture that frame.");
+      return;
+    }
     setCaptured({
       blob: poster,
       url: URL.createObjectURL(poster),
