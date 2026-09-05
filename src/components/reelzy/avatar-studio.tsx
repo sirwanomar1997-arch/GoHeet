@@ -31,10 +31,15 @@ type Traits = {
   expression: string;
   outfit: string;
   outfitColor: string;
+  fabric: string;
   headwear: string;
+  eyewear: string;
+  makeup: string[];
+  jewelry: string[];
   background: string;
   extras: string[];
 };
+
 
 const GENDER = ["Male", "Female", "Non-binary"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
@@ -90,16 +95,46 @@ const EXPRESSION = [
   "Surprised delight",
 ];
 const OUTFIT = [
-  "White shirt",
-  "Hoodie",
+  "Crisp white shirt",
+  "Oversized hoodie",
   "Denim jacket",
-  "Leather jacket",
+  "Leather biker jacket",
   "Crewneck sweater",
-  "Turtleneck",
+  "Ribbed turtleneck",
   "Tank top",
-  "Blazer",
+  "Tailored blazer",
   "Graphic tee",
   "Flannel shirt",
+  "Varsity jacket",
+  "Puffer coat",
+  "Trench coat",
+  "Silk slip dress",
+  "Satin blouse",
+  "Linen shirt, open collar",
+  "Knit cardigan",
+  "Track jacket",
+  "Utility jumpsuit",
+  "Corduroy overshirt",
+  "Wool peacoat",
+  "Mesh layered top",
+  "Embroidered jacket",
+  "Kimono robe",
+  "Kaftan",
+  "Sherwani collar",
+  "Traditional embroidered tunic",
+  "Bare shoulders, minimal",
+];
+const FABRIC = [
+  "Matte cotton",
+  "Soft knit",
+  "Washed denim",
+  "Glossy leather",
+  "Liquid satin",
+  "Crushed velvet",
+  "Technical nylon",
+  "Airy linen",
+  "Metallic sheen",
+  "Chunky wool",
 ];
 const OUTFIT_COLOR = [
   "Black",
@@ -114,6 +149,10 @@ const OUTFIT_COLOR = [
   "Dusty pink",
   "Lavender",
   "Teal",
+  "Chocolate",
+  "Sage",
+  "Electric blue",
+  "Champagne gold",
 ];
 const HEADWEAR = [
   "None",
@@ -124,6 +163,53 @@ const HEADWEAR = [
   "Bandana",
   "Beret",
   "Headscarf",
+  "Wide-brim hat",
+  "Cowboy hat",
+  "Durag",
+  "Turban",
+  "Hair clips",
+  "Silk scarf tied back",
+  "Headphones around neck",
+];
+const EYEWEAR = [
+  "None",
+  "Thin metal glasses",
+  "Bold square frames",
+  "Round wire glasses",
+  "Cat-eye frames",
+  "Aviator sunglasses",
+  "Retro shades",
+  "Sport visor shades",
+  "Clear-frame glasses",
+];
+const MAKEUP = [
+  "Natural glow",
+  "Soft matte base",
+  "Winged eyeliner",
+  "Smoky eyes",
+  "Bold red lip",
+  "Nude gloss",
+  "Berry lip",
+  "Warm blush",
+  "Highlighted cheekbones",
+  "Shimmer eyelids",
+  "Graphic liner",
+  "Bronzed contour",
+  "Glitter accents",
+];
+const JEWELRY = [
+  "Hoop earrings",
+  "Stud earrings",
+  "Ear cuff",
+  "Layered necklaces",
+  "Chunky chain",
+  "Pendant necklace",
+  "Nose ring",
+  "Septum ring",
+  "Choker",
+  "Statement rings",
+  "Pearl set",
+  "Gold bangles",
 ];
 const BACKGROUND = [
   "Warm orange-pink glow",
@@ -134,19 +220,24 @@ const BACKGROUND = [
   "Midnight ember",
   "Rose gold",
   "Golden hour",
+  "Cool slate",
+  "Emerald haze",
+  "Violet twilight",
+  "Studio charcoal",
 ];
 const EXTRA = [
-  "Glasses",
-  "Sunglasses",
   "Freckles",
   "Dimples",
-  "Hoop earrings",
-  "Stud earrings",
-  "Nose ring",
-  "Necklace",
   "Beauty spot",
   "Vitiligo",
+  "Face tattoo",
+  "Neck tattoo",
+  "Scar detail",
+  "Sun-kissed cheeks",
+  "Sharp jaw shadow",
+  "Blushed nose",
 ];
+
 
 const POSES = [
   "chin tilted slightly up",
@@ -158,6 +249,9 @@ const POSES = [
 ];
 
 const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
+
+const some = (arr: readonly string[], chance: number, max: number) =>
+  arr.filter(() => Math.random() < chance).slice(0, max);
 
 function randomTraits(): Traits {
   return {
@@ -177,9 +271,13 @@ function randomTraits(): Traits {
     expression: pick(EXPRESSION),
     outfit: pick(OUTFIT),
     outfitColor: pick(OUTFIT_COLOR),
+    fabric: pick(FABRIC),
     headwear: pick(HEADWEAR),
+    eyewear: pick(EYEWEAR),
+    makeup: some(MAKEUP, 0.15, 3),
+    jewelry: some(JEWELRY, 0.15, 3),
     background: pick(BACKGROUND),
-    extras: EXTRA.filter(() => Math.random() < 0.18).slice(0, 2),
+    extras: some(EXTRA, 0.15, 2),
   };
 }
 
@@ -196,8 +294,11 @@ function buildPrompt(t: Traits) {
     `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
     t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
     `${t.expression.toLowerCase()} expression`,
-    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
+    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()} in ${t.fabric.toLowerCase()}`,
     t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
+    t.eyewear !== "None" ? `wearing ${t.eyewear.toLowerCase()}` : "",
+    t.makeup.length ? `makeup: ${t.makeup.join(", ").toLowerCase()}` : "",
+    t.jewelry.length ? `jewellery: ${t.jewelry.join(", ").toLowerCase()}` : "",
     ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
   // A unique pose + variation seed keeps every single render one of a kind,
@@ -216,24 +317,108 @@ const SELFIE_PROMPT =
   `facial hair and glasses clearly recognizable — it must look unmistakably like the same person, ` +
   `only rendered in the animated film style.`;
 
-const GROUPS = [
-  ["Skin tone", SKIN, "skin"],
-  ["Face shape", FACE, "face"],
-  ["Eye colour", EYE_COLOR, "eyeColor"],
-  ["Eye shape", EYE_SHAPE, "eyeShape"],
-  ["Eyebrows", BROWS, "brows"],
-  ["Nose", NOSE, "nose"],
-  ["Lips", LIPS, "lips"],
-  ["Ears", EARS, "ears"],
-  ["Hair", HAIR, "hair"],
-  ["Hair colour", HAIR_COLOR, "hairColor"],
-  ["Facial hair", FACIAL_HAIR, "facialHair"],
-  ["Expression", EXPRESSION, "expression"],
-  ["Outfit", OUTFIT, "outfit"],
-  ["Outfit colour", OUTFIT_COLOR, "outfitColor"],
-  ["Headwear", HEADWEAR, "headwear"],
-  ["Background", BACKGROUND, "background"],
-] as const;
+type SingleKey =
+  | "age"
+  | "skin"
+  | "face"
+  | "eyeColor"
+  | "eyeShape"
+  | "brows"
+  | "nose"
+  | "lips"
+  | "ears"
+  | "hair"
+  | "hairColor"
+  | "facialHair"
+  | "expression"
+  | "outfit"
+  | "outfitColor"
+  | "fabric"
+  | "headwear"
+  | "eyewear"
+  | "background";
+type MultiKey = "makeup" | "jewelry" | "extras";
+
+type Group =
+  | { kind: "single"; label: string; key: SingleKey; opts: readonly string[] }
+  | { kind: "multi"; label: string; key: MultiKey; opts: readonly string[] };
+
+const single = (label: string, key: SingleKey, opts: readonly string[]): Group => ({
+  kind: "single",
+  label,
+  key,
+  opts,
+});
+const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => ({
+  kind: "multi",
+  label,
+  key,
+  opts,
+});
+
+const SECTIONS: { id: string; label: string; blurb: string; groups: Group[] }[] = [
+  {
+    id: "face",
+    label: "Face",
+    blurb: "Shape the features that make you, you.",
+    groups: [
+      single("Age", "age", AGE),
+      single("Skin tone", "skin", SKIN),
+      single("Face shape", "face", FACE),
+      single("Eye colour", "eyeColor", EYE_COLOR),
+      single("Eye shape", "eyeShape", EYE_SHAPE),
+      single("Eyebrows", "brows", BROWS),
+      single("Nose", "nose", NOSE),
+      single("Lips", "lips", LIPS),
+      single("Ears", "ears", EARS),
+      single("Expression", "expression", EXPRESSION),
+      multi("Details", "extras", EXTRA),
+    ],
+  },
+  {
+    id: "hair",
+    label: "Hair",
+    blurb: "Cut, colour and everything on your face.",
+    groups: [
+      single("Hairstyle", "hair", HAIR),
+      single("Hair colour", "hairColor", HAIR_COLOR),
+      single("Facial hair", "facialHair", FACIAL_HAIR),
+    ],
+  },
+  {
+    id: "wardrobe",
+    label: "Wardrobe",
+    blurb: "Pick the fit. New drops land here.",
+    groups: [
+      single("Outfit", "outfit", OUTFIT),
+      single("Colour", "outfitColor", OUTFIT_COLOR),
+      single("Fabric", "fabric", FABRIC),
+    ],
+  },
+  {
+    id: "accessories",
+    label: "Accessories",
+    blurb: "Headwear, frames and hardware.",
+    groups: [
+      single("Headwear", "headwear", HEADWEAR),
+      single("Eyewear", "eyewear", EYEWEAR),
+      multi("Jewellery", "jewelry", JEWELRY),
+    ],
+  },
+  {
+    id: "makeup",
+    label: "Make-up",
+    blurb: "Stack as many looks as you like.",
+    groups: [multi("Make-up", "makeup", MAKEUP)],
+  },
+  {
+    id: "scene",
+    label: "Scene",
+    blurb: "The light you stand in.",
+    groups: [single("Backdrop", "background", BACKGROUND)],
+  },
+];
+
 
 export function AvatarStudio({
   onDone,
@@ -266,12 +451,18 @@ export function AvatarStudio({
     hairColor: "Dark brown",
     facialHair: "Clean shaven",
     expression: "Warm half-smile",
-    outfit: "Hoodie",
+    outfit: "Oversized hoodie",
     outfitColor: "Black",
+    fabric: "Soft knit",
     headwear: "None",
+    eyewear: "None",
+    makeup: [],
+    jewelry: [],
     background: "Warm orange-pink glow",
     extras: [],
   });
+  const [section, setSection] = useState("face");
+
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -457,70 +648,77 @@ export function AvatarStudio({
 
           {buildReady ? (
             <>
-              <div>
-                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Age
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {AGE.map((o) => (
-                    <button
-                      key={o}
-                      type="button"
-                      onClick={() => setTraits((t) => ({ ...t, age: o }))}
-                      className={chip(traits.age === o)}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                {SECTIONS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSection(s.id)}
+                    className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                      section === s.id
+                        ? "ember-fill text-primary-foreground"
+                        : "border border-border bg-surface text-muted-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
 
-              {GROUPS.map(([label, opts, key]) => (
-                <div key={key}>
-                  <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    {label}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {opts.map((o) => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setTraits((t) => ({ ...t, [key]: o }))}
-                        className={chip(traits[key] === o)}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
+              {SECTIONS.filter((s) => s.id === section).map((s) => (
+                <div key={s.id} className="space-y-4 rounded-[28px] border border-border bg-surface/60 p-4">
+                  <p className="text-xs text-muted-foreground">{s.blurb}</p>
+                  {s.groups.map((g) => (
+                    <div key={g.key}>
+                      <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        {g.label}
+                        {g.kind === "multi" ? " — pick as many as you like" : ""}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {g.opts.map((o) =>
+                          g.kind === "single" ? (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => setTraits((t) => ({ ...t, [g.key]: o }))}
+                              className={chip(traits[g.key] === o)}
+                            >
+                              {o}
+                            </button>
+                          ) : (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() =>
+                                setTraits((t) => {
+                                  const cur = t[g.key];
+                                  return {
+                                    ...t,
+                                    [g.key]: cur.includes(o)
+                                      ? cur.filter((e) => e !== o)
+                                      : [...cur, o],
+                                  };
+                                })
+                              }
+                              className={chip(traits[g.key].includes(o))}
+                            >
+                              {o}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {s.id === "wardrobe" || s.id === "accessories" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Everything here is free. Limited drops arrive later.
+                    </p>
+                  ) : null}
                 </div>
               ))}
-
-              <div>
-                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Details — pick as many as you like
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {EXTRA.map((o) => (
-                    <button
-                      key={o}
-                      type="button"
-                      onClick={() =>
-                        setTraits((t) => ({
-                          ...t,
-                          extras: t.extras.includes(o)
-                            ? t.extras.filter((e) => e !== o)
-                            : [...t.extras, o],
-                        }))
-                      }
-                      className={chip(traits.extras.includes(o))}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </>
           ) : null}
+
         </div>
       ) : null}
 
