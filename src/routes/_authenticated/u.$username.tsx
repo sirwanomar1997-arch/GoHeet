@@ -149,8 +149,13 @@ function ProfilePage() {
             </Link>
           ) : null}
 
-          {/* username sits right under the create/change avatar button */}
-          <p className="data-figure mt-3 text-center text-xs font-normal tracking-normal text-muted-foreground">
+          {/* nickname — the real display name, right under the avatar button */}
+          <h2 className="mt-3 text-center font-display text-xl font-bold tracking-tight text-foreground">
+            {p.displayName || p.username}
+          </h2>
+
+          {/* username sits under the nickname */}
+          <p className="data-figure mt-1 text-center text-xs font-normal tracking-normal text-muted-foreground">
             @{p.username}
           </p>
 
@@ -192,10 +197,6 @@ function ProfilePage() {
               })}
             </div>
           ) : null}
-          {/* nickname — small, left-aligned, just above the stats band */}
-          <p className="mt-5 w-full px-1 text-left font-display text-[13px] font-semibold tracking-tight text-foreground/90">
-            {p.displayName || p.username}
-          </p>
 
           {/* stat band — a premium segmented strip, brand accent on REELZ */}
           <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
