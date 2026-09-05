@@ -488,15 +488,22 @@ export function AvatarStudio({
 
               <div>
                 <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Detail
+                  Details — pick as many as you like
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {EXTRA.map((o) => (
                     <button
                       key={o}
                       type="button"
-                      onClick={() => setTraits((t) => ({ ...t, extra: t.extra === o ? "" : o }))}
-                      className={chip(traits.extra === o)}
+                      onClick={() =>
+                        setTraits((t) => ({
+                          ...t,
+                          extras: t.extras.includes(o)
+                            ? t.extras.filter((e) => e !== o)
+                            : [...t.extras, o],
+                        }))
+                      }
+                      className={chip(traits.extras.includes(o))}
                     >
                       {o}
                     </button>
