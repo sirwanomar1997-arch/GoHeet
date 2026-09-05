@@ -15,7 +15,6 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const [scope, setScope] = useState<"following" | "discover">("discover");
-  const [sort, setSort] = useState<"new" | "views" | "old">("new");
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { data: me, isLoading: meLoading } = useMe();
   const fetchFeed = useServerFn(getFeed);
@@ -23,8 +22,8 @@ function FeedPage() {
   const showProfileBanner = !meLoading && !!me && !me.profile && !bannerDismissed;
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["feed", scope, sort],
-    queryFn: () => fetchFeed({ data: { scope, sort } }),
+    queryKey: ["feed", scope],
+    queryFn: () => fetchFeed({ data: { scope } }),
   });
 
   return (
@@ -52,30 +51,6 @@ function FeedPage() {
           ))}
         </div>
       </header>
-
-      <div className="flex items-center gap-2 px-4 pb-2">
-        {(
-          [
-            { key: "new", label: "Newest" },
-            { key: "views", label: "Most viewed" },
-            { key: "old", label: "Oldest" },
-          ] as const
-        ).map((o) => (
-          <button
-            key={o.key}
-            type="button"
-            onClick={() => setSort(o.key)}
-            aria-pressed={sort === o.key}
-            className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
-              sort === o.key
-                ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
-                : "border-border bg-surface text-muted-foreground"
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
 
       {showProfileBanner && (
         <div className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">

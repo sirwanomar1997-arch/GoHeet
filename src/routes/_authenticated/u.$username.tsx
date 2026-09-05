@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, type LucideIcon } from "lucide-react";
+import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -15,6 +15,58 @@ import { filterCss } from "@/components/reelzy/creative";
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
 });
+
+const SORT_OPTIONS = [
+  { key: "new", label: "Newest" },
+  { key: "views", label: "Most viewed" },
+  { key: "old", label: "Oldest" },
+] as const;
+
+function ProfileSort({
+  sort,
+  onChange,
+}: {
+  sort: "new" | "views" | "old";
+  onChange: (s: "new" | "views" | "old") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = SORT_OPTIONS.find((o) => o.key === sort);
+  return (
+    <div className="mb-4 px-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="data-figure inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <span className="uppercase tracking-[0.12em]">Sort by:</span>
+        <span className="font-semibold text-foreground">{current?.label}</span>
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {SORT_OPTIONS.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => {
+                onChange(o.key);
+                setOpen(false);
+              }}
+              aria-pressed={sort === o.key}
+              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                sort === o.key
+                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                  : "border-border bg-surface text-muted-foreground"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function ProfilePage() {
   const { username } = Route.useParams();
@@ -337,29 +389,7 @@ function ProfilePage() {
 
       {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
       <section className="pb-12 pt-8">
-        <div className="mb-4 flex items-center gap-2 px-5">
-          {(
-            [
-              { key: "new", label: "Newest" },
-              { key: "views", label: "Most viewed" },
-              { key: "old", label: "Oldest" },
-            ] as const
-          ).map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => setSort(o.key)}
-              aria-pressed={sort === o.key}
-              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
-                sort === o.key
-                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
-                  : "border-border bg-surface text-muted-foreground"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+        <ProfileSort sort={sort} onChange={setSort} />
         {(() => {
           const list: MomentCard[] = data.isSelf
             ? tab === "reelz"
