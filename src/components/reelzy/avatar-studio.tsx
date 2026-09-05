@@ -31,10 +31,15 @@ type Traits = {
   expression: string;
   outfit: string;
   outfitColor: string;
+  fabric: string;
   headwear: string;
+  eyewear: string;
+  makeup: string[];
+  jewelry: string[];
   background: string;
   extras: string[];
 };
+
 
 const GENDER = ["Male", "Female", "Non-binary"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
