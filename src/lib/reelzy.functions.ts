@@ -144,7 +144,7 @@ export type MomentCard = {
   liked: boolean;
   saved: boolean;
   styleFilter: string | null;
-  overlay: unknown;
+  overlay: { text: string; font: string; style: string; place: string } | null;
   music: { id: string; title: string; artist: string; url: string | null } | null;
   author: {
     id: string;
@@ -471,7 +471,7 @@ type FeedRow = {
   comment_count: number;
   author_id: string;
   style_filter?: string | null;
-  overlay?: unknown;
+  overlay?: { text: string; font: string; style: string; place: string } | null;
   music_tracks?: { id: string; title: string; artist: string; audio_path: string } | null;
   profiles?: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
 };
@@ -510,7 +510,7 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
     liked: liked.has(r.id),
     saved: saved.has(r.id),
     styleFilter: r.style_filter ?? null,
-    overlay: r.overlay ?? null,
+    overlay: (r.overlay as MomentCard["overlay"]) ?? null,
     music: r.music_tracks
       ? {
           id: r.music_tracks.id,
