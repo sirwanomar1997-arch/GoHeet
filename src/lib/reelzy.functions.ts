@@ -826,9 +826,10 @@ export const listMusicTracks = createServerFn({ method: "POST" })
 
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope: string; cursor?: string }) => ({
+  .inputValidator((d: { scope: string; cursor?: string; sort?: string }) => ({
     scope: z.enum(["following", "discover", "saved", "liked"]).parse(d.scope),
     cursor: z.string().optional().parse(d.cursor),
+    sort: z.enum(["new", "views", "old"]).catch("new").parse(d.sort ?? "new"),
   }))
   .handler(async ({ data, context }) => {
     const limit = 8;
@@ -856,10 +857,13 @@ export const getFeed = createServerFn({ method: "POST" })
       .select(MOMENT_SELECT)
       .eq("status", "published")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(data.sort === "new" ? limit : 24);
 
-    if (data.cursor) query = query.lt("created_at", data.cursor);
+    if (data.sort === "views") query = query.order("view_count", { ascending: false });
+    else if (data.sort === "old") query = query.order("created_at", { ascending: true });
+    else query = query.order("created_at", { ascending: false });
+
+    if (data.cursor && data.sort === "new") query = query.lt("created_at", data.cursor);
 
     if (data.scope === "following") {
       const { data: follows } = await context.supabase
@@ -878,7 +882,8 @@ export const getFeed = createServerFn({ method: "POST" })
     const list = (rows ?? []) as unknown as FeedRow[];
     return {
       moments: await decorate(list, context.userId),
-      nextCursor: list.length === limit ? list[list.length - 1]!.created_at : null,
+      nextCursor:
+        data.sort === "new" && list.length === limit ? list[list.length - 1]!.created_at : null,
     };
   });
 
@@ -1125,7 +1130,10 @@ export const deleteComment = createServerFn({ method: "POST" })
 
 export const getProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { username: string }) => ({ username: usernameSchema.parse(d.username) }))
+  .inputValidator((d: { username: string; sort?: string }) => ({
+    username: usernameSchema.parse(d.username),
+    sort: z.enum(["new", "views", "old"]).catch("new").parse(d.sort ?? "new"),
+  }))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -1142,12 +1150,13 @@ export const getProfile = createServerFn({ method: "POST" })
       .eq("following_id", profile.id)
       .maybeSingle();
 
+    const orderCol = data.sort === "views" ? "view_count" : "created_at";
     const { data: rows } = await context.supabase
       .from("moments")
       .select(MOMENT_SELECT)
       .eq("author_id", profile.id)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false })
+      .order(orderCol, { ascending: data.sort === "old" })
       .limit(40);
 
     const avatars = await signAvatars([profile.avatar_url]);

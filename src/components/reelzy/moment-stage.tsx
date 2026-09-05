@@ -45,6 +45,7 @@ import {
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { formatCount, timeAgo } from "./format";
+import { ShareSheet } from "./share-sheet";
 import {
   filterCss,
   overlayFontClass,
@@ -88,6 +89,7 @@ export function MomentStage({
   const [saved, setSaved] = useState(moment.saved);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -656,19 +658,7 @@ export function MomentStage({
           <button
             type="button"
             aria-label="Share this moment"
-            onClick={async () => {
-              const url = `${window.location.origin}/u/${moment.author.username}`;
-              if (navigator.share) {
-                try {
-                  await navigator.share({ title: `@${moment.author.username} on Reelzy`, url });
-                  return;
-                } catch {
-                  return;
-                }
-              }
-              await navigator.clipboard?.writeText(url);
-              toast.success("Link copied.");
-            }}
+            onClick={() => setShareOpen(true)}
             className="tap-target grid w-14 place-items-center rounded-2xl border border-border bg-surface-raised active:scale-[0.97]"
           >
             <Share2 className="size-4" strokeWidth={1.8} />
@@ -693,6 +683,19 @@ export function MomentStage({
         onOpenChange={setCommentsOpen}
         author={moment.author.username}
       />
+
+      <ShareSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={
+          typeof window === "undefined"
+            ? ""
+            : `${window.location.origin}/u/${moment.author.username}?r=${moment.id}`
+        }
+        text={`@${moment.author.username} on Reelzy`}
+      />
+
+
 
       <Sheet open={reportOpen} onOpenChange={setReportOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">

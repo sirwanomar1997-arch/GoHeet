@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,11 +27,21 @@ function ProfilePage() {
   const report = useServerFn(submitReport);
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["profile", username],
-    queryFn: () => fetchProfile({ data: { username } }),
+    queryKey: ["profile", username, sort],
+    queryFn: () => fetchProfile({ data: { username, sort } }),
   });
+
+  // Opening a shared reel link (?r=<id>) lands straight on that reel.
+  useEffect(() => {
+    if (!data?.moments?.length) return;
+    const id = new URLSearchParams(window.location.search).get("r");
+    if (!id) return;
+    const i = data.moments.findIndex((m) => m.id === id);
+    if (i >= 0) setOpenIndex(i);
+  }, [data]);
 
   const followMutation = useMutation({
     mutationFn: () => follow({ data: { userId: data!.profile!.id } }),
@@ -327,6 +337,29 @@ function ProfilePage() {
 
       {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
       <section className="pb-12 pt-8">
+        <div className="mb-4 flex items-center gap-2 px-5">
+          {(
+            [
+              { key: "new", label: "Newest" },
+              { key: "views", label: "Most viewed" },
+              { key: "old", label: "Oldest" },
+            ] as const
+          ).map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => setSort(o.key)}
+              aria-pressed={sort === o.key}
+              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                sort === o.key
+                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                  : "border-border bg-surface text-muted-foreground"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
         {(() => {
           const list: MomentCard[] = data.isSelf
             ? tab === "reelz"
