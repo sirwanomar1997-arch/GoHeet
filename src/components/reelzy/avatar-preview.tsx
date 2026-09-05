@@ -3,6 +3,7 @@
  * Pure SVG — it redraws the moment any option is tapped, so nothing is a surprise
  * before the final 3D render is generated.
  */
+import { useId } from "react";
 import { SWATCH } from "@/components/reelzy/avatar-icons";
 
 export type PreviewTraits = {
@@ -73,6 +74,8 @@ const has = (v: string, ...k: string[]) => k.some((x) => v.toLowerCase().include
 const hasAny = (arr: string[], ...k: string[]) => arr.some((v) => has(v, ...k));
 
 export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: string }) {
+  const uid = useId().replace(/:/g, "");
+  const id = (n: string) => `${n}-${uid}`;
   const f = FACE_P[t.face] ?? FACE_P["Oval"]!;
   const skin = hex(t.skin, "#dfae83");
   const skinShade = shift(skin, -28);
@@ -247,7 +250,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
 
   // ---- facial hair ------------------------------------------------------
   const beard = has(t.facialHair, "clean") ? null : has(t.facialHair, "stubble") ? (
-    <path d={headPath} fill={hair} opacity="0.22" clipPath="url(#lowerFace)" />
+    <path d={headPath} fill={hair} opacity="0.22" clipPath={`url(#${id("lowerFace")})`} />
   ) : has(t.facialHair, "moustache") ? (
     <path
       d={`M${cx - 20} ${mouthY - 14} q10 -7 20 0 q10 -7 20 0 q-8 9 -20 9 q-12 0 -20 -9 Z`}
@@ -260,7 +263,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
     <path
       d={headPath}
       fill={hair}
-      clipPath={has(t.facialHair, "full") ? "url(#fullBeard)" : "url(#shortBeard)"}
+      clipPath={has(t.facialHair, "full") ? {`url(#${id("fullBeard")})`} : {`url(#${id("shortBeard")})`}}
     />
   );
 
@@ -287,7 +290,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
             L${cx + f.cheek + 18} ${chin + 80} L${cx - f.cheek - 18} ${chin + 80} Z`}
         fill={cloth}
       />
-      <path d={headPath} fill={skin} clipPath="url(#faceWindow)" />
+      <path d={headPath} fill={skin} clipPath={`url(#${id("faceWindow")})`} />
     </g>
   ) : has(h, "buzz", "crew", "shaved") ? (
     <path
@@ -557,34 +560,34 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
   return (
     <svg viewBox="0 0 300 400" className={className} role="img" aria-label="Live preview of your avatar">
       <defs>
-        <linearGradient id="rz-bg" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={id("rz-bg")} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor={bg1} />
           <stop offset="100%" stopColor={bg2} />
         </linearGradient>
-        <radialGradient id="rz-vig" cx="50%" cy="38%" r="72%">
+        <radialGradient id={id("rz-vig")} cx="50%" cy="38%" r="72%">
           <stop offset="55%" stopColor="#000" stopOpacity="0" />
           <stop offset="100%" stopColor="#000" stopOpacity="0.35" />
         </radialGradient>
-        <linearGradient id="rz-skin" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={id("rz-skin")} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor={skinLight} />
           <stop offset="70%" stopColor={skin} />
           <stop offset="100%" stopColor={skinShade} />
         </linearGradient>
-        <clipPath id="lowerFace">
+        <clipPath id={id("lowerFace")}>
           <rect x="0" y={eyeY + 24} width="300" height="200" />
         </clipPath>
-        <clipPath id="shortBeard">
+        <clipPath id={id("shortBeard")}>
           <rect x="0" y={eyeY + 30} width="300" height="200" />
         </clipPath>
-        <clipPath id="fullBeard">
+        <clipPath id={id("fullBeard")}>
           <rect x="0" y={eyeY + 6} width="300" height="220" />
         </clipPath>
-        <clipPath id="faceWindow">
+        <clipPath id={id("faceWindow")}>
           <ellipse cx={cx} cy={eyeY + 20} rx={f.cheek - 8} ry={(chin - eyeY) * 0.95} />
         </clipPath>
       </defs>
 
-      <rect width="300" height="400" fill="url(#rz-bg)" />
+      <rect width="300" height="400" fill={`url(#${id("rz-bg")})`} />
       {hairBack}
       {outfit}
 
@@ -593,7 +596,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
         <circle cx={cx + f.cheek - 2} cy={eyeY + 26 + earTilt} r={earR} fill={skin} stroke={skinShade} strokeWidth="1.5" />
       </g>
 
-      <path d={headPath} fill="url(#rz-skin)" />
+      <path d={headPath} fill={`url(#${id("rz-skin")})`} />
       {blush}
       {ageLines}
       {beard}
@@ -609,7 +612,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
       {eyewear}
       {headwear}
       {jewellery}
-      <rect width="300" height="400" fill="url(#rz-vig)" />
+      <rect width="300" height="400" fill={`url(#${id("rz-vig")})`} />
     </svg>
   );
 }
