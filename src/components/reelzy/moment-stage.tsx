@@ -60,6 +60,21 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   const [saved, setSaved] = useState(moment.saved);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const togglePlayback = useCallback(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (vid.paused) {
+      void vid.play().catch(() => undefined);
+      setPaused(false);
+    } else {
+      vid.pause();
+      setPaused(true);
+    }
+  }, []);
+
 
   const like = useServerFn(toggleLike);
   const save = useServerFn(toggleSave);
