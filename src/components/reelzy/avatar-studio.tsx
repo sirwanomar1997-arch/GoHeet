@@ -411,8 +411,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   /* ---------------- builder ---------------- */
 
   return (
-    <div className="min-h-svh bg-background">
-      <div className="sticky top-0 z-20 mx-auto max-w-md bg-background">
+    <div className="mx-auto min-h-svh max-w-md overflow-hidden bg-background">
+      <div className="sticky top-0 z-20 bg-background">
         <div className="relative h-[48svh] min-h-[330px] max-h-[520px] overflow-hidden bg-muted">
           {frame ? (
             <img
