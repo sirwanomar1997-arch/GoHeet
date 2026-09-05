@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Settings, Bookmark, ShieldAlert } from "lucide-react";
+import { Settings, Bookmark, ShieldAlert, Sparkles, Play } from "lucide-react";
 import { getProfile, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -81,85 +81,118 @@ function ProfilePage() {
 
   return (
     <AppShell>
-      <header className="px-5 pb-4 pt-6">
-        <div className="flex items-start gap-4">
-          <span className="ember-fill flex size-[72px] shrink-0 items-center justify-center rounded-3xl p-[2px]">
-            <span className="grid size-full place-items-center overflow-hidden rounded-[22px] bg-surface font-display text-2xl font-extrabold uppercase">
-              {p.avatarUrl ? (
-                <img src={p.avatarUrl} alt="" className="size-full object-cover" />
-              ) : (
-                p.username.slice(0, 1)
-              )}
-            </span>
-          </span>
-          <div className="min-w-0 flex-1 pt-1">
-            <h1 className="truncate font-display text-2xl font-extrabold tracking-[-0.04em]">
-              {p.displayName || p.username}
-            </h1>
-            <p className="data-figure text-xs text-muted-foreground">@{p.username}</p>
+      {/* --- Avatar stage: the character is the page, not a tiny circle --- */}
+      <section className="relative overflow-hidden px-5 pb-2 pt-8">
+        <div
+          aria-hidden
+          className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
+        />
+        <div className="relative flex flex-col items-center">
+          <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
+            {p.avatarUrl ? (
+              <img src={p.avatarUrl} alt={`${p.username}'s avatar`} className="size-full object-cover" />
+            ) : (
+              <span className="grid size-full place-items-center font-display text-6xl font-extrabold uppercase text-muted-foreground">
+                {p.username.slice(0, 1)}
+              </span>
+            )}
           </div>
+
           {data.isSelf ? (
-            <div className="flex gap-2">
-              <Link to="/saved" aria-label="Kept moments" className="tap-target grid place-items-center rounded-full border border-border">
-                <Bookmark className="size-4" />
-              </Link>
-              <Link to="/settings" aria-label="Settings" className="tap-target grid place-items-center rounded-full border border-border">
-                <Settings className="size-4" />
-              </Link>
-            </div>
+            <Link
+              to="/avatar"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground"
+            >
+              <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
+            </Link>
           ) : null}
-        </div>
 
-        {p.bio ? <p className="mt-4 text-sm leading-relaxed text-foreground/90">{p.bio}</p> : null}
+          <h1 className="mt-4 text-center font-display text-3xl font-extrabold tracking-[-0.045em]">
+            {p.displayName || p.username}
+          </h1>
+          <p className="data-figure text-xs text-muted-foreground">@{p.username}</p>
+          {p.bio ? (
+            <p className="mt-3 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
+              {p.bio}
+            </p>
+          ) : null}
 
-        <dl className="mt-5 grid grid-cols-4 gap-2 rounded-2xl border border-border bg-surface p-3">
-          {[
-            ["Moments", formatCount(p.momentCount)],
-            ["Followers", formatCount(p.followerCount)],
-            ["Following", formatCount(p.followingCount)],
-            ["Seen", formatCount(p.totalViews)],
-          ].map(([k, v]) => (
-            <div key={k}>
-              <dt className="data-figure text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                {k}
-              </dt>
-              <dd className="data-figure mt-0.5 text-base text-foreground">{v}</dd>
-            </div>
-          ))}
-        </dl>
-
-        {!data.isSelf ? (
-          <div className="mt-4 flex gap-2">
-            <button
-              type="button"
-              onClick={() => followMutation.mutate()}
-              className={`tap-target flex-1 rounded-2xl text-sm font-semibold ${
-                data.isFollowing
-                  ? "border border-border text-foreground"
-                  : "ember-fill text-primary-foreground"
-              }`}
-            >
-              {data.isFollowing ? "Following" : "Follow"}
-            </button>
-            <button
-              type="button"
-              aria-label="Report this person"
-              onClick={async () => {
-                await report({
-                  data: { targetType: "user", targetId: p.id, category: "harassment" },
-                });
-                toast.success("Reported to the safety team.");
-              }}
-              className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-            >
-              <ShieldAlert className="size-4" />
-            </button>
+          {/* stats orbit the avatar as one quiet ring of numbers */}
+          <div className="mt-6 flex w-full items-center justify-between rounded-full border border-border bg-surface px-5 py-3">
+            {[
+              ["Moments", formatCount(p.momentCount)],
+              ["Followers", formatCount(p.followerCount)],
+              ["Following", formatCount(p.followingCount)],
+              ["Seen", formatCount(p.totalViews)],
+            ].map(([k, v]) => (
+              <div key={k} className="text-center">
+                <p className="data-figure text-base leading-none text-foreground">{v}</p>
+                <p className="data-figure mt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {k}
+                </p>
+              </div>
+            ))}
           </div>
-        ) : null}
-      </header>
 
-      <section className="px-5 pb-10">
-        <h2 className="data-figure text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+          <div className="mt-4 flex w-full gap-2">
+            {data.isSelf ? (
+              <>
+                <Link
+                  to="/camera"
+                  className="ember-fill tap-target flex flex-1 items-center justify-center rounded-2xl text-sm font-semibold text-primary-foreground"
+                >
+                  Capture a moment
+                </Link>
+                <Link
+                  to="/saved"
+                  aria-label="Kept moments"
+                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+                >
+                  <Bookmark className="size-4" />
+                </Link>
+                <Link
+                  to="/settings"
+                  aria-label="Settings"
+                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+                >
+                  <Settings className="size-4" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => followMutation.mutate()}
+                  className={`tap-target flex-1 rounded-2xl text-sm font-semibold ${
+                    data.isFollowing
+                      ? "border border-border text-foreground"
+                      : "ember-fill text-primary-foreground"
+                  }`}
+                >
+                  {data.isFollowing ? "Following" : "Follow"}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Report this person"
+                  onClick={async () => {
+                    await report({
+                      data: { targetType: "user", targetId: p.id, category: "harassment" },
+                    });
+                    toast.success("Reported to the safety team.");
+                  }}
+                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+                >
+                  <ShieldAlert className="size-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
+      <section className="pb-12 pt-8">
+        <h2 className="data-figure px-5 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
           Life so far
         </h2>
 
@@ -185,42 +218,52 @@ function ProfilePage() {
             }
           />
         ) : (
-          <div className="mt-5 space-y-8">
+          <div className="mt-4 space-y-7">
             {grouped.map(([label, items]) => (
-              <div key={label} className="relative pl-6">
-                <span className="absolute left-[3px] top-2 h-full w-px bg-border" aria-hidden />
-                <span className="ember-fill absolute left-0 top-1.5 size-[7px] rounded-full" aria-hidden />
-                <p className="data-figure text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  {label}
-                </p>
-                <div className="mt-3 space-y-3">
+              <div key={label}>
+                <div className="flex items-center gap-3 px-5">
+                  <span className="ember-fill size-[7px] shrink-0 rounded-full" aria-hidden />
+                  <p className="data-figure text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {label}
+                  </p>
+                  <span className="h-px flex-1 bg-border" aria-hidden />
+                  <span className="data-figure text-[11px] text-muted-foreground">
+                    {items.length}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2">
                   {items.map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => setOpen(m)}
-                      className="flex w-full gap-3 rounded-2xl border border-border bg-surface p-2 text-left"
+                      className="group relative aspect-[3/5] w-[58%] shrink-0 snap-start overflow-hidden rounded-[26px] border border-border bg-surface text-left"
                     >
-                      <span className="aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-xl bg-surface-raised">
-                        {m.posterUrl || m.mediaUrl ? (
-                          <img
-                            src={m.posterUrl ?? m.mediaUrl ?? ""}
-                            alt={m.caption ?? "Moment"}
-                            className="size-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : null}
-                      </span>
-                      <span className="min-w-0 flex-1 py-1">
-                        <span className="line-clamp-2 block text-sm text-foreground">
+                      {m.posterUrl || m.mediaUrl ? (
+                        <img
+                          src={m.posterUrl ?? m.mediaUrl ?? ""}
+                          alt={m.caption ?? "Moment"}
+                          className="size-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : null}
+                      <span className="stage-vignette absolute inset-0" aria-hidden />
+                      {m.kind !== "photo" ? (
+                        <span className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-background/55 backdrop-blur">
+                          <Play className="size-3.5 fill-current" />
+                        </span>
+                      ) : null}
+                      <span className="absolute inset-x-0 bottom-0 p-3.5">
+                        <span className="line-clamp-2 block font-display text-sm font-semibold leading-snug tracking-tight">
                           {m.caption || (m.kind === "photo" ? "A still" : "A moment")}
                         </span>
-                        <span className="data-figure mt-2 block text-[11px] text-muted-foreground">
+                        <span className="data-figure mt-1.5 block text-[10px] text-muted-foreground">
                           {timeAgo(m.createdAt)} · {formatCount(m.viewCount)} seen ·{" "}
                           {formatCount(m.likeCount)} felt
                         </span>
                         {m.locationLabel ? (
-                          <span className="data-figure mt-1 block text-[11px] text-primary">
+                          <span className="data-figure mt-0.5 block text-[10px] text-primary">
                             {m.locationLabel}
                           </span>
                         ) : null}

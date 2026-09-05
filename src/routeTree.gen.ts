@@ -14,12 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAvatarRouteImport } from './routes/_authenticated/avatar'
 import { Route as AuthenticatedCameraRouteImport } from './routes/_authenticated/camera'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as ApiGenerateAvatarRouteImport } from './routes/api/generate-avatar'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 
@@ -45,6 +47,11 @@ const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAvatarRoute = AuthenticatedAvatarRouteImport.update({
+  id: '/avatar',
+  path: '/avatar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCameraRoute = AuthenticatedCameraRouteImport.update({
@@ -77,6 +84,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiGenerateAvatarRoute = ApiGenerateAvatarRouteImport.update({
+  id: '/api/generate-avatar',
+  path: '/api/generate-avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LegalDocRoute = LegalDocRouteImport.update({
   id: '/legal/$doc',
   path: '/legal/$doc',
@@ -93,12 +105,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/avatar': typeof AuthenticatedAvatarRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
 }
@@ -107,12 +121,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/avatar': typeof AuthenticatedAvatarRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
 }
@@ -123,12 +139,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/avatar': typeof AuthenticatedAvatarRoute
   '/_authenticated/camera': typeof AuthenticatedCameraRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
 }
@@ -139,12 +157,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/activity'
     | '/admin'
+    | '/avatar'
     | '/camera'
     | '/discover'
     | '/feed'
     | '/onboarding'
     | '/saved'
     | '/settings'
+    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
@@ -153,12 +173,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/activity'
     | '/admin'
+    | '/avatar'
     | '/camera'
     | '/discover'
     | '/feed'
     | '/onboarding'
     | '/saved'
     | '/settings'
+    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/u/$username'
   id:
@@ -168,12 +190,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/activity'
     | '/_authenticated/admin'
+    | '/_authenticated/avatar'
     | '/_authenticated/camera'
     | '/_authenticated/discover'
     | '/_authenticated/feed'
     | '/_authenticated/onboarding'
     | '/_authenticated/saved'
     | '/_authenticated/settings'
+    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/_authenticated/u/$username'
   fileRoutesById: FileRoutesById
@@ -182,6 +206,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiGenerateAvatarRoute: typeof ApiGenerateAvatarRoute
   LegalDocRoute: typeof LegalDocRoute
 }
 
@@ -220,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/avatar': {
+      id: '/_authenticated/avatar'
+      path: '/avatar'
+      fullPath: '/avatar'
+      preLoaderRoute: typeof AuthenticatedAvatarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/camera': {
@@ -264,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/generate-avatar': {
+      id: '/api/generate-avatar'
+      path: '/api/generate-avatar'
+      fullPath: '/api/generate-avatar'
+      preLoaderRoute: typeof ApiGenerateAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legal/$doc': {
       id: '/legal/$doc'
       path: '/legal/$doc'
@@ -284,6 +323,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAvatarRoute: typeof AuthenticatedAvatarRoute
   AuthenticatedCameraRoute: typeof AuthenticatedCameraRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -296,6 +336,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAvatarRoute: AuthenticatedAvatarRoute,
   AuthenticatedCameraRoute: AuthenticatedCameraRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
@@ -312,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiGenerateAvatarRoute: ApiGenerateAvatarRoute,
   LegalDocRoute: LegalDocRoute,
 }
 export const routeTree = rootRouteImport
