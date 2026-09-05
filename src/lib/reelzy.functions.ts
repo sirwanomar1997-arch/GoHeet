@@ -1130,7 +1130,10 @@ export const deleteComment = createServerFn({ method: "POST" })
 
 export const getProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { username: string }) => ({ username: usernameSchema.parse(d.username) }))
+  .inputValidator((d: { username: string; sort?: string }) => ({
+    username: usernameSchema.parse(d.username),
+    sort: z.enum(["new", "views", "old"]).catch("new").parse(d.sort ?? "new"),
+  }))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -1147,12 +1150,13 @@ export const getProfile = createServerFn({ method: "POST" })
       .eq("following_id", profile.id)
       .maybeSingle();
 
+    const orderCol = data.sort === "views" ? "view_count" : "created_at";
     const { data: rows } = await context.supabase
       .from("moments")
       .select(MOMENT_SELECT)
       .eq("author_id", profile.id)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false })
+      .order(orderCol, { ascending: data.sort === "old" })
       .limit(40);
 
     const avatars = await signAvatars([profile.avatar_url]);
