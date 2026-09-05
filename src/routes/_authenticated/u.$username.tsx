@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -19,6 +20,7 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const fetchProfile = useServerFn(getProfile);
   const follow = useServerFn(toggleFollow);
+  const navigate = useNavigate();
   const startChat = useServerFn(sendMessage);
   const [messageText, setMessageText] = useState("");
   const [composing, setComposing] = useState(false);
