@@ -451,12 +451,18 @@ export function AvatarStudio({
     hairColor: "Dark brown",
     facialHair: "Clean shaven",
     expression: "Warm half-smile",
-    outfit: "Hoodie",
+    outfit: "Oversized hoodie",
     outfitColor: "Black",
+    fabric: "Soft knit",
     headwear: "None",
+    eyewear: "None",
+    makeup: [],
+    jewelry: [],
     background: "Warm orange-pink glow",
     extras: [],
   });
+  const [section, setSection] = useState("face");
+
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
