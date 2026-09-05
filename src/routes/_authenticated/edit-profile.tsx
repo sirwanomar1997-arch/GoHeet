@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/edit-profile")({
 });
 
 const PLATFORMS = [
-  { key: "instagram", label: "Instagram", prefix: "instagram.com/" },
-  { key: "tiktok", label: "TikTok", prefix: "tiktok.com/@" },
-  { key: "youtube", label: "YouTube", prefix: "youtube.com/@" },
-  { key: "twitter", label: "X (Twitter)", prefix: "x.com/" },
-  { key: "facebook", label: "Facebook", prefix: "facebook.com/" },
-  { key: "snapchat", label: "Snapchat", prefix: "snapchat.com/add/" },
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/you" },
+  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@you" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@you" },
+  { key: "twitter", label: "X (Twitter)", placeholder: "https://x.com/you" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/you" },
+  { key: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/you" },
 ] as const;
 
 function EditProfilePage() {
