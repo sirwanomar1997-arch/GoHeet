@@ -66,13 +66,8 @@ function ProfilePage() {
   }
 
   const p = data.profile;
-  const grouped: Array<[string, MomentCard[]]> = [];
-  for (const m of data.moments) {
-    const label = dayLabel(m.createdAt);
-    const last = grouped[grouped.length - 1];
-    if (last && last[0] === label) last[1].push(m);
-    else grouped.push([label, [m]]);
-  }
+
+
 
   if (open) {
     return (
