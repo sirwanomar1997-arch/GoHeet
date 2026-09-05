@@ -65,7 +65,15 @@ const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "other", label: "Something else" },
 ];
 
-export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: () => void }) {
+export function MomentStage({
+  moment,
+  onGone,
+  fullscreen = false,
+}: {
+  moment: MomentCard;
+  onGone?: () => void;
+  fullscreen?: boolean;
+}) {
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
