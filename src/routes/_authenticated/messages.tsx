@@ -1,0 +1,225 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Check, MailQuestion, MessageCircle, X } from "lucide-react";
+import { listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
+import { AppShell } from "@/components/reelzy/nav";
+
+export const Route = createFileRoute("/_authenticated/messages")({
+  component: MessagesPage,
+  head: () => ({
+    meta: [
+      { title: "Messages — Reelzy" },
+      {
+        name: "description",
+        content:
+          "Your Reelzy chats and message requests. People you don't follow back land in requests first.",
+      },
+      { property: "og:title", content: "Messages — Reelzy" },
+      {
+        property: "og:description",
+        content: "Chats and message requests on Reelzy.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+});
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diff / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.round(h / 24)}d`;
+}
+
+function MessagesPage() {
+  const qc = useQueryClient();
+  const fetchChats = useServerFn(listConversations);
+  const respond = useServerFn(respondToMessageRequest);
+  const [tab, setTab] = useState<"chats" | "requests">("chats");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: () => fetchChats({ data: undefined as never }),
+    refetchInterval: 15000,
+  });
+
+  const answer = useMutation({
+    mutationFn: (v: { conversationId: string; accept: boolean }) => respond({ data: v }),
+    onSuccess: (_r, v) => {
+      toast.success(v.accept ? "Request accepted." : "Request declined.");
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const requests = data?.requests ?? [];
+  const chats = data?.chats ?? [];
+  const sent = data?.sent ?? [];
+
+  return (
+    <AppShell>
+      <header className="px-5 pb-2 pt-6">
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Messages</h1>
+        <p className="text-sm text-muted-foreground">
+          People you don&apos;t follow back have to ask first.
+        </p>
+      </header>
+
+      <div className="grid grid-cols-2 gap-2 px-5">
+        {(
+          [
+            ["chats", "Chats", chats.length],
+            ["requests", "Requests", requests.length],
+          ] as const
+        ).map(([id, label, count]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`tap-target rounded-2xl text-sm font-semibold ${
+              tab === id
+                ? "ember-fill text-primary-foreground"
+                : "border border-border text-muted-foreground"
+            }`}
+          >
+            {label}
+            {count > 0 ? ` · ${count}` : ""}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-2 px-5 pb-12 pt-4">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : tab === "chats" ? (
+          chats.length === 0 ? (
+            <EmptyState
+              icon={<MessageCircle className="size-5 text-amber-400" />}
+              title="No chats yet"
+              line="Start one from someone's profile."
+            />
+          ) : (
+            chats.map((c) => <ChatRow key={c.id} chat={c} />)
+          )
+        ) : requests.length === 0 && sent.length === 0 ? (
+          <EmptyState
+            icon={<MailQuestion className="size-5 text-sky-400" />}
+            title="No requests"
+            line="Messages from people you don't follow land here first."
+          />
+        ) : (
+          <>
+            {requests.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-border bg-surface p-4">
+                <Link
+                  to="/messages/$conversationId"
+                  params={{ conversationId: c.id }}
+                  className="block"
+                >
+                  <p className="text-sm font-semibold">{c.person.displayName}</p>
+                  <p className="text-xs text-muted-foreground">@{c.person.username}</p>
+                  {c.lastMessage ? (
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {c.lastMessage.body}
+                    </p>
+                  ) : null}
+                </Link>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={answer.isPending}
+                    onClick={() => answer.mutate({ conversationId: c.id, accept: true })}
+                    className="ember-fill tap-target flex-1 rounded-2xl text-sm font-semibold text-primary-foreground"
+                  >
+                    <Check className="mr-1 inline size-4" /> Accept
+                  </button>
+                  <button
+                    type="button"
+                    disabled={answer.isPending}
+                    onClick={() => answer.mutate({ conversationId: c.id, accept: false })}
+                    className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
+                  >
+                    <X className="mr-1 inline size-4" /> Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+            {sent.length > 0 ? (
+              <>
+                <p className="pt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  Waiting for a reply
+                </p>
+                {sent.map((c) => (
+                  <ChatRow key={c.id} chat={c} pendingLabel="Request sent" />
+                ))}
+              </>
+            ) : null}
+          </>
+        )}
+      </div>
+    </AppShell>
+  );
+}
+
+type Chat = NonNullable<Awaited<ReturnType<typeof listConversations>>>["chats"][number];
+
+function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) {
+  return (
+    <Link
+      to="/messages/$conversationId"
+      params={{ conversationId: chat.id }}
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3"
+    >
+      <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-raised">
+        {chat.person.avatarUrl ? (
+          <img src={chat.person.avatarUrl} alt="" className="size-full object-cover" />
+        ) : (
+          <MessageCircle className="size-4 text-muted-foreground" />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-2">
+          <span className="truncate text-sm font-semibold">{chat.person.displayName}</span>
+          <span className="shrink-0 text-[11px] text-muted-foreground">
+            {pendingLabel ?? timeAgo(chat.lastMessageAt)}
+          </span>
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+          {chat.lastMessage?.body ?? `@${chat.person.username}`}
+        </span>
+      </span>
+      {chat.unread > 0 ? (
+        <span className="ember-fill grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold text-primary-foreground">
+          {chat.unread}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  line,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  line: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-6 text-center">
+      <div className="mx-auto grid size-11 place-items-center rounded-2xl bg-surface-raised">
+        {icon}
+      </div>
+      <p className="mt-3 text-sm font-semibold">{title}</p>
+      <p className="text-xs text-muted-foreground">{line}</p>
+    </div>
+  );
+}
