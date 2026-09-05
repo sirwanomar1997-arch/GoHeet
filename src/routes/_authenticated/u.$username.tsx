@@ -427,6 +427,19 @@ function ProfilePage() {
                   </div>
                 </div>
               ))}
+
+              {openIndex !== null ? (
+                <MomentReel
+                  moments={list}
+                  startIndex={openIndex}
+                  title={tab === "liked" ? "Liked" : tab === "saved" ? "Saved" : `@${p.username}`}
+                  onClose={() => setOpenIndex(null)}
+                  onGone={() => {
+                    setOpenIndex(null);
+                    void refetch();
+                  }}
+                />
+              ) : null}
             </div>
           );
         })()}
