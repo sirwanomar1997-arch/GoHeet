@@ -107,6 +107,155 @@ export function MomentStage({
     }
   }, []);
 
+  /* ---------------- Pinch / wheel zoom + pan ---------------- */
+  const zoomWrapRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const zoomStateRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
+  zoomStateRef.current = { zoom, offset };
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null);
+  const lastTapRef = useRef(0);
+  const movedRef = useRef(false);
+
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 5;
+  const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
+  const clampOffset = useCallback((x: number, y: number, z: number) => {
+    const el = zoomWrapRef.current;
+    if (!el || z <= 1) return { x: 0, y: 0 };
+    const maxX = (el.clientWidth * (z - 1)) / 2;
+    const maxY = (el.clientHeight * (z - 1)) / 2;
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  }, []);
+
+  const zoomAt = useCallback(
+    (nextZoomRaw: number, px: number, py: number) => {
+      const el = zoomWrapRef.current;
+      if (!el) return;
+      const { zoom: z, offset: o } = zoomStateRef.current;
+      const next = clampZoom(nextZoomRaw);
+      if (next === z) return;
+      const cx = el.clientWidth / 2;
+      const cy = el.clientHeight / 2;
+      const k = next / z;
+      const nx = px - cx - (px - cx - o.x) * k;
+      const ny = py - cy - (py - cy - o.y) * k;
+      const clamped = clampOffset(nx, ny, next);
+      setZoom(next);
+      setOffset(next <= 1 ? { x: 0, y: 0 } : clamped);
+    },
+    [clampOffset],
+  );
+
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
+
+  useEffect(() => {
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      const rect = el.getBoundingClientRect();
+      zoomAtRef.current(
+        zoomStateRef.current.zoom * Math.exp(-dy * 0.0018),
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+      );
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedRef.current = false;
+    if (pointersRef.current.size === 2) {
+      const [a, b] = [...pointersRef.current.values()];
+      if (a && b) {
+        pinchRef.current = {
+          dist: Math.hypot(a.x - b.x, a.y - b.y),
+          cx: (a.x + b.x) / 2,
+          cy: (a.y + b.y) / 2,
+        };
+      }
+    }
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const prev = pointersRef.current.get(e.pointerId);
+    if (!prev) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+
+    if (pointersRef.current.size >= 2 && pinchRef.current) {
+      const [a, b] = [...pointersRef.current.values()];
+      if (!a || !b) return;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const ratio = dist / (pinchRef.current.dist || dist);
+      pinchRef.current.dist = dist;
+      movedRef.current = true;
+      zoomAtRef.current(
+        zoomStateRef.current.zoom * ratio,
+        (a.x + b.x) / 2 - rect.left,
+        (a.y + b.y) / 2 - rect.top,
+      );
+      return;
+    }
+
+    if (zoomStateRef.current.zoom > 1) {
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      if (Math.abs(dx) + Math.abs(dy) > 2) movedRef.current = true;
+      const o = zoomStateRef.current.offset;
+      setOffset(clampOffset(o.x + dx, o.y + dy, zoomStateRef.current.zoom));
+    }
+  };
+
+  const endPointer = (e: React.PointerEvent) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+  };
+
+  const onMediaTap = (e: React.PointerEvent) => {
+    endPointer(e);
+    if (movedRef.current) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 280) {
+      lastTapRef.current = 0;
+      const el = zoomWrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (zoomStateRef.current.zoom > 1) {
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+      } else {
+        zoomAtRef.current(2.5, e.clientX - rect.left, e.clientY - rect.top);
+      }
+      return;
+    }
+    lastTapRef.current = now;
+    window.setTimeout(() => {
+      if (lastTapRef.current && Date.now() - lastTapRef.current >= 280) {
+        lastTapRef.current = 0;
+        if (moment.kind === "video") togglePlayback();
+      }
+    }, 300);
+  };
+
+  const resetZoom = () => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
 
   const like = useServerFn(toggleLike);
   const save = useServerFn(toggleSave);
