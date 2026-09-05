@@ -723,8 +723,8 @@ function CameraPage() {
                 </Button>
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        ) : null}
 
         <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
           <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
