@@ -257,7 +257,11 @@ export function MomentStage({
   return (
     <section
       ref={containerRef}
-      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
+      className={
+        fullscreen
+          ? "relative h-[100svh] w-full shrink-0 snap-start snap-always overflow-hidden bg-black"
+          : "animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
+      }
       aria-label={`Moment by ${moment.author.username}`}
     >
       {moment.kind === "video" && moment.mediaUrl ? (
