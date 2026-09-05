@@ -162,10 +162,10 @@ function AuthPage() {
           className="tap-target mt-8 flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-surface-raised text-sm font-medium"
         >
           <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.63 4.1-5.35 4.1a5.9 5.9 0 1 1 0-11.8c1.68 0 2.81.72 3.46 1.34l2.36-2.27C16.4 3.9 14.4 3 12 3a9 9 0 1 0 0 18c5.2 0 8.64-3.65 8.64-8.8 0-.6-.06-1.05-.29-1.1Z"
-            />
+            <path fill="#4285F4" d="M23.06 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.38Z" />
+            <path fill="#34A853" d="M12 24c3.1 0 5.7-1.03 7.6-2.78l-3.72-2.89c-1.03.69-2.35 1.1-3.88 1.1-2.98 0-5.5-2.01-6.4-4.72H1.86v2.99A12 12 0 0 0 12 24Z" />
+            <path fill="#FBBC05" d="M5.6 14.71A7.2 7.2 0 0 1 5.22 12c0-.94.16-1.85.38-2.71V6.3H1.86A12 12 0 0 0 0 12c0 1.94.46 3.77 1.86 5.7l3.74-2.99Z" />
+            <path fill="#EA4335" d="M12 4.77c1.68 0 3.18.58 4.37 1.71l3.27-3.27C17.7 1.27 15.1.25 12 .25A12 12 0 0 0 1.86 6.3l3.74 2.99C6.5 6.78 9.02 4.77 12 4.77Z" />
           </svg>
           Continue with Google
         </button>
