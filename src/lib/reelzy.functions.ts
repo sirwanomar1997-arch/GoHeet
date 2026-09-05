@@ -1053,3 +1053,35 @@ export const deleteAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* 3D avatar                                                           */
+/* ------------------------------------------------------------------ */
+
+export const saveAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { dataUrl: string }) => ({
+    dataUrl: z.string().min(32).max(12_000_000).startsWith("data:image/").parse(d.dataUrl),
+  }))
+  .handler(async ({ data, context }) => {
+    const base64 = data.dataUrl.slice(data.dataUrl.indexOf(",") + 1);
+    const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    if (binary.byteLength > 8 * 1024 * 1024) throw new Error("Avatar image is too large.");
+
+    const sb = await admin();
+    const path = `${context.userId}/avatar-${Date.now()}.png`;
+    const { error: upErr } = await sb.storage
+      .from("avatars")
+      .upload(path, binary, { contentType: "image/png", upsert: true });
+    if (upErr) throw new Error(upErr.message);
+
+    const { error } = await sb
+      .from("profiles")
+      .update({ avatar_url: path } as never)
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+
+    const signed = await signAvatars([path]);
+    await track(context.userId, "avatar_created");
+    return { path, url: signed[path] ?? null };
+  });
