@@ -97,6 +97,15 @@ function ProfilePage() {
           aria-hidden
           className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
         />
+        {data.isSelf ? (
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            className="absolute right-5 top-5 grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Settings className="size-4" />
+          </Link>
+        ) : null}
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
             {p.avatarUrl ? (
