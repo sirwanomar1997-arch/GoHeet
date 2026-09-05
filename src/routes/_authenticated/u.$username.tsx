@@ -164,59 +164,75 @@ function ProfilePage() {
             ))}
           </div>
 
-          <div className="mt-4 flex w-full gap-2">
-            {data.isSelf ? (
-              <>
-                <Link
-                  to="/camera"
-                  className="ember-fill tap-target flex flex-1 items-center justify-center rounded-2xl text-sm font-semibold text-primary-foreground"
-                >
-                  Capture a moment
-                </Link>
-                <Link
-                  to="/saved"
-                  aria-label="Kept moments"
-                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-                >
-                  <Bookmark className="size-4" />
-                </Link>
-                <Link
-                  to="/settings"
-                  aria-label="Settings"
-                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-                >
-                  <Settings className="size-4" />
-                </Link>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => followMutation.mutate()}
-                  className={`tap-target flex-1 rounded-2xl text-sm font-semibold ${
-                    data.isFollowing
-                      ? "border border-border text-foreground"
-                      : "ember-fill text-primary-foreground"
-                  }`}
-                >
-                  {data.isFollowing ? "Following" : "Follow"}
-                </button>
-                <button
-                  type="button"
-                  aria-label="Report this person"
-                  onClick={async () => {
-                    await report({
-                      data: { targetType: "user", targetId: p.id, category: "harassment" },
-                    });
-                    toast.success("Reported to the safety team.");
-                  }}
-                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-                >
-                  <ShieldAlert className="size-4" />
-                </button>
-              </>
-            )}
-          </div>
+          {data.isSelf ? (
+            <div className="mt-5 grid w-full grid-cols-3 gap-2">
+              {([
+                { id: "reelz", label: "Your Reelz", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
+                { id: "liked", label: "Liked", Icon: Heart, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
+                { id: "saved", label: "Saved", Icon: Bookmark, color: "oklch(0.74 0.15 150)", glow: "oklch(0.74 0.15 150 / 60%)" },
+              ] as const).map(({ id, label, Icon, color, glow }) => {
+                const activeTab = tab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTab(id)}
+                    aria-label={label}
+                    className="relative flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-surface py-3 transition-colors"
+                  >
+                    <Icon
+                      className="size-5"
+                      strokeWidth={activeTab ? 2.4 : 1.7}
+                      style={{
+                        color,
+                        opacity: activeTab ? 1 : 0.45,
+                        filter: activeTab ? `drop-shadow(0 0 7px ${glow})` : "none",
+                      }}
+                    />
+                    <span className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+                      {label}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-3 bottom-1 h-[3px] rounded-full transition-opacity"
+                      style={{
+                        background: color,
+                        opacity: activeTab ? 1 : 0,
+                        boxShadow: activeTab ? `0 0 10px ${glow}` : "none",
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 flex w-full gap-2">
+              <button
+                type="button"
+                onClick={() => followMutation.mutate()}
+                className={`tap-target flex-1 rounded-2xl text-sm font-semibold ${
+                  data.isFollowing
+                    ? "border border-border text-foreground"
+                    : "ember-fill text-primary-foreground"
+                }`}
+              >
+                {data.isFollowing ? "Following" : "Follow"}
+              </button>
+              <button
+                type="button"
+                aria-label="Report this person"
+                onClick={async () => {
+                  await report({
+                    data: { targetType: "user", targetId: p.id, category: "harassment" },
+                  });
+                  toast.success("Reported to the safety team.");
+                }}
+                className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+              >
+                <ShieldAlert className="size-4" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
