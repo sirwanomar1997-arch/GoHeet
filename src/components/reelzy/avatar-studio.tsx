@@ -878,7 +878,7 @@ export function AvatarStudio({
           {buildReady ? (
             <>
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                {SECTIONS.map((s) => (
+                {sections.map((s) => (
                   <button
                     key={s.id}
                     type="button"
@@ -894,7 +894,7 @@ export function AvatarStudio({
                 ))}
               </div>
 
-              {SECTIONS.filter((s) => s.id === section).map((s) => (
+              {sections.filter((s) => s.id === activeSection).map((s) => (
                 <div key={s.id} className="space-y-4 rounded-[28px] border border-border bg-surface/60 p-4">
                   <p className="text-xs text-muted-foreground">{s.blurb}</p>
                   {s.groups.map((g) => (
