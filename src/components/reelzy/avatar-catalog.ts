@@ -6,6 +6,7 @@ import mouthSheet from "@/assets/av/mouth-sheet.png";
 import hairMaleSheet from "@/assets/av/hair-male-sheet.png";
 import hairFemaleSheet from "@/assets/av/hair-female-sheet.png";
 import makeupSheet from "@/assets/av/makeup-sheet.png";
+import beardSheet from "@/assets/av/beard-sheet.png";
 import outfitSheet from "@/assets/av/outfit-sheet.png";
 import accessorySheet from "@/assets/av/accessory-sheet.png";
 import outfitMaleCasualSheet from "@/assets/av/outfit-male-casual.png";
