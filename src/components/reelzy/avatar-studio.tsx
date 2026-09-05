@@ -123,6 +123,11 @@ const buildEditPrompt = (t: Traits, changes: string[]) =>
   `The finished character is: ${describe(t)}. ` +
   "Everything not listed above stays identical to the reference.";
 
+const buildPictureEditPrompt = (t: Traits, changes: string[]) =>
+  `${buildEditPrompt(t, changes)} The second reference image is the option the user tapped. ` +
+  "Copy its pictured hairstyle exactly—its silhouette, length, texture, parting and styling override any hairstyle wording. " +
+  "Do not copy the reference model's face, head, neck, skin tone or clothing.";
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
@@ -197,7 +202,7 @@ function SheetRow({
   sheet: Sheet;
   opts: Cell[];
   value: string | string[];
-  onPick: (name: string) => void;
+  onPick: (name: string, sheet?: Sheet, index?: number) => void;
   multi?: boolean;
   picturesOnly?: boolean;
 }) {
@@ -214,7 +219,7 @@ function SheetRow({
       </div>
       <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
         {opts.map((o) => (
-          <Tile key={o.name} active={isOn(o.name)} label={o.name} showLabel={!picturesOnly} onClick={() => onPick(o.name)}>
+          <Tile key={o.name} active={isOn(o.name)} label={o.name} showLabel={!picturesOnly} onClick={() => onPick(o.name, sheet, o.index)}>
             <SpriteTile sheet={sheet} index={o.index} />
           </Tile>
         ))}
@@ -335,7 +340,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const mouths = useMemo(() => mouthsFor(traits.gender), [traits.gender]);
   const outfits = useMemo(() => outfitsFor(traits.gender), [traits.gender]);
 
-  const generate = useCallback(async (prompt: string, reference: string | null) => {
+  const generate = useCallback(async (prompt: string, reference: string | null, visualReference: string | null = null) => {
     const run = ++runRef.current;
     setBusy(true);
     setIsFinal(false);
@@ -348,7 +353,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           baseRef.current = url;
           finalFrameRef.current = url;
         }
-      });
+      }, visualReference);
     } catch (e) {
       if (runRef.current === run) {
         if (finalFrameRef.current) setFrame(finalFrameRef.current);
@@ -361,13 +366,18 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   }, []);
 
   const queueRender = useCallback(
-    (next: Traits, fresh = false) => {
+    (next: Traits, fresh = false, visualReference: string | null = null) => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         const base = fresh ? null : baseRef.current;
         const changes = renderedRef.current ? changeLabels(renderedRef.current, next) : [];
         renderedRef.current = next;
-        void generate(base ? buildEditPrompt(next, changes) : buildPrompt(next, seed), base);
+        const prompt = base
+          ? visualReference
+            ? buildPictureEditPrompt(next, changes)
+            : buildEditPrompt(next, changes)
+          : buildPrompt(next, seed);
+        void generate(prompt, base, visualReference);
       }, fresh ? 0 : 900);
     },
     [generate, seed],
@@ -381,6 +391,45 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       const unchanged = (Object.keys(patch) as (keyof Traits)[]).every((k) => t[k] === next[k]);
       if (unchanged) return t;
       queueRender(next);
+      return next;
+    });
+  }
+
+  function updateFromPicture(patch: Partial<Traits>, sheet: Sheet, index: number) {
+    setTraits((current) => {
+      const next = { ...current, ...patch };
+      const unchanged = (Object.keys(patch) as (keyof Traits)[]).every((key) => current[key] === next[key]);
+      if (unchanged) return current;
+
+      const image = new Image();
+      image.onload = () => {
+        const sourceWidth = image.naturalWidth / sheet.cols;
+        const sourceHeight = image.naturalHeight / sheet.rows;
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          queueRender(next);
+          return;
+        }
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(
+          image,
+          (index % sheet.cols) * sourceWidth,
+          Math.floor(index / sheet.cols) * sourceHeight,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+        queueRender(next, false, canvas.toDataURL("image/jpeg", 0.92));
+      };
+      image.onerror = () => queueRender(next);
+      image.src = sheet.src;
       return next;
     });
   }
@@ -676,7 +725,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           sheet={hair.sheet}
           opts={hair.opts}
           value={traits.hair}
-          onPick={(v) => update({ hair: v })}
+          onPick={(value, sheet, index) => {
+            if (sheet && index !== undefined) updateFromPicture({ hair: value }, sheet, index);
+          }}
           picturesOnly
         />
         <SwatchRow
