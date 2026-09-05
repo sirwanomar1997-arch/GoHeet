@@ -884,7 +884,7 @@ export function AvatarStudio({
                     type="button"
                     onClick={() => setSection(s.id)}
                     className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
-                      section === s.id
+                      activeSection === s.id
                         ? "ember-fill text-primary-foreground"
                         : "border border-border bg-surface text-muted-foreground"
                     }`}
