@@ -40,7 +40,9 @@ const STYLE_BASE =
   "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
   "soft cinematic studio key light from the upper left with warm rim light, " +
   "smooth warm orange-to-pink gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
-  "vertical portrait composition, no text, no watermark, no logo.";
+  "vertical portrait composition with the WHOLE head, the complete hairstyle and any hat or headwear fully inside the frame, " +
+  "generous empty margin above the hair and on both sides, shoulders visible, nothing cropped or touching the edges, " +
+  "no text, no watermark, no logo.";
 
 /** Age reads honestly in the render — keeps a 30s avatar from looking 50. */
 const AGE_LOOK: Record<string, string> = {
@@ -301,7 +303,7 @@ function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
     "same pose, same camera angle, same lighting and same render style. " +
     `Change only the following: ${changed.map(describe).join("; ")}. ` +
     "Everything else must stay pixel-consistent with the reference. " +
-    "Glossy premium 3D animated feature-film portrait, no text, no watermark."
+    "Glossy premium 3D animated feature-film portrait. Keep the whole head, full hairstyle and any headwear inside the frame with margin above the hair, nothing cropped. No text, no watermark."
   );
 }
 
