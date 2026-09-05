@@ -645,12 +645,20 @@ export function AvatarStudio({
     [generate],
   );
 
-  // The very first render happens as soon as you pick male or female. After
-  // that nothing re-renders until you tap Update, so styling stays instant.
+  // The first render fires the moment you pick male or female, and every tap
+  // after that re-renders the same character automatically (short debounce so
+  // rapid taps collapse into one render).
   useEffect(() => {
-    if (mode !== "build" || !traits.gender || appliedTraits) return;
-    renderLook(traits, look, null, []);
-  }, [mode, traits, look, appliedTraits, renderLook]);
+    if (mode !== "build" || !traits.gender) return;
+    if (!appliedTraits) {
+      renderLook(traits, look, null, []);
+      return;
+    }
+    const changed = diffTraits(appliedTraits, traits);
+    if (changed.length === 0 || busy) return;
+    const t = setTimeout(() => renderLook(traits, look, baseImage, changed), 450);
+    return () => clearTimeout(t);
+  }, [mode, traits, look, appliedTraits, baseImage, busy, renderLook]);
 
 
 
@@ -750,16 +758,10 @@ export function AvatarStudio({
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
               Pick male or female below and your avatar appears here in full 3D. Style as much as you
-              like, then tap Update — it stays the same person.
+              like — every tap updates the same person instantly.
             </p>
           </div>
         )}
-
-        {!busy && pending.length > 0 && frame ? (
-          <div className="absolute inset-x-0 bottom-0 bg-background/70 px-4 py-3 text-xs backdrop-blur">
-            {pending.length} change{pending.length > 1 ? "s" : ""} ready — tap Update my avatar.
-          </div>
-        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
@@ -899,39 +901,27 @@ export function AvatarStudio({
             <Camera className="size-4" /> Take the shot
           </button>
         ) : mode === "build" ? (
-          pending.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => renderLook(traits, look, baseImage, pending)}
-              disabled={busy || !buildReady}
-              className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            >
-              <Sparkles className="size-4" />
-              {busy ? "Updating…" : `Update my avatar (${pending.length})`}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
-                setLook(l);
-                void generate({
-                  prompt: baseImage
-                    ? "Keep the EXACT same character from the reference image — identical face, hair, " +
-                      `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
-                      "feature-film render style and lighting. No text, no watermark."
-                    : buildPrompt(traits, l.pose, l.seed),
-                  reference: baseImage,
-                  traits,
-                });
-              }}
-              disabled={busy || !buildReady}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
-            >
-              <RefreshCw className="size-4" />
-              {busy ? "Rendering…" : "Try another take"}
-            </button>
-          )
+          <button
+            type="button"
+            onClick={() => {
+              const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
+              setLook(l);
+              void generate({
+                prompt: baseImage
+                  ? "Keep the EXACT same character from the reference image — identical face, hair, " +
+                    `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
+                    "feature-film render style and lighting. No text, no watermark."
+                  : buildPrompt(traits, l.pose, l.seed),
+                reference: baseImage,
+                traits,
+              });
+            }}
+            disabled={busy || !buildReady}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+          >
+            <RefreshCw className="size-4" />
+            {busy ? "Rendering…" : "Try another take"}
+          </button>
         ) : (
           <button
             type="button"
