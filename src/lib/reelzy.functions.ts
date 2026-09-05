@@ -490,25 +490,27 @@ const MOMENT_SELECT =
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { scope: string; cursor?: string }) => ({
-    scope: z.enum(["following", "discover", "saved"]).parse(d.scope),
+    scope: z.enum(["following", "discover", "saved", "liked"]).parse(d.scope),
     cursor: z.string().optional().parse(d.cursor),
   }))
   .handler(async ({ data, context }) => {
     const limit = 8;
 
-    if (data.scope === "saved") {
-      const { data: saves } = await context.supabase
-        .from("saves")
+    if (data.scope === "saved" || data.scope === "liked") {
+      const table = data.scope === "saved" ? "saves" : "likes";
+      const { data: rels } = await context.supabase
+        .from(table)
         .select("moment_id, created_at")
         .eq("user_id", context.userId)
         .order("created_at", { ascending: false })
         .limit(limit);
-      const ids = (saves ?? []).map((s) => s.moment_id);
+      const ids = (rels ?? []).map((s) => s.moment_id);
       if (!ids.length) return { moments: [], nextCursor: null };
       const { data: rows } = await context.supabase
         .from("moments")
         .select(MOMENT_SELECT)
-        .in("id", ids);
+        .in("id", ids)
+        .is("deleted_at", null);
       return { moments: await decorate((rows ?? []) as unknown as FeedRow[], context.userId), nextCursor: null };
     }
 
