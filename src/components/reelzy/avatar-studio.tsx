@@ -621,15 +621,17 @@ export function AvatarStudio({
             muted
             className={`size-full object-cover ${facing === "user" ? "-scale-x-100" : ""}`}
           />
+        ) : buildReady ? (
+          <AvatarPreview t={traits} className="size-full object-cover" />
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              {buildReady
-                ? "Fine-tune every feature below, then press create — Reelzy renders the 3D you."
-                : "Start by choosing who you are, then shape every feature."}
+              Pick who you are below — your avatar appears here straight away, and changes with
+              every single thing you tap.
             </p>
           </div>
         )}
+
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
