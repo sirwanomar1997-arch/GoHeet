@@ -408,20 +408,40 @@ function CameraPage() {
             )}
             {overlay?.text ? (
               <div
-                className={`pointer-events-none absolute inset-0 flex justify-center px-6 text-center ${overlayPlaceClass(
-                  overlay.place,
-                )}`}
+                ref={stageRef}
+                className="absolute inset-0 touch-none"
+                onPointerMove={onDragMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
               >
                 <p
-                  className={`max-w-[85%] text-[24px] leading-tight ${overlayFontClass(
-                    overlay.font,
-                  )} ${overlayStyleClass(overlay.style)}`}
+                  onPointerDown={startDrag}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Drag to move your text"
+                  className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
+                    overlayStyleProps(overlay.style, overlay.color).className
+                  }`}
+                  style={{
+                    left: `${overlay.x}%`,
+                    top: `${overlay.y}%`,
+                    transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
+                    fontSize: `${overlay.size}px`,
+                    ...overlayFontStyle(overlay.font),
+                    ...overlayStyleProps(overlay.style, overlay.color).style,
+                  }}
                 >
                   {overlay.text}
                 </p>
               </div>
             ) : null}
           </div>
+          {overlay?.text ? (
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              Drag the text anywhere on the frame.
+            </p>
+          ) : null}
+
 
           {/* Creative tools — a look, a line of type, a track. Nothing heavier. */}
           <div className="mt-4 flex gap-2">
