@@ -8,7 +8,8 @@ import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentStage } from "@/components/reelzy/moment-stage";
-import { formatCount, dayLabel, timeAgo } from "@/components/reelzy/format";
+import { formatCount, dayLabel } from "@/components/reelzy/format";
+import { filterCss } from "@/components/reelzy/creative";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
@@ -294,41 +295,39 @@ function ProfilePage() {
                     </span>
                   </div>
 
-                  <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2.5 px-5">
                     {items.map((m) => (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => setOpen(m)}
-                        className="group relative aspect-[3/5] w-[58%] shrink-0 snap-start overflow-hidden rounded-[26px] border border-border bg-surface text-left"
+                        className="group relative aspect-[9/16] overflow-hidden rounded-[22px] border border-border bg-surface text-left"
                       >
                         {m.posterUrl || m.mediaUrl ? (
                           <img
                             src={m.posterUrl ?? m.mediaUrl ?? ""}
                             alt={m.caption ?? "Moment"}
                             className="size-full object-cover"
+                            style={filterCss(m.styleFilter) ? { filter: filterCss(m.styleFilter) } : undefined}
                             loading="lazy"
                           />
                         ) : null}
                         <span className="stage-vignette absolute inset-0" aria-hidden />
                         {m.kind !== "photo" ? (
-                          <span className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-background/55 backdrop-blur">
-                            <Play className="size-3.5 fill-current" />
+                          <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
+                            <Play className="size-3 fill-current" />
                           </span>
                         ) : null}
-                        <span className="absolute inset-x-0 bottom-0 p-3.5">
-                          <span className="line-clamp-2 block font-display text-sm font-semibold leading-snug tracking-tight">
-                            {m.caption || (m.kind === "photo" ? "A still" : "A moment")}
-                          </span>
-                          <span className="data-figure mt-1.5 block text-[10px] text-muted-foreground">
-                            {timeAgo(m.createdAt)} · {formatCount(m.viewCount)} seen ·{" "}
-                            {formatCount(m.likeCount)} felt
-                          </span>
-                          {m.locationLabel ? (
-                            <span className="data-figure mt-0.5 block text-[10px] text-primary">
-                              {m.locationLabel}
+                        <span className="absolute inset-x-0 bottom-0 p-2.5">
+                          {m.caption ? (
+                            <span className="line-clamp-1 block font-display text-[13px] font-semibold leading-snug tracking-tight">
+                              {m.caption}
                             </span>
                           ) : null}
+                          <span className="data-figure mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <span>{formatCount(m.viewCount)} seen</span>
+                            <span className="text-primary">{formatCount(m.likeCount)} felt</span>
+                          </span>
                         </span>
                       </button>
                     ))}
