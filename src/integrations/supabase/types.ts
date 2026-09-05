@@ -433,13 +433,38 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_private: {
+        Row: {
+          birth_date: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           allow_comments: string
           avatar_url: string | null
           banned_at: string | null
           bio: string | null
-          birth_date: string | null
           created_at: string
           deleted_at: string | null
           deletion_requested_at: string | null
@@ -461,7 +486,6 @@ export type Database = {
           avatar_url?: string | null
           banned_at?: string | null
           bio?: string | null
-          birth_date?: string | null
           created_at?: string
           deleted_at?: string | null
           deletion_requested_at?: string | null
@@ -483,7 +507,6 @@ export type Database = {
           avatar_url?: string | null
           banned_at?: string | null
           bio?: string | null
-          birth_date?: string | null
           created_at?: string
           deleted_at?: string | null
           deletion_requested_at?: string | null
