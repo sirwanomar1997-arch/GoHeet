@@ -112,36 +112,8 @@ const EXPRESSION = [
   "Thoughtful",
   "Surprised delight",
 ];
-const OUTFIT = [
-  "Crisp white shirt",
-  "Oversized hoodie",
-  "Denim jacket",
-  "Leather biker jacket",
-  "Crewneck sweater",
-  "Ribbed turtleneck",
-  "Tank top",
-  "Tailored blazer",
-  "Graphic tee",
-  "Flannel shirt",
-  "Varsity jacket",
-  "Puffer coat",
-  "Trench coat",
-  "Silk slip dress",
-  "Satin blouse",
-  "Linen shirt, open collar",
-  "Knit cardigan",
-  "Track jacket",
-  "Utility jumpsuit",
-  "Corduroy overshirt",
-  "Wool peacoat",
-  "Mesh layered top",
-  "Embroidered jacket",
-  "Kimono robe",
-  "Kaftan",
-  "Sherwani collar",
-  "Traditional embroidered tunic",
-  "Bare shoulders, minimal",
-];
+const OUTFIT = OUTFIT_MALE;
+
 const FABRIC = [
   "Matte cotton",
   "Soft knit",
