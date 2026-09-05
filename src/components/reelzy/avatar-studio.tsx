@@ -11,6 +11,21 @@ import {
   HAIR_FEMALE,
   OUTFIT_MALE,
   OUTFIT_FEMALE,
+  FACE_SHAPES,
+  EYE_SHAPES,
+  BROWS_MALE,
+  BROWS_FEMALE,
+  LIPS_MALE,
+  LIPS_FEMALE,
+  NOSES,
+  EARS,
+  FACIAL_HAIR,
+  EYEWEAR,
+  HEADWEAR_MALE,
+  HEADWEAR_FEMALE,
+  JEWELRY_MALE,
+  JEWELRY_FEMALE,
+  MAKEUP,
   cellFor,
   cellStyle,
 } from "@/components/reelzy/avatar-sheets";
@@ -70,14 +85,7 @@ type Traits = {
 const GENDER = ["Male", "Female"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
 const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
-const FACE = ["Oval", "Round", "Square jaw", "Heart", "Long", "Sharp cheekbones"];
 const EYE_COLOR = ["Dark brown", "Hazel", "Amber", "Green", "Blue", "Grey"];
-const EYE_SHAPE = ["Almond", "Round", "Wide-set", "Hooded", "Monolid", "Upturned"];
-const BROWS = ["Soft arched", "Straight", "Thick bold", "Thin", "Bushy"];
-const NOSE = ["Small button", "Straight", "Narrow", "Wide", "Roman bridge", "Upturned"];
-const LIPS = ["Thin", "Medium", "Full", "Wide smile"];
-const EARS = ["Small", "Medium", "Large", "Slightly protruding", "Pointed lobes"];
-const HAIR = HAIR_MALE;
 
 const HAIR_COLOR = [
   "Jet black",
@@ -91,7 +99,7 @@ const HAIR_COLOR = [
   "Pastel pink",
   "Teal",
 ];
-const FACIAL_HAIR = ["Clean shaven", "Stubble", "Short beard", "Full beard", "Moustache", "Goatee"];
+
 const EXPRESSION = [
   "Warm half-smile",
   "Big joyful grin",
@@ -100,7 +108,7 @@ const EXPRESSION = [
   "Thoughtful",
   "Surprised delight",
 ];
-const OUTFIT = OUTFIT_MALE;
+
 
 const FABRIC = [
   "Matte cotton",
@@ -131,63 +139,6 @@ const OUTFIT_COLOR = [
   "Sage",
   "Electric blue",
   "Champagne gold",
-];
-const HEADWEAR = [
-  "None",
-  "Cap",
-  "Beanie",
-  "Bucket hat",
-  "Headband",
-  "Bandana",
-  "Beret",
-  "Headscarf",
-  "Wide-brim hat",
-  "Cowboy hat",
-  "Durag",
-  "Turban",
-  "Hair clips",
-  "Silk scarf tied back",
-  "Headphones around neck",
-];
-const EYEWEAR = [
-  "None",
-  "Thin metal glasses",
-  "Bold square frames",
-  "Round wire glasses",
-  "Cat-eye frames",
-  "Aviator sunglasses",
-  "Retro shades",
-  "Sport visor shades",
-  "Clear-frame glasses",
-];
-const MAKEUP = [
-  "Natural glow",
-  "Soft matte base",
-  "Winged eyeliner",
-  "Smoky eyes",
-  "Bold red lip",
-  "Nude gloss",
-  "Berry lip",
-  "Warm blush",
-  "Highlighted cheekbones",
-  "Shimmer eyelids",
-  "Graphic liner",
-  "Bronzed contour",
-  "Glitter accents",
-];
-const JEWELRY = [
-  "Hoop earrings",
-  "Stud earrings",
-  "Ear cuff",
-  "Layered necklaces",
-  "Chunky chain",
-  "Pendant necklace",
-  "Nose ring",
-  "Septum ring",
-  "Choker",
-  "Statement rings",
-  "Pearl set",
-  "Gold bangles",
 ];
 const BACKGROUND = [
   "Warm orange-pink glow",
@@ -400,59 +351,6 @@ const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => 
   opts,
 });
 
-/** Options that only make sense for one gender. */
-const BROWS_F = ["Soft arched", "Sculpted arch", "Straight", "Feathered", "Thin", "Bold defined"];
-const LIPS_F = ["Full pout", "Heart-shaped", "Medium", "Wide smile", "Cupid's bow"];
-const HEADWEAR_F = [
-  "None",
-  "Headband",
-  "Silk scarf tied back",
-  "Beret",
-  "Wide-brim hat",
-  "Bucket hat",
-  "Beanie",
-  "Hair clips",
-  "Hair bow",
-  "Flower crown",
-  "Headscarf",
-  "Cap",
-];
-const HEADWEAR_M = [
-  "None",
-  "Cap",
-  "Beanie",
-  "Bucket hat",
-  "Bandana",
-  "Durag",
-  "Wide-brim hat",
-  "Cowboy hat",
-  "Turban",
-  "Headphones around neck",
-];
-const JEWELRY_F = [
-  "Hoop earrings",
-  "Stud earrings",
-  "Drop earrings",
-  "Pearl set",
-  "Layered necklaces",
-  "Pendant necklace",
-  "Choker",
-  "Delicate chain",
-  "Nose ring",
-  "Statement rings",
-  "Gold bangles",
-  "Ear cuff",
-];
-const JEWELRY_M = [
-  "Stud earrings",
-  "Hoop earring",
-  "Chunky chain",
-  "Pendant necklace",
-  "Ear cuff",
-  "Signet ring",
-  "Leather cord necklace",
-  "Nose ring",
-];
 
 function sectionsFor(gender: string) {
   const female = gender === "Female";
