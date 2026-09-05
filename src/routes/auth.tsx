@@ -7,6 +7,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { signInWithIdentifier } from "@/lib/reelzy.functions";
 import { ReelzyMark, ReelzyWordmark } from "@/components/reelzy/logo";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
@@ -38,6 +39,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [code, setCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -244,16 +246,27 @@ function AuthPage() {
               {(mode === "signup" || (mode === "signin" && !isPhone)) && (
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                    required
-                    minLength={8}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1.5 h-12 bg-surface-raised"
-                  />
+                  <div className="relative mt-1.5">
+                    <Input
+                      id="password"
+                      type={showPw ? "text" : "password"}
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      required
+                      minLength={8}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 bg-surface-raised pr-11"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw((v) => !v)}
+                      aria-label={showPw ? "Hide password" : "Show password"}
+                      aria-pressed={showPw}
+                      className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+                    >
+                      {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
                 </div>
               )}
             </>
