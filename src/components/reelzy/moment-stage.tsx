@@ -65,7 +65,15 @@ const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "other", label: "Something else" },
 ];
 
-export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: () => void }) {
+export function MomentStage({
+  moment,
+  onGone,
+  fullscreen = false,
+}: {
+  moment: MomentCard;
+  onGone?: () => void;
+  fullscreen?: boolean;
+}) {
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -249,7 +257,11 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   return (
     <section
       ref={containerRef}
-      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
+      className={
+        fullscreen
+          ? "relative h-[100svh] w-full shrink-0 snap-start snap-always overflow-hidden bg-black"
+          : "animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
+      }
       aria-label={`Moment by ${moment.author.username}`}
     >
       {moment.kind === "video" && moment.mediaUrl ? (
@@ -318,11 +330,29 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
-        <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
-        <span className="data-figure text-[11px] text-foreground">
-          {formatCount(moment.viewCount)} seen
+      <div
+        className={`absolute top-4 flex items-center gap-3 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md ${
+          fullscreen ? "left-1/2 -translate-x-1/2" : "left-4"
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
+          <span className="data-figure text-[11px] text-foreground">
+            {formatCount(moment.viewCount)} seen
+          </span>
         </span>
+        {fullscreen ? (
+          <>
+            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+              <Flame className="size-3" strokeWidth={2} />
+              {formatCount(likeCount)}
+            </span>
+            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+              <MessageCircle className="size-3" strokeWidth={2} />
+              {formatCount(moment.commentCount)}
+            </span>
+          </>
+        ) : null}
       </div>
 
       {moment.kind === "video" ? (

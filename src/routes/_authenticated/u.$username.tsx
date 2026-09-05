@@ -8,7 +8,7 @@ import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pen
 import { getProfile, getFeed, toggleFollow, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
-import { MomentStage } from "@/components/reelzy/moment-stage";
+import { MomentReel } from "@/components/reelzy/moment-reel";
 import { formatCount, dayLabel } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
 
@@ -26,7 +26,7 @@ function ProfilePage() {
   const [composing, setComposing] = useState(false);
   const report = useServerFn(submitReport);
   const qc = useQueryClient();
-  const [open, setOpen] = useState<MomentCard | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["profile", username],
@@ -75,24 +75,6 @@ function ProfilePage() {
 
 
 
-  if (open) {
-    return (
-      <AppShell hideNav>
-        <div className="px-3 pt-3">
-          <button type="button" onClick={() => setOpen(null)} className="mb-3 text-sm underline">
-            ← Back to timeline
-          </button>
-          <MomentStage
-            moment={open}
-            onGone={() => {
-              setOpen(null);
-              void refetch();
-            }}
-          />
-        </div>
-      </AppShell>
-    );
-  }
 
   return (
     <AppShell hideNav>
@@ -411,7 +393,7 @@ function ProfilePage() {
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => setOpen(m)}
+                        onClick={() => setOpenIndex(list.indexOf(m))}
                         className="group relative aspect-[9/16] overflow-hidden rounded-[22px] border border-border bg-surface text-left"
                       >
                         {m.posterUrl || m.mediaUrl ? (
@@ -445,6 +427,19 @@ function ProfilePage() {
                   </div>
                 </div>
               ))}
+
+              {openIndex !== null ? (
+                <MomentReel
+                  moments={list}
+                  startIndex={openIndex}
+                  title={tab === "liked" ? "Liked" : tab === "saved" ? "Saved" : `@${p.username}`}
+                  onClose={() => setOpenIndex(null)}
+                  onGone={() => {
+                    setOpenIndex(null);
+                    void refetch();
+                  }}
+                />
+              ) : null}
             </div>
           );
         })()}
