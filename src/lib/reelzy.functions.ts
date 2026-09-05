@@ -236,6 +236,18 @@ export const getMe = createServerFn({ method: "POST" })
     };
   });
 
+const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat"] as const;
+const socialSchema = z
+  .record(z.enum(SOCIAL_KEYS), z.string().trim().max(80))
+  .transform((v) => {
+    const out: Record<string, string> = {};
+    for (const [k, val] of Object.entries(v)) {
+      const handle = (val ?? "").replace(/^@+/, "").trim();
+      if (handle) out[k] = handle;
+    }
+    return out;
+  });
+
 export const updateProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: {
@@ -245,6 +257,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     isPrivate?: boolean;
     discoverable?: boolean;
     allowComments?: string;
+    socialLinks?: Record<string, string>;
   }) => ({
     displayName: z.string().trim().max(40).optional().parse(d.displayName),
     bio: z.string().trim().max(160).optional().parse(d.bio),
@@ -254,6 +267,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     allowComments: d.allowComments
       ? z.enum(["everyone", "followers", "nobody"]).parse(d.allowComments)
       : undefined,
+    socialLinks: d.socialLinks ? socialSchema.parse(d.socialLinks) : undefined,
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
@@ -264,7 +278,9 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.isPrivate !== undefined) patch["is_private"] = data.isPrivate;
     if (data.discoverable !== undefined) patch["discoverable"] = data.discoverable;
     if (data.allowComments !== undefined) patch["allow_comments"] = data.allowComments;
+    if (data.socialLinks !== undefined) patch["social_links"] = data.socialLinks;
     // Profile pictures are avatars only — avatar_url is set exclusively by saveAvatar.
+
     if (data.username) {
       const { data: current } = await sb
         .from("profiles")
@@ -862,7 +878,10 @@ export const getProfile = createServerFn({ method: "POST" })
         totalViews: Number(profile.total_views ?? 0),
         totalLikes: Number(profile.total_likes ?? 0),
         isPrivate: profile.is_private,
+        socialLinks: ((profile as unknown as { social_links?: Record<string, string> })
+          .social_links ?? {}) as Record<string, string>,
         createdAt: profile.created_at,
+
       },
       moments: await decorate((rows ?? []) as unknown as FeedRow[], context.userId),
       isFollowing: !!rel,
@@ -1162,4 +1181,21 @@ export const saveAvatar = createServerFn({ method: "POST" })
     const signed = await signAvatars([path]);
     await track(context.userId, "avatar_created");
     return { path, url: signed[path] ?? null };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Activity history                                                    */
+/* ------------------------------------------------------------------ */
+
+export const listMyComments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("comments")
+      .select("id, body, created_at, moment_id")
+      .eq("author_id", context.userId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { comments: data ?? [] };
   });

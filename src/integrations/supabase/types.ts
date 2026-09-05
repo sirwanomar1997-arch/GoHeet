@@ -542,6 +542,7 @@ export type Database = {
           id: string
           is_private: boolean
           moment_count: number
+          social_links: Json
           suspended_until: string | null
           total_likes: number
           total_views: number
@@ -563,6 +564,7 @@ export type Database = {
           id: string
           is_private?: boolean
           moment_count?: number
+          social_links?: Json
           suspended_until?: string | null
           total_likes?: number
           total_views?: number
@@ -584,6 +586,7 @@ export type Database = {
           id?: string
           is_private?: boolean
           moment_count?: number
+          social_links?: Json
           suspended_until?: string | null
           total_likes?: number
           total_views?: number

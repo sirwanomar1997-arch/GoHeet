@@ -120,7 +120,7 @@ function ProfilePage() {
           {data.isSelf ? (
             <div className="mt-3 flex items-center gap-2">
               <Link
-                to="/settings"
+                to="/edit-profile"
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Pencil className="size-3" /> Edit profile
@@ -143,6 +143,34 @@ function ProfilePage() {
               {p.bio}
             </p>
           ) : null}
+
+          {Object.keys(p.socialLinks ?? {}).length > 0 ? (
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {Object.entries(p.socialLinks ?? {}).map(([key, handle]) => {
+                const base: Record<string, string> = {
+                  instagram: "https://instagram.com/",
+                  tiktok: "https://tiktok.com/@",
+                  youtube: "https://youtube.com/@",
+                  twitter: "https://x.com/",
+                  facebook: "https://facebook.com/",
+                  snapchat: "https://snapchat.com/add/",
+                };
+                if (!base[key]) return null;
+                return (
+                  <a
+                    key={key}
+                    href={`${base[key]}${handle}`}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium capitalize text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {key}
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
+
 
           {/* stat band — a premium segmented strip, brand accent on REELZ */}
           <div className="mt-6 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
