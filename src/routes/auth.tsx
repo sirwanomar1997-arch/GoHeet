@@ -19,12 +19,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in to Reelzy" },
+      { title: "Log in to Reelzy" },
       {
         name: "description",
-        content: "Create your Reelzy account or sign back in to capture and share real moments.",
+        content: "Log back in to Reelzy to capture and share real moments, or create a new account.",
       },
-      { property: "og:title", content: "Sign in to Reelzy" },
+      { property: "og:title", content: "Log in to Reelzy" },
       { property: "og:description", content: "Camera-first social video. Real moments only." },
     ],
   }),
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signup");
+  const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -112,12 +112,10 @@ function AuthPage() {
         </Link>
 
         <h1 className="mt-12 font-display text-3xl font-extrabold tracking-[-0.04em]">
-          {mode === "signup" ? "Real moments." : "Welcome back."}
+          Real moments.
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "signup"
-            ? "Capture your moment, right as it happens. Just life, pressed into a reality frame."
-            : "Your moments are waiting."}
+          Capture your moment, right as it happens. Just life, pressed into a reality frame.
         </p>
 
         <button
@@ -184,16 +182,16 @@ function AuthPage() {
             disabled={busy}
             className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
           >
-            {busy ? "One moment…" : mode === "signup" ? "Create account" : "Sign in"}
+            {busy ? "One moment…" : mode === "signin" ? "Log in" : "Create account"}
           </Button>
         </form>
 
         <button
           type="button"
-          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="mt-6 w-full text-center text-sm text-muted-foreground underline"
         >
-          {mode === "signup" ? "I already have an account" : "I need an account"}
+          {mode === "signin" ? "Create account" : "Log in"}
         </button>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
