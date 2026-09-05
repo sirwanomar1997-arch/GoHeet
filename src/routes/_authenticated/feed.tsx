@@ -24,7 +24,6 @@ function FeedPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["feed", scope],
     queryFn: () => fetchFeed({ data: { scope } }),
-    enabled: !!me?.profile,
   });
 
   return (
