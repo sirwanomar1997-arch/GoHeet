@@ -178,7 +178,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
     if (!aud) return;
     if (!vid) return;
     const play = () => {
-      aud.currentTime = vid.currentTime % (aud.duration || 1);
+      const offsetSeconds = moment.music ? moment.music.offsetMs / 1000 : 0;
+      const duration = aud.duration || 1;
+      aud.currentTime = (offsetSeconds + vid.currentTime) % duration;
+      aud.volume = moment.music?.volume ?? 0.75;
       void aud.play().catch(() => undefined);
     };
     const pause = () => aud.pause();
@@ -189,7 +192,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       vid.removeEventListener("pause", pause);
       aud.pause();
     };
-  }, [moment.music?.url]);
+  }, [moment.music]);
 
   const likeMutation = useMutation({
     mutationFn: () => like({ data: { momentId: moment.id } }),
@@ -258,6 +261,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           playsInline
           loop
           muted={muted}
+          volume={moment.originalAudioVolume}
           preload="metadata"
           onClick={togglePlayback}
         />
