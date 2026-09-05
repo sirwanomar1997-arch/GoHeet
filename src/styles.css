@@ -45,6 +45,10 @@
   --color-ring-offset-background: var(--background);
   --color-ember: var(--ember);
   --color-ember-deep: var(--ember-deep);
+  --color-nav-reelz: var(--nav-reelz);
+  --color-nav-search: var(--nav-search);
+  --color-nav-pulse: var(--nav-pulse);
+  --color-nav-profile: var(--nav-profile);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-sidebar: var(--sidebar);
@@ -77,6 +81,10 @@
 
   --ember: oklch(0.8 0.168 68);
   --ember-deep: oklch(0.62 0.238 20);
+  --nav-reelz: oklch(0.82 0.18 72);
+  --nav-search: oklch(0.8 0.17 220);
+  --nav-pulse: oklch(0.7 0.25 350);
+  --nav-profile: oklch(0.79 0.18 155);
 
   --primary: oklch(0.8 0.168 68);
   --primary-foreground: oklch(0.16 0.02 50);
@@ -203,6 +211,53 @@
     0 0 46px -10px oklch(0.62 0.238 20 / 55%);
 }
 
+@utility nav-dock {
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  border-radius: 2rem 2rem 0 0;
+  box-shadow:
+    0 -18px 45px -28px oklch(0 0 0 / 90%),
+    inset 0 1px 0 color-mix(in oklab, var(--foreground) 7%, transparent);
+  backdrop-filter: blur(24px);
+}
+
+@utility nav-glow-reelz {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--nav-reelz) 75%, transparent))
+    drop-shadow(0 0 15px color-mix(in oklab, var(--nav-reelz) 38%, transparent));
+}
+
+@utility nav-glow-search {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--nav-search) 75%, transparent))
+    drop-shadow(0 0 15px color-mix(in oklab, var(--nav-search) 38%, transparent));
+}
+
+@utility nav-glow-pulse {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--nav-pulse) 75%, transparent))
+    drop-shadow(0 0 15px color-mix(in oklab, var(--nav-pulse) 38%, transparent));
+}
+
+@utility nav-glow-profile {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--nav-profile) 75%, transparent))
+    drop-shadow(0 0 15px color-mix(in oklab, var(--nav-profile) 38%, transparent));
+}
+
+@utility capture-orbit {
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  border: 2px solid color-mix(in oklab, var(--ember) 45%, transparent);
+  box-shadow:
+    0 0 0 7px color-mix(in oklab, var(--ember-deep) 10%, transparent),
+    0 0 28px color-mix(in oklab, var(--ember) 36%, transparent),
+    0 16px 36px -15px color-mix(in oklab, var(--ember-deep) 78%, transparent);
+}
+
+@utility capture-face {
+  background: var(--gradient-ember);
+  box-shadow:
+    inset 0 2px 2px color-mix(in oklab, var(--foreground) 26%, transparent),
+    inset 0 -8px 18px color-mix(in oklab, var(--ember-deep) 35%, transparent);
+  animation: capture-breathe 2.8s ease-in-out infinite;
+}
+
 @utility hairline-top {
   box-shadow: inset 0 1px 0 oklch(1 0 0 / 6%);
 }
@@ -237,6 +292,22 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+@keyframes capture-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 2px color-mix(in oklab, var(--foreground) 26%, transparent),
+      inset 0 -8px 18px color-mix(in oklab, var(--ember-deep) 35%, transparent),
+      0 0 12px color-mix(in oklab, var(--ember) 16%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 2px color-mix(in oklab, var(--foreground) 30%, transparent),
+      inset 0 -8px 18px color-mix(in oklab, var(--ember-deep) 28%, transparent),
+      0 0 24px color-mix(in oklab, var(--ember) 38%, transparent);
   }
 }
 
