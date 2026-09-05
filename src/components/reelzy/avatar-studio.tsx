@@ -742,31 +742,43 @@ export function AvatarStudio({
     value: string;
     active: boolean;
     onClick: () => void;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={value}
-      aria-pressed={active}
-      title={value}
-      className={`w-[68px] shrink-0 rounded-2xl border p-1.5 transition-all ${
-        active
-          ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
-          : "border-border bg-surface text-foreground/70"
-      }`}
-    >
-      <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
-        <OptionVisual group={group} value={value} />
-      </div>
-      <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
-        {value}
-      </span>
-    </button>
-  );
+  }) => {
+    const cell = cellFor(group, value);
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={value}
+        aria-pressed={active}
+        title={value}
+        className={`${cell ? "w-[92px]" : "w-[68px]"} shrink-0 rounded-2xl border p-1.5 transition-all ${
+          active
+            ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
+            : "border-border bg-surface text-foreground/70"
+        }`}
+      >
+        <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
+          {cell ? (
+            <div className="size-full bg-cover" style={cellStyle(cell)} role="img" aria-label={value} />
+          ) : (
+            <OptionVisual group={group} value={value} />
+          )}
+        </div>
+        {cell ? null : (
+          <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
+            {value}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   const buildReady = !!traits.gender;
+  const sections = sectionsFor(traits.gender);
+  const activeSection = sections.some((s) => s.id === section) ? section : "face";
 
   const edit = (fn: (t: Traits) => Traits) => setTraits(fn);
+
 
 
   return (
