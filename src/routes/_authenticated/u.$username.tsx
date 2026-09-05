@@ -34,6 +34,15 @@ function ProfilePage() {
     queryFn: () => fetchProfile({ data: { username, sort } }),
   });
 
+  // Opening a shared reel link (?r=<id>) lands straight on that reel.
+  useEffect(() => {
+    if (!data?.moments?.length) return;
+    const id = new URLSearchParams(window.location.search).get("r");
+    if (!id) return;
+    const i = data.moments.findIndex((m) => m.id === id);
+    if (i >= 0) setOpenIndex(i);
+  }, [data]);
+
   const followMutation = useMutation({
     mutationFn: () => follow({ data: { userId: data!.profile!.id } }),
     onSuccess: () => {
