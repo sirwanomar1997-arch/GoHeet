@@ -63,6 +63,7 @@ function SettingsPage() {
   const [clearing, setClearing] = useState(false);
   const [confirm, setConfirm] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -274,12 +275,18 @@ function SettingsPage() {
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </button>
+            <button type="button" className={row} onClick={() => setShowBlocked((v) => !v)}>
+              <span className="flex items-center gap-3">
+                <Ban className="size-4 text-rose-500" /> Blocked people
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </button>
           </div>
           {showComments ? (
             myComments.isLoading ? (
               <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
             ) : (myComments.data?.comments.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">You haven&apos;t commented yet.</p>
+              <p className="mt-2 text-sm text-muted-foreground">You haven't commented yet.</p>
             ) : (
               <ul className="mt-2 divide-y divide-border">
                 {myComments.data?.comments.map((c) => (
@@ -288,6 +295,31 @@ function SettingsPage() {
                     <p className="text-[11px] text-muted-foreground">
                       {new Date(c.created_at).toLocaleDateString()}
                     </p>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : null}
+          {showBlocked ? (
+            blocked.isLoading ? (
+              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
+            ) : (blocked.data?.blocked.length ?? 0) === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">You haven't blocked anyone.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border">
+                {blocked.data?.blocked.map((b) => (
+                  <li key={b.id} className="flex items-center justify-between py-2.5">
+                    <span className="text-sm">@{b.username}</span>
+                    <button
+                      type="button"
+                      className="text-xs underline"
+                      onClick={async () => {
+                        await unblock({ data: { userId: b.id } });
+                        void blocked.refetch();
+                      }}
+                    >
+                      Unblock
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -487,31 +519,6 @@ function SettingsPage() {
           </Button>
         </section>
 
-        <section className={section}>
-          <h2 className="font-display text-base font-semibold">Blocked people</h2>
-          {(blocked.data?.blocked.length ?? 0) === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">You haven&apos;t blocked anyone.</p>
-          ) : (
-            <ul className="mt-3 divide-y divide-border">
-              {blocked.data?.blocked.map((b) => (
-                <li key={b.id} className="flex items-center justify-between py-2.5">
-                  <span className="text-sm">@{b.username}</span>
-                  <button
-                    type="button"
-                    className="text-xs underline"
-                    onClick={async () => {
-                      await unblock({ data: { userId: b.id } });
-                      void blocked.refetch();
-                    }}
-                  >
-                    Unblock
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
         {me?.isStaff ? (
           <Link to="/admin" className={`${section} block text-sm font-semibold`}>
             Open moderation dashboard →
@@ -540,7 +547,7 @@ function SettingsPage() {
           <UserPlus className="size-4" /> Switch or add another account
         </button>
         <p className="-mt-2 text-center text-[11px] text-muted-foreground">
-          You&apos;ll be taken to the login screen to sign in with another account.
+          You'll be taken to the login screen to sign in with another account.
         </p>
 
         <button
