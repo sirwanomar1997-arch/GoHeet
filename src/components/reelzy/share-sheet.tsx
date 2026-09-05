@@ -78,7 +78,7 @@ export function ShareSheet({
 
   const { data } = useQuery({
     queryKey: ["share-people"],
-    queryFn: () => fetchConversations({ data: {} }),
+    queryFn: () => fetchConversations({ data: undefined }),
     enabled: open,
   });
 
