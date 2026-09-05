@@ -577,10 +577,10 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
           <rect x="0" y={eyeY + 24} width="300" height="200" />
         </clipPath>
         <clipPath id={id("shortBeard")}>
-          <rect x="0" y={eyeY + 30} width="300" height="200" />
+          <rect x="0" y={eyeY + 46} width="300" height="200" />
         </clipPath>
         <clipPath id={id("fullBeard")}>
-          <rect x="0" y={eyeY + 6} width="300" height="220" />
+          <rect x="0" y={eyeY + 28} width="300" height="220" />
         </clipPath>
         <clipPath id={id("faceWindow")}>
           <ellipse cx={cx} cy={eyeY + 20} rx={f.cheek - 8} ry={(chin - eyeY) * 0.95} />
