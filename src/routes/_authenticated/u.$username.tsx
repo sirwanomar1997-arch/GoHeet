@@ -75,24 +75,6 @@ function ProfilePage() {
 
 
 
-  if (open) {
-    return (
-      <AppShell hideNav>
-        <div className="px-3 pt-3">
-          <button type="button" onClick={() => setOpen(null)} className="mb-3 text-sm underline">
-            ← Back to timeline
-          </button>
-          <MomentStage
-            moment={open}
-            onGone={() => {
-              setOpen(null);
-              void refetch();
-            }}
-          />
-        </div>
-      </AppShell>
-    );
-  }
 
   return (
     <AppShell hideNav>
