@@ -263,7 +263,7 @@ export function AvatarPreview({ t, className }: { t: PreviewTraits; className?: 
     <path
       d={headPath}
       fill={hair}
-      clipPath={has(t.facialHair, "full") ? {`url(#${id("fullBeard")})`} : {`url(#${id("shortBeard")})`}}
+      clipPath={`url(#${id(has(t.facialHair, "full") ? "fullBeard" : "shortBeard")})`}
     />
   );
 
