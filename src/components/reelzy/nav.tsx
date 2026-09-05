@@ -115,11 +115,11 @@ export function ReelzyNav() {
 }
 
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, hideNav = false }: { children: React.ReactNode; hideNav?: boolean }) {
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className={`min-h-screen bg-background ${hideNav ? "pb-10" : "pb-24"}`}>
       <div className="mx-auto max-w-lg">{children}</div>
-      <ReelzyNav />
+      {hideNav ? null : <ReelzyNav />}
     </div>
   );
 }

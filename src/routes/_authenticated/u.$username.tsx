@@ -57,7 +57,7 @@ function ProfilePage() {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <LoadingRail label="Opening timeline" />
       </AppShell>
     );
@@ -65,7 +65,7 @@ function ProfilePage() {
 
   if (!data?.profile) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <EmptyState title="No one by that name." line={`@${username} doesn't exist on Reelzy.`} />
       </AppShell>
     );
@@ -77,7 +77,7 @@ function ProfilePage() {
 
   if (open) {
     return (
-      <AppShell>
+      <AppShell hideNav>
         <div className="px-3 pt-3">
           <button type="button" onClick={() => setOpen(null)} className="mb-3 text-sm underline">
             ← Back to timeline
@@ -95,7 +95,7 @@ function ProfilePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell hideNav>
       {/* --- Avatar stage: the character is the page, not a tiny circle --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
         <div
@@ -154,12 +154,7 @@ function ProfilePage() {
             @{p.username}
           </p>
 
-          {/* nickname — smaller, sits where the bio area was */}
-          <h1 className="mt-1 text-center font-display text-xl font-bold tracking-[-0.03em]">
-            {p.displayName || p.username}
-          </h1>
-
-          {/* bio lives under the nickname, only when the user adds one */}
+          {/* bio lives under the username, only when the user adds one */}
           {p.bio ? (
             <p className="mt-2 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
               {p.bio}
@@ -197,10 +192,13 @@ function ProfilePage() {
               })}
             </div>
           ) : null}
-
+          {/* nickname — small, left-aligned, just above the stats band */}
+          <p className="mt-5 w-full px-1 text-left font-display text-[13px] font-semibold tracking-tight text-foreground/90">
+            {p.displayName || p.username}
+          </p>
 
           {/* stat band — a premium segmented strip, brand accent on REELZ */}
-          <div className="mt-6 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
               ["Reelz", formatCount(p.momentCount), true],
               ["Followers", formatCount(p.followerCount), false],
