@@ -277,7 +277,7 @@ function buildPrompt(t: Traits, pose: string, seed: number) {
     `${t.nose.toLowerCase()} nose`,
     `${t.lips.toLowerCase()} lips`,
     `${t.ears.toLowerCase()} ears`,
-    `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
+    female ? "" : (t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase()),
     t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
     `${t.expression.toLowerCase()} expression`,
     `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()} in ${t.fabric.toLowerCase()}`,
