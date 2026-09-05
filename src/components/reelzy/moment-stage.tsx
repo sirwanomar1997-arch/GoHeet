@@ -203,7 +203,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   return (
     <section
       ref={containerRef}
-      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[28px] bg-surface"
+      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
       aria-label={`Moment by ${moment.author.username}`}
     >
       {moment.kind === "video" && moment.mediaUrl ? (
@@ -216,7 +216,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           loop
           muted={muted}
           preload="metadata"
-          onClick={() => setMuted((m) => !m)}
+          onClick={togglePlayback}
         />
       ) : moment.mediaUrl ? (
         <img
@@ -230,8 +230,27 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
         </div>
       )}
 
-      {/* Seen ticker — Reelzy's honest view counter */}
-      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 backdrop-blur">
+      {/* Film treatment: vignette + grain so real footage reads cinematic. */}
+      <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
+      <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
+
+      {moment.kind === "video" && paused ? (
+        <button
+          type="button"
+          onClick={togglePlayback}
+          aria-label="Play"
+          className="absolute inset-0 grid place-items-center"
+        >
+          <span className="grid size-16 place-items-center rounded-full border border-[oklch(1_0_0/25%)] bg-background/45 backdrop-blur-md">
+            <Play className="ml-0.5 size-6" strokeWidth={1.8} />
+          </span>
+        </button>
+      ) : null}
+
+      {/* Top rail: honest seen ticker on the left, sound on the right */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
+
+      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
         <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
         <span className="data-figure text-[11px] text-foreground">
           {formatCount(moment.viewCount)} seen
@@ -243,11 +262,22 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           type="button"
           onClick={() => setMuted((m) => !m)}
           aria-label={muted ? "Turn sound on" : "Turn sound off"}
-          className="tap-target absolute right-4 top-4 grid place-items-center rounded-full border border-border bg-background/70 backdrop-blur"
+          className="tap-target absolute right-4 top-4 grid place-items-center rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 backdrop-blur-md"
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
         </button>
       ) : null}
+
+      {/* Hairline scrub line — progress, never a control bar */}
+      {moment.kind === "video" ? (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-[oklch(1_0_0/8%)]" aria-hidden>
+          <div
+            className="ember-fill h-full origin-left transition-[width] duration-150 ease-linear"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+      ) : null}
+
 
       {/* Bottom information band + reaction rail */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-16">
