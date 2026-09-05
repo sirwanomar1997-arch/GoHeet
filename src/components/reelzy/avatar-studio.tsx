@@ -37,14 +37,15 @@ import {
 /* ------------------------------------------------------------------ */
 
 const STYLE_BASE =
-  "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style: " +
-  "head-and-shoulders close-up, slight three-quarter turn, warm friendly gaze into camera, " +
-  "big glossy photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores " +
-  "and gentle blush, individually rendered glossy hair strands, realistic cloth weave, " +
-  "soft cinematic studio key light from the upper left with a warm rim light, shallow depth of field, " +
-  "smooth warm orange-to-pink gradient studio backdrop, octane-quality 8k render, " +
+  "Glossy stylized 3D cartoon character bust in premium Pixar-like animation style: " +
+  "friendly approachable head-and-shoulders portrait facing the camera with a warm natural smile, " +
+  "large expressive eyes with crisp catchlights, smooth soft-shaded skin, clean sculpted hair with " +
+  "clear texture, believable everyday clothing with visible fabric detail, " +
+  "even soft studio lighting with a gentle contact shadow, " +
+  "PURE WHITE seamless background, high-quality clean render, " +
   "vertical portrait with the WHOLE head, complete hairstyle and any headwear fully inside the frame " +
-  "with generous margin above the hair, shoulders visible, nothing cropped, no text, no watermark, no logo.";
+  "with generous margin above the hair, shoulders and upper chest visible, nothing cropped, " +
+  "no text, no watermark, no logo.";
 
 function describe(t: Traits) {
   const female = t.gender === "Female";
