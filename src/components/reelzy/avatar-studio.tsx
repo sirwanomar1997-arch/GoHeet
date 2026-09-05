@@ -2,16 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Sparkles, RefreshCw, Check, SwitchCamera } from "lucide-react";
+import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, looking at camera, warm friendly closed-mouth half-smile, " +
+  "head and shoulders, three-quarter view, looking at camera, " +
   "large expressive photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores and peach fuzz, " +
   "individually rendered hair strands, soft cinematic studio key light from the upper left with gentle rim light, " +
-  "smooth warm orange-to-pink gradient studio background, shallow depth of field, octane-quality render, " +
+  "smooth studio gradient background, shallow depth of field, octane-quality render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
 
 type Traits = {
@@ -28,7 +28,12 @@ type Traits = {
   hair: string;
   hairColor: string;
   facialHair: string;
-  extra: string;
+  expression: string;
+  outfit: string;
+  outfitColor: string;
+  headwear: string;
+  background: string;
+  extras: string[];
 };
 
 const GENDER = ["Male", "Female", "Non-binary"];
@@ -47,13 +52,21 @@ const HAIR = [
   "Crew cut",
   "Messy short",
   "Curly afro",
+  "Coily",
   "Shoulder-length wavy",
   "Long straight",
+  "Long wavy",
   "Braids",
+  "Cornrows",
+  "Locs",
   "Top knot",
   "Bob",
+  "Pixie cut",
   "Ponytail",
+  "Side part",
+  "Shaved sides",
   "Bald",
+  "Hijab",
 ];
 const HAIR_COLOR = [
   "Jet black",
@@ -64,9 +77,111 @@ const HAIR_COLOR = [
   "Platinum",
   "Salt & pepper",
   "Ginger",
+  "Pastel pink",
+  "Teal",
 ];
 const FACIAL_HAIR = ["Clean shaven", "Stubble", "Short beard", "Full beard", "Moustache", "Goatee"];
-const EXTRA = ["Glasses", "Freckles", "Dimples", "Earrings", "Hoodie", "White shirt", "Cap"];
+const EXPRESSION = [
+  "Warm half-smile",
+  "Big joyful grin",
+  "Calm and confident",
+  "Playful smirk",
+  "Thoughtful",
+  "Surprised delight",
+];
+const OUTFIT = [
+  "White shirt",
+  "Hoodie",
+  "Denim jacket",
+  "Leather jacket",
+  "Crewneck sweater",
+  "Turtleneck",
+  "Tank top",
+  "Blazer",
+  "Graphic tee",
+  "Flannel shirt",
+];
+const OUTFIT_COLOR = [
+  "Black",
+  "White",
+  "Cream",
+  "Charcoal",
+  "Burnt orange",
+  "Crimson",
+  "Mustard",
+  "Forest green",
+  "Navy",
+  "Dusty pink",
+  "Lavender",
+  "Teal",
+];
+const HEADWEAR = [
+  "None",
+  "Cap",
+  "Beanie",
+  "Bucket hat",
+  "Headband",
+  "Bandana",
+  "Beret",
+  "Headscarf",
+];
+const BACKGROUND = [
+  "Warm orange-pink glow",
+  "Deep amber",
+  "Crimson dusk",
+  "Peach sunrise",
+  "Soft sand",
+  "Midnight ember",
+  "Rose gold",
+  "Golden hour",
+];
+const EXTRA = [
+  "Glasses",
+  "Sunglasses",
+  "Freckles",
+  "Dimples",
+  "Hoop earrings",
+  "Stud earrings",
+  "Nose ring",
+  "Necklace",
+  "Beauty spot",
+  "Vitiligo",
+];
+
+const POSES = [
+  "chin tilted slightly up",
+  "head turned a touch to the left",
+  "head turned a touch to the right",
+  "relaxed straight-on pose",
+  "slight lean toward camera",
+  "shoulders angled softly",
+];
+
+const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
+
+function randomTraits(): Traits {
+  return {
+    gender: pick(["Male", "Female", "Non-binary"]),
+    age: pick(AGE),
+    skin: pick(SKIN),
+    face: pick(FACE),
+    eyeColor: pick(EYE_COLOR),
+    eyeShape: pick(EYE_SHAPE),
+    brows: pick(BROWS),
+    nose: pick(NOSE),
+    lips: pick(LIPS),
+    ears: pick(EARS),
+    hair: pick(HAIR),
+    hairColor: pick(HAIR_COLOR),
+    facialHair: pick(FACIAL_HAIR),
+    expression: pick(EXPRESSION),
+    outfit: pick(OUTFIT),
+    outfitColor: pick(OUTFIT_COLOR),
+    headwear: pick(HEADWEAR),
+    background: pick(BACKGROUND),
+    extras: EXTRA.filter(() => Math.random() < 0.18).slice(0, 2),
+  };
+}
 
 function buildPrompt(t: Traits) {
   const bits = [
@@ -80,9 +195,19 @@ function buildPrompt(t: Traits) {
     `${t.ears.toLowerCase()} ears`,
     `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
     t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
-    t.extra ? t.extra.toLowerCase() : "",
+    `${t.expression.toLowerCase()} expression`,
+    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
+    t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
+    ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
-  return `${STYLE_BASE} The character is a ${bits.join(", ")}.`;
+  // A unique pose + variation seed keeps every single render one of a kind,
+  // even when two people pick identical options.
+  const pose = pick(POSES);
+  const seed = Math.floor(Math.random() * 1_000_000);
+  return (
+    `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
+    `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
+  );
 }
 
 const SELFIE_PROMPT =
@@ -103,6 +228,11 @@ const GROUPS = [
   ["Hair", HAIR, "hair"],
   ["Hair colour", HAIR_COLOR, "hairColor"],
   ["Facial hair", FACIAL_HAIR, "facialHair"],
+  ["Expression", EXPRESSION, "expression"],
+  ["Outfit", OUTFIT, "outfit"],
+  ["Outfit colour", OUTFIT_COLOR, "outfitColor"],
+  ["Headwear", HEADWEAR, "headwear"],
+  ["Background", BACKGROUND, "background"],
 ] as const;
 
 export function AvatarStudio({
@@ -123,7 +253,7 @@ export function AvatarStudio({
   const [camError, setCamError] = useState<string | null>(null);
   const [traits, setTraits] = useState<Traits>({
     gender: "",
-    age: "30s",
+    age: "20s",
     skin: "Light olive",
     face: "Oval",
     eyeColor: "Dark brown",
@@ -135,7 +265,12 @@ export function AvatarStudio({
     hair: "Short swept-back",
     hairColor: "Dark brown",
     facialHair: "Clean shaven",
-    extra: "",
+    expression: "Warm half-smile",
+    outfit: "Hoodie",
+    outfitColor: "Black",
+    headwear: "None",
+    background: "Warm orange-pink glow",
+    extras: [],
   });
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
@@ -294,9 +429,18 @@ export function AvatarStudio({
       {mode === "build" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              You are
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                You are
+              </p>
+              <button
+                type="button"
+                onClick={() => setTraits((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
+              >
+                <Dices className="size-3.5" /> Shuffle
+              </button>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {GENDER.map((o) => (
                 <button
@@ -353,15 +497,22 @@ export function AvatarStudio({
 
               <div>
                 <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Detail
+                  Details — pick as many as you like
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {EXTRA.map((o) => (
                     <button
                       key={o}
                       type="button"
-                      onClick={() => setTraits((t) => ({ ...t, extra: t.extra === o ? "" : o }))}
-                      className={chip(traits.extra === o)}
+                      onClick={() =>
+                        setTraits((t) => ({
+                          ...t,
+                          extras: t.extras.includes(o)
+                            ? t.extras.filter((e) => e !== o)
+                            : [...t.extras, o],
+                        }))
+                      }
+                      className={chip(traits.extras.includes(o))}
                     >
                       {o}
                     </button>
