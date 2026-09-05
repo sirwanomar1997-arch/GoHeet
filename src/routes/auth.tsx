@@ -182,7 +182,7 @@ function AuthPage() {
             disabled={busy}
             className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
           >
-            {busy ? "One moment…" : mode === "signup" ? "Create account" : "Sign in"}
+            {busy ? "One moment…" : mode === "signin" ? "Log in" : "Create account"}
           </Button>
         </form>
 
