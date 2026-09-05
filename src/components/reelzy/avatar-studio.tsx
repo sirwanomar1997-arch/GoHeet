@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Check, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
+import { ArrowLeft, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
@@ -85,7 +85,7 @@ function SpriteTile({ sheet, index }: { sheet: Sheet; index: number }) {
   return (
     <span
       aria-hidden
-      className="block aspect-square w-full bg-[#26262a]"
+      className="block aspect-square w-full bg-muted"
       style={{
         backgroundImage: `url(${sheet.src})`,
         backgroundSize: `${sheet.cols * 100}% ${sheet.rows * 100}%`,
@@ -109,13 +109,14 @@ function Tile({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       title={label}
       aria-label={label}
       aria-pressed={active}
       onClick={onClick}
-      className={`w-[76px] shrink-0 overflow-hidden rounded-2xl border-2 bg-surface transition-transform active:scale-95 ${
+      className={`h-auto w-[76px] shrink-0 flex-col overflow-hidden rounded-2xl border-2 bg-surface p-0 transition-transform active:scale-95 ${
         active
           ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
           : "border-border"
@@ -123,7 +124,7 @@ function Tile({
     >
       {children}
       <span className="block truncate px-1.5 py-1 text-[10px] font-semibold">{label}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -181,14 +182,15 @@ function SwatchRow({
       </div>
       <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
         {opts.map((s) => (
-          <button
+          <Button
             key={s.name}
             type="button"
+            variant="ghost"
             title={s.name}
             aria-label={s.name}
             aria-pressed={value === s.name}
             onClick={() => onPick(s.name)}
-            className={`size-12 shrink-0 rounded-full border-2 transition-transform active:scale-95 ${
+            className={`size-12 shrink-0 rounded-full border-2 p-0 transition-transform active:scale-95 ${
               value === s.name
                 ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
                 : "border-border"
@@ -462,6 +464,16 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           >
             <RefreshCw />
           </Button>
+          <Button
+            type="button"
+            onClick={() => setSelfieOpen(true)}
+            size="icon"
+            variant="ghost"
+            className="absolute bottom-5 left-4 rounded-full bg-background/50 backdrop-blur"
+            aria-label="Use a selfie"
+          >
+            <Camera />
+          </Button>
         </div>
       </div>
 
@@ -575,6 +587,17 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           multi
         /> : null}
       </div>
+      {selfieOpen ? (
+        <SelfieSheet
+          onClose={() => setSelfieOpen(false)}
+          onShot={(url) => {
+            setSelfieOpen(false);
+            baseRef.current = null;
+            setFrame(null);
+            void generate(SELFIE_PROMPT, url);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -636,24 +659,27 @@ function SelfieSheet({ onClose, onShot }: { onClose: () => void; onShot: (dataUr
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background/95 p-5 backdrop-blur">
-      <button type="button" onClick={onClose} className="self-end rounded-full border border-border p-2" aria-label="Close">
+      <Button type="button" size="icon" variant="outline" onClick={onClose} className="self-end rounded-full" aria-label="Close">
         <X className="size-5" />
-      </button>
+      </Button>
       <div className="mt-4 flex-1 overflow-hidden rounded-[2rem] border border-border bg-black">
         <video ref={videoRef} playsInline muted className="size-full object-cover" />
       </div>
       {error ? <p className="mt-3 text-center text-sm text-muted-foreground">{error}</p> : null}
       <div className="mt-5 flex items-center justify-center gap-6">
-        <button
+        <Button
           type="button"
+          size="icon"
+          variant="outline"
           onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-          className="grid size-12 place-items-center rounded-full border border-border bg-surface"
+          className="size-12 rounded-full bg-surface"
           aria-label="Flip camera"
         >
           <SwitchCamera className="size-5" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="icon"
           onClick={snap}
           className="ember-fill size-20 rounded-full shadow-[0_10px_30px_-8px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
           aria-label="Take selfie"
