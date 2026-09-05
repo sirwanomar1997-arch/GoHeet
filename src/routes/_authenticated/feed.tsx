@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getFeed } from "@/lib/reelzy.functions";
@@ -15,18 +15,15 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const [scope, setScope] = useState<"following" | "discover">("following");
-  const navigate = useNavigate();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const { data: me, isLoading: meLoading } = useMe();
   const fetchFeed = useServerFn(getFeed);
 
-  useEffect(() => {
-    if (!meLoading && me && !me.profile) void navigate({ to: "/onboarding" });
-  }, [me, meLoading, navigate]);
+  const showProfileBanner = !meLoading && !!me && !me.profile && !bannerDismissed;
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["feed", scope],
     queryFn: () => fetchFeed({ data: { scope } }),
-    enabled: !!me?.profile,
   });
 
   return (
@@ -55,6 +52,30 @@ function FeedPage() {
         </div>
       </header>
 
+      {showProfileBanner && (
+        <div className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Finish your profile</p>
+            <p className="text-xs text-muted-foreground">
+              Pick a username so people can find you.
+            </p>
+          </div>
+          <Link
+            to="/onboarding"
+            className="ember-fill tap-target inline-flex items-center rounded-full px-4 text-xs font-semibold text-primary-foreground"
+          >
+            Set up
+          </Link>
+          <button
+            type="button"
+            onClick={() => setBannerDismissed(true)}
+            aria-label="Dismiss"
+            className="tap-target -mr-1 inline-flex items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <LoadingRail label="Gathering moments" />
