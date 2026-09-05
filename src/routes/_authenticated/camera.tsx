@@ -727,22 +727,9 @@ function CameraPage() {
         </div>
       ) : null}
 
+      {/* No looks while filming — the frame stays true. Filters come after, before posting. */}
       <div className="absolute inset-x-0 bottom-0 pb-10">
-        <div className="mb-5 flex gap-2.5 overflow-x-auto px-5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setLook(f.id)}
-              aria-label={f.label}
-              aria-pressed={look === f.id}
-              className={`size-11 shrink-0 rounded-2xl border-2 transition-transform ${
-                look === f.id ? "border-white scale-110" : "border-white/25"
-              }`}
-              style={{ backgroundImage: f.swatch }}
-            />
-          ))}
-        </div>
+
         <div className="flex items-center justify-around px-8">
           {recording ? (
             <button
