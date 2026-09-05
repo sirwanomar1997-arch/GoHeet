@@ -266,6 +266,21 @@ export const HAIR_FEMALE = cells([
   "Short curly",
 ]);
 
+export const BEARDS = cells([
+  "Clean shaven",
+  "Light stubble",
+  "Heavy stubble",
+  "Short boxed beard",
+  "Full thick beard",
+  "Goatee",
+  "Moustache",
+  "Handlebar moustache",
+  "Chin strap beard",
+  "Long full beard",
+  "Van dyke",
+  "Mutton chops",
+]);
+
 export const MAKEUP = cells([
   "None",
   "Soft nude",
@@ -411,6 +426,7 @@ export type Traits = {
   hair: string;
   hairColor: string;
   makeup: string;
+  beard: string;
   outfit: string;
   outfitColor: string;
   accessories: string[];
