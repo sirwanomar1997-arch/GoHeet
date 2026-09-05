@@ -118,12 +118,20 @@ function ProfilePage() {
           </div>
 
           {data.isSelf ? (
-            <Link
-              to="/avatar"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground"
-            >
-              <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
-            </Link>
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Pencil className="size-3" /> Edit profile
+              </Link>
+              <Link
+                to="/avatar"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
+              </Link>
+            </div>
           ) : null}
 
           <h1 className="mt-4 text-center font-display text-3xl font-extrabold tracking-[-0.045em]">
