@@ -11,6 +11,21 @@ import {
   HAIR_FEMALE,
   OUTFIT_MALE,
   OUTFIT_FEMALE,
+  FACE_SHAPES,
+  EYE_SHAPES,
+  BROWS_MALE,
+  BROWS_FEMALE,
+  LIPS_MALE,
+  LIPS_FEMALE,
+  NOSES,
+  EARS,
+  FACIAL_HAIR,
+  EYEWEAR,
+  HEADWEAR_MALE,
+  HEADWEAR_FEMALE,
+  JEWELRY_MALE,
+  JEWELRY_FEMALE,
+  MAKEUP,
   cellFor,
   cellStyle,
 } from "@/components/reelzy/avatar-sheets";
@@ -25,7 +40,9 @@ const STYLE_BASE =
   "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
   "soft cinematic studio key light from the upper left with warm rim light, " +
   "smooth warm orange-to-pink gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
-  "vertical portrait composition, no text, no watermark, no logo.";
+  "vertical portrait composition with the WHOLE head, the complete hairstyle and any hat or headwear fully inside the frame, " +
+  "generous empty margin above the hair and on both sides, shoulders visible, nothing cropped or touching the edges, " +
+  "no text, no watermark, no logo.";
 
 /** Age reads honestly in the render — keeps a 30s avatar from looking 50. */
 const AGE_LOOK: Record<string, string> = {
@@ -70,14 +87,7 @@ type Traits = {
 const GENDER = ["Male", "Female"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
 const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
-const FACE = ["Oval", "Round", "Square jaw", "Heart", "Long", "Sharp cheekbones"];
 const EYE_COLOR = ["Dark brown", "Hazel", "Amber", "Green", "Blue", "Grey"];
-const EYE_SHAPE = ["Almond", "Round", "Wide-set", "Hooded", "Monolid", "Upturned"];
-const BROWS = ["Soft arched", "Straight", "Thick bold", "Thin", "Bushy"];
-const NOSE = ["Small button", "Straight", "Narrow", "Wide", "Roman bridge", "Upturned"];
-const LIPS = ["Thin", "Medium", "Full", "Wide smile"];
-const EARS = ["Small", "Medium", "Large", "Slightly protruding", "Pointed lobes"];
-const HAIR = HAIR_MALE;
 
 const HAIR_COLOR = [
   "Jet black",
@@ -91,7 +101,7 @@ const HAIR_COLOR = [
   "Pastel pink",
   "Teal",
 ];
-const FACIAL_HAIR = ["Clean shaven", "Stubble", "Short beard", "Full beard", "Moustache", "Goatee"];
+
 const EXPRESSION = [
   "Warm half-smile",
   "Big joyful grin",
@@ -100,7 +110,7 @@ const EXPRESSION = [
   "Thoughtful",
   "Surprised delight",
 ];
-const OUTFIT = OUTFIT_MALE;
+
 
 const FABRIC = [
   "Matte cotton",
@@ -131,63 +141,6 @@ const OUTFIT_COLOR = [
   "Sage",
   "Electric blue",
   "Champagne gold",
-];
-const HEADWEAR = [
-  "None",
-  "Cap",
-  "Beanie",
-  "Bucket hat",
-  "Headband",
-  "Bandana",
-  "Beret",
-  "Headscarf",
-  "Wide-brim hat",
-  "Cowboy hat",
-  "Durag",
-  "Turban",
-  "Hair clips",
-  "Silk scarf tied back",
-  "Headphones around neck",
-];
-const EYEWEAR = [
-  "None",
-  "Thin metal glasses",
-  "Bold square frames",
-  "Round wire glasses",
-  "Cat-eye frames",
-  "Aviator sunglasses",
-  "Retro shades",
-  "Sport visor shades",
-  "Clear-frame glasses",
-];
-const MAKEUP = [
-  "Natural glow",
-  "Soft matte base",
-  "Winged eyeliner",
-  "Smoky eyes",
-  "Bold red lip",
-  "Nude gloss",
-  "Berry lip",
-  "Warm blush",
-  "Highlighted cheekbones",
-  "Shimmer eyelids",
-  "Graphic liner",
-  "Bronzed contour",
-  "Glitter accents",
-];
-const JEWELRY = [
-  "Hoop earrings",
-  "Stud earrings",
-  "Ear cuff",
-  "Layered necklaces",
-  "Chunky chain",
-  "Pendant necklace",
-  "Nose ring",
-  "Septum ring",
-  "Choker",
-  "Statement rings",
-  "Pearl set",
-  "Gold bangles",
 ];
 const BACKGROUND = [
   "Warm orange-pink glow",
@@ -239,12 +192,12 @@ function randomTraits(forced?: string): Traits {
 
     age: pick(AGE),
     skin: pick(SKIN),
-    face: pick(FACE),
+    face: pick(FACE_SHAPES),
     eyeColor: pick(EYE_COLOR),
-    eyeShape: pick(EYE_SHAPE),
-    brows: pick(female ? BROWS_F : BROWS),
-    nose: pick(NOSE),
-    lips: pick(female ? LIPS_F : LIPS),
+    eyeShape: pick(EYE_SHAPES),
+    brows: pick(female ? BROWS_FEMALE : BROWS_MALE),
+    nose: pick(NOSES),
+    lips: pick(female ? LIPS_FEMALE : LIPS_MALE),
     ears: pick(EARS),
     hair: pick(female ? HAIR_FEMALE : HAIR_MALE),
     hairColor: pick(HAIR_COLOR),
@@ -253,10 +206,10 @@ function randomTraits(forced?: string): Traits {
     outfit: pick(female ? OUTFIT_FEMALE : OUTFIT_MALE),
     outfitColor: pick(OUTFIT_COLOR),
     fabric: pick(FABRIC),
-    headwear: pick(female ? HEADWEAR_F : HEADWEAR_M),
+    headwear: pick(female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
     eyewear: pick(EYEWEAR),
     makeup: female ? some(MAKEUP, 0.35, 3) : [],
-    jewelry: some(female ? JEWELRY_F : JEWELRY_M, 0.25, 3),
+    jewelry: some(female ? JEWELRY_FEMALE : JEWELRY_MALE, 0.25, 3),
 
     background: pick(BACKGROUND),
     extras: some(EXTRA, 0.15, 2),
@@ -350,7 +303,7 @@ function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
     "same pose, same camera angle, same lighting and same render style. " +
     `Change only the following: ${changed.map(describe).join("; ")}. ` +
     "Everything else must stay pixel-consistent with the reference. " +
-    "Glossy premium 3D animated feature-film portrait, no text, no watermark."
+    "Glossy premium 3D animated feature-film portrait. Keep the whole head, full hairstyle and any headwear inside the frame with margin above the hair, nothing cropped. No text, no watermark."
   );
 }
 
@@ -400,59 +353,6 @@ const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => 
   opts,
 });
 
-/** Options that only make sense for one gender. */
-const BROWS_F = ["Soft arched", "Sculpted arch", "Straight", "Feathered", "Thin", "Bold defined"];
-const LIPS_F = ["Full pout", "Heart-shaped", "Medium", "Wide smile", "Cupid's bow"];
-const HEADWEAR_F = [
-  "None",
-  "Headband",
-  "Silk scarf tied back",
-  "Beret",
-  "Wide-brim hat",
-  "Bucket hat",
-  "Beanie",
-  "Hair clips",
-  "Hair bow",
-  "Flower crown",
-  "Headscarf",
-  "Cap",
-];
-const HEADWEAR_M = [
-  "None",
-  "Cap",
-  "Beanie",
-  "Bucket hat",
-  "Bandana",
-  "Durag",
-  "Wide-brim hat",
-  "Cowboy hat",
-  "Turban",
-  "Headphones around neck",
-];
-const JEWELRY_F = [
-  "Hoop earrings",
-  "Stud earrings",
-  "Drop earrings",
-  "Pearl set",
-  "Layered necklaces",
-  "Pendant necklace",
-  "Choker",
-  "Delicate chain",
-  "Nose ring",
-  "Statement rings",
-  "Gold bangles",
-  "Ear cuff",
-];
-const JEWELRY_M = [
-  "Stud earrings",
-  "Hoop earring",
-  "Chunky chain",
-  "Pendant necklace",
-  "Ear cuff",
-  "Signet ring",
-  "Leather cord necklace",
-  "Nose ring",
-];
 
 function sectionsFor(gender: string) {
   const female = gender === "Female";
@@ -464,12 +364,12 @@ function sectionsFor(gender: string) {
       groups: [
         single("Age", "age", AGE),
         single("Skin tone", "skin", SKIN),
-        single("Face shape", "face", FACE),
+        single("Face shape", "face", FACE_SHAPES),
         single("Eye colour", "eyeColor", EYE_COLOR),
-        single("Eye shape", "eyeShape", EYE_SHAPE),
-        single("Eyebrows", "brows", female ? BROWS_F : BROWS),
-        single("Nose", "nose", NOSE),
-        single("Lips", "lips", female ? LIPS_F : LIPS),
+        single("Eye shape", "eyeShape", EYE_SHAPES),
+        single("Eyebrows", "brows", female ? BROWS_FEMALE : BROWS_MALE),
+        single("Nose", "nose", NOSES),
+        single("Lips", "lips", female ? LIPS_FEMALE : LIPS_MALE),
         single("Ears", "ears", EARS),
         single("Expression", "expression", EXPRESSION),
         multi("Details", "extras", EXTRA),
@@ -500,9 +400,9 @@ function sectionsFor(gender: string) {
       label: "Accessories",
       blurb: "Headwear, frames and hardware.",
       groups: [
-        single("Headwear", "headwear", female ? HEADWEAR_F : HEADWEAR_M),
+        single("Headwear", "headwear", female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
         single("Eyewear", "eyewear", EYEWEAR),
-        multi("Jewellery", "jewelry", female ? JEWELRY_F : JEWELRY_M),
+        multi("Jewellery", "jewelry", female ? JEWELRY_FEMALE : JEWELRY_MALE),
       ],
     },
     ...(female
@@ -752,7 +652,7 @@ export function AvatarStudio({
     active: boolean;
     onClick: () => void;
   }) => {
-    const cell = cellFor(group, value);
+    const cell = cellFor(group, value, traits.gender);
     return (
       <button
         type="button"
@@ -801,12 +701,12 @@ export function AvatarStudio({
         </button>
       </div>
 
-      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
+      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-gradient-to-b from-primary/15 to-background">
         {frame ? (
           <img
             src={frame}
             alt="Your avatar"
-            className={`size-full object-cover transition-[filter] duration-500 ${
+            className={`size-full object-contain transition-[filter] duration-500 ${
               isFinal && !busy ? "blur-0" : "blur-xl"
             }`}
           />
