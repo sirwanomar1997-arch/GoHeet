@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { signInWithIdentifier } from "@/lib/reelzy.functions";
 import { ReelzyMark, ReelzyWordmark } from "@/components/reelzy/logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -54,7 +55,7 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: identifier.trim(),
           password,
           options: { emailRedirectTo: `${window.location.origin}${dest}` },
         });
@@ -65,7 +66,13 @@ function AuthPage() {
         }
         await navigate({ to: "/onboarding" });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const res = await signInWithIdentifier({
+          data: { identifier: identifier.trim(), password },
+        });
+        const { error } = await supabase.auth.setSession({
+          access_token: res.accessToken,
+          refresh_token: res.refreshToken,
+        });
         if (error) throw error;
         await navigate({ to: dest });
       }
@@ -95,8 +102,8 @@ function AuthPage() {
           <ReelzyMark className="mx-auto size-10" />
           <h1 className="mt-6 font-display text-2xl font-semibold">Check your email</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            We sent a confirmation link to {email}. Tap it and come back to finish setting up your
-            profile.
+            We sent a confirmation link to {identifier}. Tap it and come back to finish setting up
+            your profile.
           </p>
         </div>
       </main>
@@ -151,16 +158,24 @@ function AuthPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
 
+        {mode === "signin" && (
+          <p className="mb-4 text-xs text-muted-foreground">
+            Log in with your email, phone number or username.
+          </p>
+        )}
+
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="identifier">
+              {mode === "signin" ? "Email, phone or username" : "Email"}
+            </Label>
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="identifier"
+              type={mode === "signup" ? "email" : "text"}
+              autoComplete={mode === "signup" ? "email" : "username"}
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-1.5 h-12 bg-surface-raised"
             />
           </div>
