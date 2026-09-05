@@ -826,9 +826,10 @@ export const listMusicTracks = createServerFn({ method: "POST" })
 
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope: string; cursor?: string }) => ({
+  .inputValidator((d: { scope: string; cursor?: string; sort?: string }) => ({
     scope: z.enum(["following", "discover", "saved", "liked"]).parse(d.scope),
     cursor: z.string().optional().parse(d.cursor),
+    sort: z.enum(["new", "views", "old"]).catch("new").parse(d.sort ?? "new"),
   }))
   .handler(async ({ data, context }) => {
     const limit = 8;
