@@ -310,7 +310,10 @@ export type Database = {
           location_label: string | null
           media_path: string
           moderation_state: string
+          music_offset_ms: number
           music_track_id: string | null
+          music_volume: number
+          original_audio_volume: number
           overlay: Json | null
           save_count: number
           status: string
@@ -333,7 +336,10 @@ export type Database = {
           location_label?: string | null
           media_path: string
           moderation_state?: string
+          music_offset_ms?: number
           music_track_id?: string | null
+          music_volume?: number
+          original_audio_volume?: number
           overlay?: Json | null
           save_count?: number
           status?: string
@@ -356,7 +362,10 @@ export type Database = {
           location_label?: string | null
           media_path?: string
           moderation_state?: string
+          music_offset_ms?: number
           music_track_id?: string | null
+          music_volume?: number
+          original_audio_volume?: number
           overlay?: Json | null
           save_count?: number
           status?: string
@@ -392,32 +401,68 @@ export type Database = {
         Row: {
           active: boolean
           artist: string
+          artwork_url: string | null
+          attribution_text: string | null
           audio_path: string
           created_at: string
           duration_ms: number | null
+          genres: string[]
           id: string
+          license_ends_at: string | null
+          license_id: string | null
+          license_scope: string | null
+          license_starts_at: string | null
           mood: string | null
+          provider: string
+          provider_track_id: string | null
+          status: string
+          territories: string[]
           title: string
+          updated_at: string
         }
         Insert: {
           active?: boolean
           artist: string
+          artwork_url?: string | null
+          attribution_text?: string | null
           audio_path: string
           created_at?: string
           duration_ms?: number | null
+          genres?: string[]
           id?: string
+          license_ends_at?: string | null
+          license_id?: string | null
+          license_scope?: string | null
+          license_starts_at?: string | null
           mood?: string | null
+          provider?: string
+          provider_track_id?: string | null
+          status?: string
+          territories?: string[]
           title: string
+          updated_at?: string
         }
         Update: {
           active?: boolean
           artist?: string
+          artwork_url?: string | null
+          attribution_text?: string | null
           audio_path?: string
           created_at?: string
           duration_ms?: number | null
+          genres?: string[]
           id?: string
+          license_ends_at?: string | null
+          license_id?: string | null
+          license_scope?: string | null
+          license_starts_at?: string | null
           mood?: string | null
+          provider?: string
+          provider_track_id?: string | null
+          status?: string
+          territories?: string[]
           title?: string
+          updated_at?: string
         }
         Relationships: []
       }
