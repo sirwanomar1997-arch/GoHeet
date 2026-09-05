@@ -198,11 +198,11 @@ function CameraPage() {
         data: {
           sessionId: session.sessionId,
           mediaPath,
-          thumbnailPath,
           kind: captured.kind,
           durationMs: Math.round(captured.durationMs),
-          caption: caption.trim() || undefined,
-          locationLabel: place.trim() || undefined,
+          ...(thumbnailPath ? { thumbnailPath } : {}),
+          ...(caption.trim() ? { caption: caption.trim() } : {}),
+          ...(place.trim() ? { locationLabel: place.trim() } : {}),
         },
       });
       toast.success("Published. That's a real one.");
