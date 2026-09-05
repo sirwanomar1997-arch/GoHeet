@@ -6,6 +6,8 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
+import { AvatarPreview } from "@/components/reelzy/avatar-preview";
+
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
@@ -468,6 +470,7 @@ export function AvatarStudio({
   const [section, setSection] = useState("face");
 
   const [frame, setFrame] = useState<string | null>(null);
+  const [showRender, setShowRender] = useState(false);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -520,6 +523,7 @@ export function AvatarStudio({
 
   async function generate() {
     setBusy(true);
+    setShowRender(true);
     setFrame(null);
     setIsFinal(false);
     try {
@@ -591,6 +595,13 @@ export function AvatarStudio({
 
   const buildReady = !!traits.gender;
 
+  // Any change flips the stage back to the live preview so the user always
+  // sees what they just picked, straight away.
+  const edit = (fn: (t: Traits) => Traits) => {
+    setShowRender(false);
+    setTraits(fn);
+  };
+
 
   return (
     <div className="mx-auto w-full max-w-sm">
@@ -604,7 +615,7 @@ export function AvatarStudio({
       </div>
 
       <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
-        {frame ? (
+        {frame && (mode === "selfie" || showRender) ? (
           <img
             src={frame}
             alt="Your avatar"
@@ -621,15 +632,40 @@ export function AvatarStudio({
             muted
             className={`size-full object-cover ${facing === "user" ? "-scale-x-100" : ""}`}
           />
+        ) : buildReady ? (
+          <AvatarPreview t={traits} className="size-full object-cover" />
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              {buildReady
-                ? "Fine-tune every feature below, then press create — Reelzy renders the 3D you."
-                : "Start by choosing who you are, then shape every feature."}
+              Pick who you are below — your avatar appears here straight away, and changes with
+              every single thing you tap.
             </p>
           </div>
         )}
+
+
+        {mode === "build" && frame && !busy ? (
+          <div className="absolute left-1/2 top-3 flex -translate-x-1/2 gap-1 rounded-full bg-background/70 p-1 backdrop-blur">
+            <button
+              type="button"
+              onClick={() => setShowRender(false)}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                showRender ? "text-muted-foreground" : "ember-fill text-primary-foreground"
+              }`}
+            >
+              Editing
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRender(true)}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                showRender ? "ember-fill text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              3D render
+            </button>
+          </div>
+        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
@@ -663,7 +699,7 @@ export function AvatarStudio({
               </p>
               <button
                 type="button"
-                onClick={() => setTraits((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
+                onClick={() => edit((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
               >
                 <Dices className="size-3.5" /> Shuffle
@@ -676,7 +712,7 @@ export function AvatarStudio({
                   group="gender"
                   value={o}
                   active={traits.gender === o}
-                  onClick={() => setTraits((t) => ({ ...t, gender: o }))}
+                  onClick={() => edit((t) => ({ ...t, gender: o }))}
                 />
               ))}
             </div>
@@ -719,7 +755,7 @@ export function AvatarStudio({
                               group={g.key as IconKey}
                               value={o}
                               active={traits[g.key] === o}
-                              onClick={() => setTraits((t) => ({ ...t, [g.key]: o }))}
+                              onClick={() => edit((t) => ({ ...t, [g.key]: o }))}
                             />
                           ) : (
                             <Tile
@@ -728,7 +764,7 @@ export function AvatarStudio({
                               value={o}
                               active={traits[g.key].includes(o)}
                               onClick={() =>
-                                setTraits((t) => {
+                                edit((t) => {
                                   const cur = t[g.key];
                                   return {
                                     ...t,
