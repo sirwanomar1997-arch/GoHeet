@@ -1099,7 +1099,12 @@ export const addComment = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase
       .from("comments")
-      .insert({ moment_id: data.momentId, author_id: context.userId, body: data.body });
+      .insert({
+        moment_id: data.momentId,
+        author_id: context.userId,
+        body: data.body,
+        parent_id: data.parentId,
+      });
     if (error) throw new Error(error.message);
     await track(context.userId, "comment_created");
     return { ok: true };
