@@ -85,7 +85,11 @@ function AuthPage() {
           toast("We sent a code to your phone.");
           return;
         }
-        const { error } = await supabase.auth.verifyOtp({ phone, token: code.trim() });
+        const { error } = await supabase.auth.verifyOtp({
+          phone,
+          token: code.trim(),
+          type: "sms",
+        });
         if (error) throw error;
         await navigate({ to: dest });
         return;
