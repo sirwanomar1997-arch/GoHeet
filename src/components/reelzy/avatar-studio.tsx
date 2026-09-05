@@ -631,7 +631,6 @@ export function AvatarStudio({
     [],
   );
 
-  const pending = appliedTraits ? diffTraits(appliedTraits, traits) : [];
 
   const renderLook = useCallback(
     (t: Traits, l: { pose: string; seed: number }, base: string | null, changed: (keyof Traits)[]) => {
