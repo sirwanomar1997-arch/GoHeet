@@ -393,6 +393,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
     baseRef.current = null;
+    renderedRef.current = null;
     setGender(g);
     setTraits(next);
     setFrame(BASE_AVATARS[g]);
@@ -466,6 +467,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               setSelfieOpen(false);
               setGender("Male");
               baseRef.current = null;
+              renderedRef.current = null;
               setFrame(null);
               void generate(SELFIE_PROMPT, url);
             }}
@@ -699,6 +701,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           onShot={(url) => {
             setSelfieOpen(false);
             baseRef.current = null;
+            renderedRef.current = null;
             setFrame(null);
             void generate(SELFIE_PROMPT, url);
           }}
