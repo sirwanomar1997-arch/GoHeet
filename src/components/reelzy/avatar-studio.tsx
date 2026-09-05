@@ -264,8 +264,12 @@ function randomTraits(forced?: string): Traits {
 }
 
 function buildPrompt(t: Traits, pose: string, seed: number) {
+  const female = t.gender === "Female";
   const bits = [
-    `${t.gender.toLowerCase()} character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
+    female
+      ? `beautiful feminine young woman character with soft delicate feminine facial features, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`
+      : `masculine male character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
+
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
