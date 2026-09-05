@@ -81,7 +81,7 @@ export async function streamAvatar(
   if (!sawAnyEvent) {
     const replay = await fetch("/api/generate-avatar", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await avatarHeaders(),
       body: JSON.stringify({ prompt, selfie, stream: false }),
     });
     if (!replay.ok) {
