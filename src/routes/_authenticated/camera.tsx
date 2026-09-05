@@ -227,6 +227,16 @@ function CameraPage() {
     stopStream();
   }
 
+  /** Cue sounds are for the person filming — never for the clip. Mute the mic while they play. */
+  function silenceMicFor(ms: number) {
+    const tracks = streamRef.current?.getAudioTracks() ?? [];
+    if (!tracks.length) return;
+    tracks.forEach((t) => (t.enabled = false));
+    window.setTimeout(() => {
+      tracks.forEach((t) => (t.enabled = true));
+    }, ms);
+  }
+
   async function beginRecording() {
     const stream = streamRef.current;
     if (!stream) return;
