@@ -882,7 +882,8 @@ export const getFeed = createServerFn({ method: "POST" })
     const list = (rows ?? []) as unknown as FeedRow[];
     return {
       moments: await decorate(list, context.userId),
-      nextCursor: list.length === limit ? list[list.length - 1]!.created_at : null,
+      nextCursor:
+        data.sort === "new" && list.length === limit ? list[list.length - 1]!.created_at : null,
     };
   });
 
