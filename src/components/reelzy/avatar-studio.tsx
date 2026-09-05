@@ -8,10 +8,10 @@ import { streamAvatar } from "@/lib/stream-avatar";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, looking at camera, warm friendly closed-mouth half-smile, " +
+  "head and shoulders, three-quarter view, looking at camera, " +
   "large expressive photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores and peach fuzz, " +
   "individually rendered hair strands, soft cinematic studio key light from the upper left with gentle rim light, " +
-  "smooth warm orange-to-pink gradient studio background, shallow depth of field, octane-quality render, " +
+  "smooth studio gradient background, shallow depth of field, octane-quality render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
 
 type Traits = {
