@@ -48,11 +48,11 @@ import { formatCount, timeAgo } from "./format";
 import { ShareSheet } from "./share-sheet";
 import {
   filterCss,
-  overlayFontClass,
-  overlayPlaceClass,
-  overlayStyleClass,
+  overlayFontStyle,
+  overlayStyleProps,
   parseOverlay,
 } from "./creative";
+
 
 const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "harassment", label: "Harassment" },
