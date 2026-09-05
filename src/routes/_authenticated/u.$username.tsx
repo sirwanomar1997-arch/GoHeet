@@ -120,7 +120,7 @@ function ProfilePage() {
           {data.isSelf ? (
             <div className="mt-3 flex items-center gap-2">
               <Link
-                to="/settings"
+                to="/edit-profile"
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Pencil className="size-3" /> Edit profile
