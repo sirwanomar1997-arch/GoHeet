@@ -1,0 +1,15 @@
+revoke execute on function public.tg_follow_counts() from public, anon, authenticated;
+revoke execute on function public.tg_like_counts() from public, anon, authenticated;
+revoke execute on function public.tg_save_counts() from public, anon, authenticated;
+revoke execute on function public.tg_comment_counts() from public, anon, authenticated;
+revoke execute on function public.tg_moment_counts() from public, anon, authenticated;
+revoke execute on function public.tg_view_counts() from public, anon, authenticated;
+revoke execute on function public.tg_touch_updated_at() from public, anon, authenticated;
+revoke execute on function public.has_role(uuid, public.app_role) from public, anon;
+revoke execute on function public.is_staff(uuid) from public, anon;
+revoke execute on function public.is_blocked_between(uuid, uuid) from public;
+revoke execute on function public.username_taken(text) from public;
+grant execute on function public.username_taken(text) to anon, authenticated;
+grant execute on function public.is_blocked_between(uuid, uuid) to anon, authenticated;
+grant execute on function public.has_role(uuid, public.app_role) to authenticated;
+grant execute on function public.is_staff(uuid) to authenticated;
