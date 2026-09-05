@@ -878,7 +878,10 @@ export function AvatarStudio({
                   group="gender"
                   value={o}
                   active={traits.gender === o}
-                  onClick={() => edit((t) => ({ ...t, gender: o }))}
+                  onClick={() =>
+                    edit((t) => ({ ...t, gender: o, ...genderDefaults(o) }))
+                  }
+
                 />
               ))}
             </div>
