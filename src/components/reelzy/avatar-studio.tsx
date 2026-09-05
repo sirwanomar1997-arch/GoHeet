@@ -6,6 +6,14 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
+import {
+  HAIR_MALE,
+  HAIR_FEMALE,
+  OUTFIT_MALE,
+  OUTFIT_FEMALE,
+  cellFor,
+  cellStyle,
+} from "@/components/reelzy/avatar-sheets";
 
 
 const STYLE_BASE =
@@ -69,28 +77,8 @@ const BROWS = ["Soft arched", "Straight", "Thick bold", "Thin", "Bushy"];
 const NOSE = ["Small button", "Straight", "Narrow", "Wide", "Roman bridge", "Upturned"];
 const LIPS = ["Thin", "Medium", "Full", "Wide smile"];
 const EARS = ["Small", "Medium", "Large", "Slightly protruding", "Pointed lobes"];
-const HAIR = [
-  "Short swept-back",
-  "Buzz cut",
-  "Crew cut",
-  "Messy short",
-  "Curly afro",
-  "Coily",
-  "Shoulder-length wavy",
-  "Long straight",
-  "Long wavy",
-  "Braids",
-  "Cornrows",
-  "Locs",
-  "Top knot",
-  "Bob",
-  "Pixie cut",
-  "Ponytail",
-  "Side part",
-  "Shaved sides",
-  "Bald",
-  "Hijab",
-];
+const HAIR = HAIR_MALE;
+
 const HAIR_COLOR = [
   "Jet black",
   "Dark brown",
@@ -112,36 +100,8 @@ const EXPRESSION = [
   "Thoughtful",
   "Surprised delight",
 ];
-const OUTFIT = [
-  "Crisp white shirt",
-  "Oversized hoodie",
-  "Denim jacket",
-  "Leather biker jacket",
-  "Crewneck sweater",
-  "Ribbed turtleneck",
-  "Tank top",
-  "Tailored blazer",
-  "Graphic tee",
-  "Flannel shirt",
-  "Varsity jacket",
-  "Puffer coat",
-  "Trench coat",
-  "Silk slip dress",
-  "Satin blouse",
-  "Linen shirt, open collar",
-  "Knit cardigan",
-  "Track jacket",
-  "Utility jumpsuit",
-  "Corduroy overshirt",
-  "Wool peacoat",
-  "Mesh layered top",
-  "Embroidered jacket",
-  "Kimono robe",
-  "Kaftan",
-  "Sherwani collar",
-  "Traditional embroidered tunic",
-  "Bare shoulders, minimal",
-];
+const OUTFIT = OUTFIT_MALE;
+
 const FABRIC = [
   "Matte cotton",
   "Soft knit",
@@ -271,37 +231,45 @@ const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.lengt
 const some = (arr: readonly string[], chance: number, max: number) =>
   arr.filter(() => Math.random() < chance).slice(0, max);
 
-function randomTraits(): Traits {
+function randomTraits(forced?: string): Traits {
+  const gender = forced ?? pick(["Male", "Female"]);
+  const female = gender === "Female";
   return {
-    gender: pick(["Male", "Female"]),
+    gender,
+
     age: pick(AGE),
     skin: pick(SKIN),
     face: pick(FACE),
     eyeColor: pick(EYE_COLOR),
     eyeShape: pick(EYE_SHAPE),
-    brows: pick(BROWS),
+    brows: pick(female ? BROWS_F : BROWS),
     nose: pick(NOSE),
-    lips: pick(LIPS),
+    lips: pick(female ? LIPS_F : LIPS),
     ears: pick(EARS),
-    hair: pick(HAIR),
+    hair: pick(female ? HAIR_FEMALE : HAIR_MALE),
     hairColor: pick(HAIR_COLOR),
-    facialHair: pick(FACIAL_HAIR),
+    facialHair: female ? "Clean shaven" : pick(FACIAL_HAIR),
     expression: pick(EXPRESSION),
-    outfit: pick(OUTFIT),
+    outfit: pick(female ? OUTFIT_FEMALE : OUTFIT_MALE),
     outfitColor: pick(OUTFIT_COLOR),
     fabric: pick(FABRIC),
-    headwear: pick(HEADWEAR),
+    headwear: pick(female ? HEADWEAR_F : HEADWEAR_M),
     eyewear: pick(EYEWEAR),
-    makeup: some(MAKEUP, 0.15, 3),
-    jewelry: some(JEWELRY, 0.15, 3),
+    makeup: female ? some(MAKEUP, 0.35, 3) : [],
+    jewelry: some(female ? JEWELRY_F : JEWELRY_M, 0.25, 3),
+
     background: pick(BACKGROUND),
     extras: some(EXTRA, 0.15, 2),
   };
 }
 
 function buildPrompt(t: Traits, pose: string, seed: number) {
+  const female = t.gender === "Female";
   const bits = [
-    `${t.gender.toLowerCase()} character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
+    female
+      ? `beautiful feminine young woman character with soft delicate feminine facial features, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`
+      : `masculine male character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
+
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -310,7 +278,8 @@ function buildPrompt(t: Traits, pose: string, seed: number) {
     `${t.lips.toLowerCase()} lips`,
     `${t.ears.toLowerCase()} ears`,
     `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
-    t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
+    female ? "" : t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
+
     `${t.expression.toLowerCase()} expression`,
     `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()} in ${t.fabric.toLowerCase()}`,
     t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
@@ -431,68 +400,157 @@ const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => 
   opts,
 });
 
-const SECTIONS: { id: string; label: string; blurb: string; groups: Group[] }[] = [
-  {
-    id: "face",
-    label: "Face",
-    blurb: "Shape the features that make you, you.",
-    groups: [
-      single("Age", "age", AGE),
-      single("Skin tone", "skin", SKIN),
-      single("Face shape", "face", FACE),
-      single("Eye colour", "eyeColor", EYE_COLOR),
-      single("Eye shape", "eyeShape", EYE_SHAPE),
-      single("Eyebrows", "brows", BROWS),
-      single("Nose", "nose", NOSE),
-      single("Lips", "lips", LIPS),
-      single("Ears", "ears", EARS),
-      single("Expression", "expression", EXPRESSION),
-      multi("Details", "extras", EXTRA),
-    ],
-  },
-  {
-    id: "hair",
-    label: "Hair",
-    blurb: "Cut, colour and everything on your face.",
-    groups: [
-      single("Hairstyle", "hair", HAIR),
-      single("Hair colour", "hairColor", HAIR_COLOR),
-      single("Facial hair", "facialHair", FACIAL_HAIR),
-    ],
-  },
-  {
-    id: "wardrobe",
-    label: "Wardrobe",
-    blurb: "Pick the fit. New drops land here.",
-    groups: [
-      single("Outfit", "outfit", OUTFIT),
-      single("Colour", "outfitColor", OUTFIT_COLOR),
-      single("Fabric", "fabric", FABRIC),
-    ],
-  },
-  {
-    id: "accessories",
-    label: "Accessories",
-    blurb: "Headwear, frames and hardware.",
-    groups: [
-      single("Headwear", "headwear", HEADWEAR),
-      single("Eyewear", "eyewear", EYEWEAR),
-      multi("Jewellery", "jewelry", JEWELRY),
-    ],
-  },
-  {
-    id: "makeup",
-    label: "Make-up",
-    blurb: "Stack as many looks as you like.",
-    groups: [multi("Make-up", "makeup", MAKEUP)],
-  },
-  {
-    id: "scene",
-    label: "Scene",
-    blurb: "The light you stand in.",
-    groups: [single("Backdrop", "background", BACKGROUND)],
-  },
+/** Options that only make sense for one gender. */
+const BROWS_F = ["Soft arched", "Sculpted arch", "Straight", "Feathered", "Thin", "Bold defined"];
+const LIPS_F = ["Full pout", "Heart-shaped", "Medium", "Wide smile", "Cupid's bow"];
+const HEADWEAR_F = [
+  "None",
+  "Headband",
+  "Silk scarf tied back",
+  "Beret",
+  "Wide-brim hat",
+  "Bucket hat",
+  "Beanie",
+  "Hair clips",
+  "Hair bow",
+  "Flower crown",
+  "Headscarf",
+  "Cap",
 ];
+const HEADWEAR_M = [
+  "None",
+  "Cap",
+  "Beanie",
+  "Bucket hat",
+  "Bandana",
+  "Durag",
+  "Wide-brim hat",
+  "Cowboy hat",
+  "Turban",
+  "Headphones around neck",
+];
+const JEWELRY_F = [
+  "Hoop earrings",
+  "Stud earrings",
+  "Drop earrings",
+  "Pearl set",
+  "Layered necklaces",
+  "Pendant necklace",
+  "Choker",
+  "Delicate chain",
+  "Nose ring",
+  "Statement rings",
+  "Gold bangles",
+  "Ear cuff",
+];
+const JEWELRY_M = [
+  "Stud earrings",
+  "Hoop earring",
+  "Chunky chain",
+  "Pendant necklace",
+  "Ear cuff",
+  "Signet ring",
+  "Leather cord necklace",
+  "Nose ring",
+];
+
+function sectionsFor(gender: string) {
+  const female = gender === "Female";
+  const sections: { id: string; label: string; blurb: string; groups: Group[] }[] = [
+    {
+      id: "face",
+      label: "Face",
+      blurb: "Shape the features that make you, you.",
+      groups: [
+        single("Age", "age", AGE),
+        single("Skin tone", "skin", SKIN),
+        single("Face shape", "face", FACE),
+        single("Eye colour", "eyeColor", EYE_COLOR),
+        single("Eye shape", "eyeShape", EYE_SHAPE),
+        single("Eyebrows", "brows", female ? BROWS_F : BROWS),
+        single("Nose", "nose", NOSE),
+        single("Lips", "lips", female ? LIPS_F : LIPS),
+        single("Ears", "ears", EARS),
+        single("Expression", "expression", EXPRESSION),
+        multi("Details", "extras", EXTRA),
+      ],
+    },
+    {
+      id: "hair",
+      label: "Hair",
+      blurb: female ? "Pick your style — tap a look to wear it." : "Cut, colour and beard.",
+      groups: [
+        single("Hairstyle", "hair", female ? HAIR_FEMALE : HAIR_MALE),
+        single("Hair colour", "hairColor", HAIR_COLOR),
+        ...(female ? [] : [single("Facial hair", "facialHair", FACIAL_HAIR)]),
+      ],
+    },
+    {
+      id: "wardrobe",
+      label: "Wardrobe",
+      blurb: "Pick the fit. New drops land here.",
+      groups: [
+        single("Outfit", "outfit", female ? OUTFIT_FEMALE : OUTFIT_MALE),
+        single("Colour", "outfitColor", OUTFIT_COLOR),
+        single("Fabric", "fabric", FABRIC),
+      ],
+    },
+    {
+      id: "accessories",
+      label: "Accessories",
+      blurb: "Headwear, frames and hardware.",
+      groups: [
+        single("Headwear", "headwear", female ? HEADWEAR_F : HEADWEAR_M),
+        single("Eyewear", "eyewear", EYEWEAR),
+        multi("Jewellery", "jewelry", female ? JEWELRY_F : JEWELRY_M),
+      ],
+    },
+    ...(female
+      ? [
+          {
+            id: "makeup",
+            label: "Make-up",
+            blurb: "Stack as many looks as you like.",
+            groups: [multi("Make-up", "makeup", MAKEUP)],
+          },
+        ]
+      : []),
+    {
+      id: "scene",
+      label: "Scene",
+      blurb: "The light you stand in.",
+      groups: [single("Backdrop", "background", BACKGROUND)],
+    },
+  ];
+  return sections;
+}
+
+/** Defaults that suit the chosen gender, applied when you switch. */
+function genderDefaults(gender: string): Partial<Traits> {
+  return gender === "Female"
+    ? {
+        hair: "Long loose waves",
+        outfit: "Soft knit sweater",
+        outfitColor: "Dusty pink",
+        facialHair: "Clean shaven",
+        brows: "Soft arched",
+        lips: "Full pout",
+        headwear: "None",
+        makeup: ["Natural glow"],
+        jewelry: ["Stud earrings"],
+      }
+    : {
+        hair: "Short swept-back",
+        outfit: "Oversized hoodie",
+        outfitColor: "Black",
+        brows: "Soft arched",
+        lips: "Medium",
+        headwear: "None",
+        makeup: [],
+        jewelry: [],
+      };
+}
+
 
 
 export function AvatarStudio({
@@ -693,31 +751,43 @@ export function AvatarStudio({
     value: string;
     active: boolean;
     onClick: () => void;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={value}
-      aria-pressed={active}
-      title={value}
-      className={`w-[68px] shrink-0 rounded-2xl border p-1.5 transition-all ${
-        active
-          ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
-          : "border-border bg-surface text-foreground/70"
-      }`}
-    >
-      <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
-        <OptionVisual group={group} value={value} />
-      </div>
-      <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
-        {value}
-      </span>
-    </button>
-  );
+  }) => {
+    const cell = cellFor(group, value);
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={value}
+        aria-pressed={active}
+        title={value}
+        className={`${cell ? "w-[92px]" : "w-[68px]"} shrink-0 rounded-2xl border p-1.5 transition-all ${
+          active
+            ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
+            : "border-border bg-surface text-foreground/70"
+        }`}
+      >
+        <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
+          {cell ? (
+            <div className="size-full bg-cover" style={cellStyle(cell)} role="img" aria-label={value} />
+          ) : (
+            <OptionVisual group={group} value={value} />
+          )}
+        </div>
+        {cell ? null : (
+          <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
+            {value}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   const buildReady = !!traits.gender;
+  const sections = sectionsFor(traits.gender);
+  const activeSection = sections.some((s) => s.id === section) ? section : "face";
 
   const edit = (fn: (t: Traits) => Traits) => setTraits(fn);
+
 
 
   return (
@@ -794,7 +864,13 @@ export function AvatarStudio({
               </p>
               <button
                 type="button"
-                onClick={() => edit((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
+                onClick={() =>
+                  edit((t) => {
+                    const g = t.gender || "Male";
+                    return { ...randomTraits(g), gender: g };
+                  })
+                }
+
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
               >
                 <Dices className="size-3.5" /> Shuffle
@@ -807,7 +883,10 @@ export function AvatarStudio({
                   group="gender"
                   value={o}
                   active={traits.gender === o}
-                  onClick={() => edit((t) => ({ ...t, gender: o }))}
+                  onClick={() =>
+                    edit((t) => ({ ...t, gender: o, ...genderDefaults(o) }))
+                  }
+
                 />
               ))}
             </div>
@@ -817,13 +896,13 @@ export function AvatarStudio({
           {buildReady ? (
             <>
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                {SECTIONS.map((s) => (
+                {sections.map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     onClick={() => setSection(s.id)}
                     className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
-                      section === s.id
+                      activeSection === s.id
                         ? "ember-fill text-primary-foreground"
                         : "border border-border bg-surface text-muted-foreground"
                     }`}
@@ -833,7 +912,7 @@ export function AvatarStudio({
                 ))}
               </div>
 
-              {SECTIONS.filter((s) => s.id === section).map((s) => (
+              {sections.filter((s) => s.id === activeSection).map((s) => (
                 <div key={s.id} className="space-y-4 rounded-[28px] border border-border bg-surface/60 p-4">
                   <p className="text-xs text-muted-foreground">{s.blurb}</p>
                   {s.groups.map((g) => (
