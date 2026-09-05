@@ -26,7 +26,7 @@ export async function streamAvatar(
 ): Promise<void> {
   const res = await fetch("/api/generate-avatar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await avatarHeaders(),
     body: JSON.stringify({ prompt, selfie }),
   });
   if (!res.ok || !res.body) {
