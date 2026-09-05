@@ -237,13 +237,34 @@ export const getMe = createServerFn({ method: "POST" })
   });
 
 const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat"] as const;
+const SOCIAL_DOMAINS: Record<(typeof SOCIAL_KEYS)[number], string[]> = {
+  instagram: ["instagram.com"],
+  tiktok: ["tiktok.com"],
+  youtube: ["youtube.com", "youtu.be"],
+  twitter: ["x.com", "twitter.com"],
+  facebook: ["facebook.com", "fb.com"],
+  snapchat: ["snapchat.com"],
+};
 const socialSchema = z
-  .record(z.enum(SOCIAL_KEYS), z.string().trim().max(80))
+  .record(z.enum(SOCIAL_KEYS), z.string().trim().max(300))
   .transform((v) => {
     const out: Record<string, string> = {};
     for (const [k, val] of Object.entries(v)) {
-      const handle = (val ?? "").replace(/^@+/, "").trim();
-      if (handle) out[k] = handle;
+      const raw = (val ?? "").trim();
+      if (!raw) continue;
+      let url: URL;
+      try {
+        url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+      } catch {
+        throw new Error(`The ${k} link isn't a valid URL.`);
+      }
+      const host = url.hostname.toLowerCase().replace(/^www\./, "");
+      const allowed = SOCIAL_DOMAINS[k as (typeof SOCIAL_KEYS)[number]];
+      if (!allowed.some((d) => host === d || host.endsWith(`.${d}`))) {
+        throw new Error(`The ${k} link must be a ${allowed[0]} URL.`);
+      }
+      url.protocol = "https:";
+      out[k] = url.toString();
     }
     return out;
   });
