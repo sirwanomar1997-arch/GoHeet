@@ -7,36 +7,103 @@ import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 
 const STYLE_BASE =
-  "A single stylized 3D animated character portrait, head and shoulders, Pixar-quality soft-shaded render, " +
-  "glossy skin with subtle subsurface scattering, big expressive eyes, warm friendly half-smile, " +
-  "clean studio key light from the upper left, smooth warm amber-to-crimson gradient background, " +
-  "no text, no watermark, no logo, centered, square composition, high detail.";
+  "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
+  "head and shoulders, three-quarter view, looking at camera, warm friendly closed-mouth half-smile, " +
+  "large expressive photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores and peach fuzz, " +
+  "individually rendered hair strands, soft cinematic studio key light from the upper left with gentle rim light, " +
+  "smooth warm orange-to-pink gradient studio background, shallow depth of field, octane-quality render, " +
+  "vertical portrait composition, no text, no watermark, no logo.";
 
 type Traits = {
-  vibe: string;
-  hair: string;
+  gender: string;
+  age: string;
   skin: string;
+  face: string;
+  eyeColor: string;
+  eyeShape: string;
+  brows: string;
+  nose: string;
+  lips: string;
+  ears: string;
+  hair: string;
+  hairColor: string;
+  facialHair: string;
   extra: string;
 };
 
-const VIBES = ["Warm", "Bold", "Playful", "Calm", "Sharp"];
-const HAIR = ["Short dark", "Long wavy brown", "Curly black", "Blonde bob", "Buzz cut", "Bun"];
-const SKIN = ["Fair", "Light olive", "Tan", "Brown", "Deep brown"];
-const EXTRA = ["Glasses", "Beard", "Freckles", "Hoodie", "Earrings", "Cap"];
+const GENDER = ["Male", "Female", "Non-binary"];
+const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
+const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
+const FACE = ["Oval", "Round", "Square jaw", "Heart", "Long", "Sharp cheekbones"];
+const EYE_COLOR = ["Dark brown", "Hazel", "Amber", "Green", "Blue", "Grey"];
+const EYE_SHAPE = ["Almond", "Round", "Wide-set", "Hooded", "Monolid", "Upturned"];
+const BROWS = ["Soft arched", "Straight", "Thick bold", "Thin", "Bushy"];
+const NOSE = ["Small button", "Straight", "Narrow", "Wide", "Roman bridge", "Upturned"];
+const LIPS = ["Thin", "Medium", "Full", "Wide smile"];
+const EARS = ["Small", "Medium", "Large", "Slightly protruding", "Pointed lobes"];
+const HAIR = [
+  "Short swept-back",
+  "Buzz cut",
+  "Crew cut",
+  "Messy short",
+  "Curly afro",
+  "Shoulder-length wavy",
+  "Long straight",
+  "Braids",
+  "Top knot",
+  "Bob",
+  "Ponytail",
+  "Bald",
+];
+const HAIR_COLOR = [
+  "Jet black",
+  "Dark brown",
+  "Chestnut",
+  "Auburn",
+  "Blonde",
+  "Platinum",
+  "Salt & pepper",
+  "Ginger",
+];
+const FACIAL_HAIR = ["Clean shaven", "Stubble", "Short beard", "Full beard", "Moustache", "Goatee"];
+const EXTRA = ["Glasses", "Freckles", "Dimples", "Earrings", "Hoodie", "White shirt", "Cap"];
 
 function buildPrompt(t: Traits) {
   const bits = [
-    `${t.vibe.toLowerCase()} personality`,
-    t.hair.toLowerCase() + " hair",
-    t.skin.toLowerCase() + " skin tone",
+    `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
+    `${t.skin.toLowerCase()} skin tone`,
+    `${t.face.toLowerCase()} face shape`,
+    `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
+    `${t.brows.toLowerCase()} eyebrows`,
+    `${t.nose.toLowerCase()} nose`,
+    `${t.lips.toLowerCase()} lips`,
+    `${t.ears.toLowerCase()} ears`,
+    `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
+    t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
     t.extra ? t.extra.toLowerCase() : "",
   ].filter(Boolean);
-  return `${STYLE_BASE} The character has ${bits.join(", ")}.`;
+  return `${STYLE_BASE} The character is a ${bits.join(", ")}.`;
 }
 
 const SELFIE_PROMPT =
-  `${STYLE_BASE} Recreate the person in the reference photo as this stylized 3D character: ` +
-  `keep their hair, skin tone, face shape, facial hair and glasses recognizable, but render them in the animated style.`;
+  `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
+  `keep their face shape, skin tone, eye colour and shape, nose, lips, ears, hairstyle, hair colour, ` +
+  `facial hair and glasses clearly recognizable — it must look unmistakably like the same person, ` +
+  `only rendered in the animated film style.`;
+
+const GROUPS = [
+  ["Skin tone", SKIN, "skin"],
+  ["Face shape", FACE, "face"],
+  ["Eye colour", EYE_COLOR, "eyeColor"],
+  ["Eye shape", EYE_SHAPE, "eyeShape"],
+  ["Eyebrows", BROWS, "brows"],
+  ["Nose", NOSE, "nose"],
+  ["Lips", LIPS, "lips"],
+  ["Ears", EARS, "ears"],
+  ["Hair", HAIR, "hair"],
+  ["Hair colour", HAIR_COLOR, "hairColor"],
+  ["Facial hair", FACIAL_HAIR, "facialHair"],
+] as const;
 
 export function AvatarStudio({
   onDone,
@@ -55,9 +122,19 @@ export function AvatarStudio({
   const [selfie, setSelfie] = useState<string | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
   const [traits, setTraits] = useState<Traits>({
-    vibe: "Warm",
-    hair: "Short dark",
-    skin: "Tan",
+    gender: "",
+    age: "30s",
+    skin: "Light olive",
+    face: "Oval",
+    eyeColor: "Dark brown",
+    eyeShape: "Almond",
+    brows: "Soft arched",
+    nose: "Straight",
+    lips: "Medium",
+    ears: "Medium",
+    hair: "Short swept-back",
+    hairColor: "Dark brown",
+    facialHair: "Clean shaven",
     extra: "",
   });
   const [frame, setFrame] = useState<string | null>(null);
@@ -150,6 +227,8 @@ export function AvatarStudio({
         : "border border-border bg-surface text-muted-foreground"
     }`;
 
+  const buildReady = !!traits.gender;
+
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="flex gap-2">
@@ -161,7 +240,7 @@ export function AvatarStudio({
         </button>
       </div>
 
-      <div className="key-glow relative mt-6 aspect-square w-full overflow-hidden rounded-[32px] border border-border bg-surface">
+      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
         {frame ? (
           <img
             src={frame}
@@ -182,7 +261,9 @@ export function AvatarStudio({
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Pick your look below, then press create — Reelzy renders a 3D you.
+              {buildReady
+                ? "Fine-tune every feature below, then press create — Reelzy renders the 3D you."
+                : "Start by choosing who you are, then shape every feature."}
             </p>
           </div>
         )}
@@ -212,48 +293,83 @@ export function AvatarStudio({
 
       {mode === "build" ? (
         <div className="mt-5 space-y-4">
-          {(
-            [
-              ["Vibe", VIBES, "vibe"],
-              ["Hair", HAIR, "hair"],
-              ["Skin", SKIN, "skin"],
-            ] as const
-          ).map(([label, opts, key]) => (
-            <div key={key}>
-              <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                {label}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {opts.map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    onClick={() => setTraits((t) => ({ ...t, [key]: o }))}
-                    className={chip(traits[key] === o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
           <div>
             <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              Detail
+              You are
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {EXTRA.map((o) => (
+              {GENDER.map((o) => (
                 <button
                   key={o}
                   type="button"
-                  onClick={() => setTraits((t) => ({ ...t, extra: t.extra === o ? "" : o }))}
-                  className={chip(traits.extra === o)}
+                  onClick={() => setTraits((t) => ({ ...t, gender: o }))}
+                  className={chip(traits.gender === o)}
                 >
                   {o}
                 </button>
               ))}
             </div>
           </div>
+
+          {buildReady ? (
+            <>
+              <div>
+                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Age
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {AGE.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => setTraits((t) => ({ ...t, age: o }))}
+                      className={chip(traits.age === o)}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {GROUPS.map(([label, opts, key]) => (
+                <div key={key}>
+                  <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {label}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {opts.map((o) => (
+                      <button
+                        key={o}
+                        type="button"
+                        onClick={() => setTraits((t) => ({ ...t, [key]: o }))}
+                        className={chip(traits[key] === o)}
+                      >
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div>
+                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Detail
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {EXTRA.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => setTraits((t) => ({ ...t, extra: t.extra === o ? "" : o }))}
+                      className={chip(traits.extra === o)}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
 
@@ -271,7 +387,7 @@ export function AvatarStudio({
           <button
             type="button"
             onClick={() => void generate()}
-            disabled={busy}
+            disabled={busy || (mode === "build" && !buildReady)}
             className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             {frame ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
