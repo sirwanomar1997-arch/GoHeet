@@ -1,0 +1,489 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  addComment,
+  deleteComment,
+  deleteMoment,
+  listComments,
+  recordView,
+  submitReport,
+  toggleBlock,
+  toggleLike,
+  toggleSave,
+  type MomentCard,
+} from "@/lib/reelzy.functions";
+import { formatCount, timeAgo } from "./format";
+
+const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "harassment", label: "Harassment" },
+  { value: "bullying", label: "Bullying" },
+  { value: "hate", label: "Hate" },
+  { value: "sexual", label: "Sexual content" },
+  { value: "violence", label: "Violence" },
+  { value: "dangerous", label: "Dangerous behaviour" },
+  { value: "spam", label: "Spam" },
+  { value: "impersonation", label: "Impersonation" },
+  { value: "illegal", label: "Illegal content" },
+  { value: "self_harm", label: "Self-harm" },
+  { value: "other", label: "Something else" },
+];
+
+export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: () => void }) {
+  const qc = useQueryClient();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const watchedRef = useRef(0);
+  const reportedRef = useRef(false);
+
+  const [muted, setMuted] = useState(true);
+  const [liked, setLiked] = useState(moment.liked);
+  const [likeCount, setLikeCount] = useState(moment.likeCount);
+  const [saved, setSaved] = useState(moment.saved);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const like = useServerFn(toggleLike);
+  const save = useServerFn(toggleSave);
+  const view = useServerFn(recordView);
+  const report = useServerFn(submitReport);
+  const block = useServerFn(toggleBlock);
+  const removeMoment = useServerFn(deleteMoment);
+
+  const flushView = useCallback(
+    (completed: boolean) => {
+      if (reportedRef.current || watchedRef.current < 1500) return;
+      reportedRef.current = true;
+      void view({ data: { momentId: moment.id, watchedMs: Math.round(watchedRef.current), completed } });
+    },
+    [moment.id, view],
+  );
+
+  useEffect(() => {
+    const el = containerRef.current;
+    const vid = videoRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && e.intersectionRatio > 0.6) {
+            void vid?.play().catch(() => undefined);
+          } else {
+            vid?.pause();
+            flushView(false);
+          }
+        }
+      },
+      { threshold: [0, 0.6, 1] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [flushView]);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    let last = 0;
+    const onTime = () => {
+      const t = vid.currentTime * 1000;
+      if (t > last) watchedRef.current += t - last;
+      last = t;
+      if (watchedRef.current >= 1500) flushView(false);
+    };
+    const onEnded = () => {
+      reportedRef.current = false;
+      watchedRef.current = Math.max(watchedRef.current, 3000);
+      flushView(true);
+      last = 0;
+    };
+    vid.addEventListener("timeupdate", onTime);
+    vid.addEventListener("ended", onEnded);
+    return () => {
+      vid.removeEventListener("timeupdate", onTime);
+      vid.removeEventListener("ended", onEnded);
+    };
+  }, [flushView]);
+
+  // Photos still count as seen after a short dwell.
+  useEffect(() => {
+    if (moment.kind !== "photo") return;
+    const timer = setTimeout(() => {
+      watchedRef.current = 2000;
+      flushView(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [moment.kind, flushView]);
+
+  const likeMutation = useMutation({
+    mutationFn: () => like({ data: { momentId: moment.id } }),
+    onMutate: () => {
+      setLiked((v) => !v);
+      setLikeCount((c) => c + (liked ? -1 : 1));
+    },
+    onError: () => {
+      setLiked(moment.liked);
+      setLikeCount(moment.likeCount);
+      toast.error("Couldn't register that. Try again.");
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: () => save({ data: { momentId: moment.id } }),
+    onSuccess: (res) => {
+      setSaved(res.saved);
+      toast.success(res.saved ? "Kept." : "Removed from kept.");
+      void qc.invalidateQueries({ queryKey: ["feed", "saved"] });
+    },
+    onError: () => toast.error("Couldn't save that moment."),
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: (category: string) =>
+      report({ data: { targetType: "moment", targetId: moment.id, category } }),
+    onSuccess: () => {
+      setReportOpen(false);
+      toast.success("Reported. Our safety team will review it.");
+    },
+    onError: () => toast.error("Couldn't send that report."),
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: () => block({ data: { userId: moment.author.id } }),
+    onSuccess: () => {
+      toast.success(`You blocked @${moment.author.username}.`);
+      onGone?.();
+      void qc.invalidateQueries();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => removeMoment({ data: { momentId: moment.id } }),
+    onSuccess: () => {
+      toast.success("Moment deleted.");
+      onGone?.();
+      void qc.invalidateQueries();
+    },
+  });
+
+  return (
+    <section
+      ref={containerRef}
+      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[28px] bg-surface"
+      aria-label={`Moment by ${moment.author.username}`}
+    >
+      {moment.kind === "video" && moment.mediaUrl ? (
+        <video
+          ref={videoRef}
+          src={moment.mediaUrl}
+          poster={moment.posterUrl ?? undefined}
+          className="size-full object-cover"
+          playsInline
+          loop
+          muted={muted}
+          preload="metadata"
+          onClick={() => setMuted((m) => !m)}
+        />
+      ) : moment.mediaUrl ? (
+        <img
+          src={moment.mediaUrl}
+          alt={moment.caption ?? `A moment by ${moment.author.username}`}
+          className="size-full object-cover"
+        />
+      ) : (
+        <div className="grid size-full place-items-center text-sm text-muted-foreground">
+          This moment is unavailable.
+        </div>
+      )}
+
+      {/* Seen ticker — Reelzy's honest view counter */}
+      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 backdrop-blur">
+        <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
+        <span className="data-figure text-[11px] text-foreground">
+          {formatCount(moment.viewCount)} seen
+        </span>
+      </div>
+
+      {moment.kind === "video" ? (
+        <button
+          type="button"
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted ? "Turn sound on" : "Turn sound off"}
+          className="tap-target absolute right-4 top-4 grid place-items-center rounded-full border border-border bg-background/70 backdrop-blur"
+        >
+          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+        </button>
+      ) : null}
+
+      {/* Bottom information band + reaction rail */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-16">
+        <div className="flex items-center gap-3">
+          <Link to="/u/$username" params={{ username: moment.author.username }} className="shrink-0">
+            <span className="ember-fill flex size-10 items-center justify-center rounded-2xl p-[2px]">
+              <span className="grid size-full place-items-center overflow-hidden rounded-[14px] bg-surface">
+                {moment.author.avatarUrl ? (
+                  <img src={moment.author.avatarUrl} alt="" className="size-full object-cover" />
+                ) : (
+                  <span className="font-display text-sm font-bold uppercase">
+                    {moment.author.username.slice(0, 1)}
+                  </span>
+                )}
+              </span>
+            </span>
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link
+              to="/u/$username"
+              params={{ username: moment.author.username }}
+              className="block truncate font-display text-base font-semibold"
+            >
+              @{moment.author.username}
+            </Link>
+            <p className="data-figure truncate text-[11px] text-muted-foreground">
+              {moment.locationLabel ? `${moment.locationLabel} · ` : ""}
+              {timeAgo(moment.createdAt)}
+            </p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="More options"
+              className="tap-target grid place-items-center rounded-full border border-border"
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  void navigator.clipboard?.writeText(
+                    `${window.location.origin}/u/${moment.author.username}`,
+                  );
+                  toast.success("Link copied.");
+                }}
+              >
+                Share this person
+              </DropdownMenuItem>
+              {moment.isOwn ? (
+                <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
+                  Delete moment
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem onClick={() => setReportOpen(true)}>Report moment</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => blockMutation.mutate()}>
+                    Block @{moment.author.username}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {moment.caption ? (
+          <p className="mt-3 text-sm leading-relaxed text-foreground/90">{moment.caption}</p>
+        ) : null}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => likeMutation.mutate()}
+            aria-pressed={liked}
+            className={`tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition-all active:scale-[0.97] ${
+              liked
+                ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                : "border-border bg-surface-raised text-foreground"
+            }`}
+          >
+            <Flame className="size-4" strokeWidth={liked ? 2.6 : 1.8} />
+            <span className="data-figure text-xs">{formatCount(likeCount)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCommentsOpen(true)}
+            className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised px-3 text-sm font-medium active:scale-[0.97]"
+          >
+            <MessageCircle className="size-4" strokeWidth={1.8} />
+            <span className="data-figure text-xs">{formatCount(moment.commentCount)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => saveMutation.mutate()}
+            aria-pressed={saved}
+            aria-label="Keep this moment"
+            className={`tap-target grid w-14 place-items-center rounded-2xl border active:scale-[0.97] ${
+              saved ? "border-primary text-primary" : "border-border bg-surface-raised"
+            }`}
+          >
+            <Bookmark className="size-4" strokeWidth={saved ? 2.6 : 1.8} />
+          </button>
+        </div>
+      </div>
+
+      <CommentSheet
+        momentId={moment.id}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        author={moment.author.username}
+      />
+
+      <Sheet open={reportOpen} onOpenChange={setReportOpen}>
+        <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
+          <SheetHeader className="px-0">
+            <SheetTitle className="font-display">Report this moment</SheetTitle>
+            <SheetDescription>
+              Tell us what&apos;s wrong. Reports are reviewed by the Reelzy safety team.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid max-h-[50vh] grid-cols-2 gap-2 overflow-y-auto pb-6">
+            {REPORT_CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                disabled={reportMutation.isPending}
+                onClick={() => reportMutation.mutate(c.value)}
+                className="tap-target rounded-xl border border-border bg-surface-raised px-3 text-sm"
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </section>
+  );
+}
+
+function CommentSheet({
+  momentId,
+  open,
+  onOpenChange,
+  author,
+}: {
+  momentId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  author: string;
+}) {
+  const fetchComments = useServerFn(listComments);
+  const create = useServerFn(addComment);
+  const remove = useServerFn(deleteComment);
+  const removeReport = useServerFn(submitReport);
+  const [body, setBody] = useState("");
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["comments", momentId],
+    queryFn: () => fetchComments({ data: { momentId } }),
+    enabled: open,
+  });
+
+  const post = useMutation({
+    mutationFn: () => create({ data: { momentId, body } }),
+    onSuccess: () => {
+      setBody("");
+      void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Couldn't post that comment."),
+  });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="flex h-[80svh] flex-col rounded-t-[28px] border-border bg-surface">
+        <SheetHeader className="px-0">
+          <SheetTitle className="font-display">Said about this moment</SheetTitle>
+          <SheetDescription>Talking with @{author} and everyone else here.</SheetDescription>
+        </SheetHeader>
+
+        <div className="flex-1 space-y-4 overflow-y-auto pb-4">
+          {isLoading ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : (data?.comments.length ?? 0) === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Nobody has said anything yet. Be first.
+            </p>
+          ) : (
+            data?.comments.map((c) => (
+              <div key={c.id} className="flex gap-3">
+                <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase">
+                  {c.avatarUrl ? (
+                    <img src={c.avatarUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    c.username.slice(0, 1)
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">
+                    @{c.username} · {timeAgo(c.createdAt)}
+                  </p>
+                  <p className="text-sm text-foreground">{c.body}</p>
+                  <div className="mt-1 flex gap-3">
+                    {c.isOwn ? (
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted-foreground underline"
+                        onClick={async () => {
+                          await remove({ data: { commentId: c.id } });
+                          void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted-foreground underline"
+                        onClick={async () => {
+                          await removeReport({
+                            data: { targetType: "comment", targetId: c.id, category: "harassment" },
+                          });
+                          toast.success("Reported.");
+                        }}
+                      >
+                        Report
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="flex items-end gap-2 border-t border-border pt-3">
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value.slice(0, 500))}
+            placeholder="Say something real…"
+            rows={1}
+            className="min-h-11 resize-none bg-surface-raised"
+          />
+          <Button
+            size="icon"
+            className="ember-fill size-11 shrink-0 rounded-2xl text-primary-foreground"
+            disabled={!body.trim() || post.isPending}
+            onClick={() => post.mutate()}
+            aria-label="Post comment"
+          >
+            <Send className="size-4" />
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
