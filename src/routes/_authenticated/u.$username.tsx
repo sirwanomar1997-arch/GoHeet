@@ -103,22 +103,31 @@ function ProfilePage() {
           className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
         />
         {data.isSelf ? (
-          <div className="absolute right-5 top-5 flex gap-2">
+          <>
             <Link
-              to="/messages"
-              aria-label="Messages"
-              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              to="/edit-profile"
+              aria-label="Edit profile"
+              className="absolute left-5 top-5 grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
             >
-              <MessageCircle className="size-4" />
+              <Pencil className="size-4" />
             </Link>
-            <Link
-              to="/settings"
-              aria-label="Settings"
-              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Settings className="size-4" />
-            </Link>
-          </div>
+            <div className="absolute right-5 top-5 flex gap-2">
+              <Link
+                to="/messages"
+                aria-label="Messages"
+                className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <MessageCircle className="size-4" />
+              </Link>
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Settings className="size-4" />
+              </Link>
+            </div>
+          </>
         ) : null}
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
@@ -132,26 +141,22 @@ function ProfilePage() {
           </div>
 
           {data.isSelf ? (
-            <div className="mt-3 flex items-center gap-2">
-              <Link
-                to="/edit-profile"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Pencil className="size-3" /> Edit profile
-              </Link>
-              <Link
-                to="/avatar"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
-              </Link>
-            </div>
+            <Link
+              to="/avatar"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
+            </Link>
           ) : null}
 
-          <h1 className="mt-4 text-center font-display text-3xl font-extrabold tracking-[-0.045em]">
+          <h1 className="mt-4 flex flex-wrap items-baseline justify-center gap-x-2 text-center font-display text-3xl font-extrabold tracking-[-0.045em]">
             {p.displayName || p.username}
+            {p.displayName ? (
+              <span className="data-figure align-middle font-sans text-xs font-normal tracking-normal text-muted-foreground">
+                @{p.username}
+              </span>
+            ) : null}
           </h1>
-          <p className="data-figure text-xs text-muted-foreground">@{p.username}</p>
           {p.bio ? (
             <p className="mt-3 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
               {p.bio}
