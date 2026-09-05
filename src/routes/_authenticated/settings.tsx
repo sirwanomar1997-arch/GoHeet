@@ -226,6 +226,17 @@ function SettingsPage() {
           </p>
           <div className="mt-4 space-y-4">
             <div>
+              <Label htmlFor="cur">Current password</Label>
+              <Input
+                id="cur"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="mt-1.5 h-11 bg-surface-raised"
+              />
+            </div>
+            <div>
               <Label htmlFor="np">New password</Label>
               <Input
                 id="np"
