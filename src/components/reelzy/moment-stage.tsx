@@ -138,6 +138,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
+    vid.volume = moment.originalAudioVolume;
     let last = 0;
     const onTime = () => {
       const t = vid.currentTime * 1000;
@@ -159,7 +160,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       vid.removeEventListener("timeupdate", onTime);
       vid.removeEventListener("ended", onEnded);
     };
-  }, [flushView]);
+  }, [flushView, moment.originalAudioVolume]);
 
   // Photos still count as seen after a short dwell.
   useEffect(() => {
@@ -178,7 +179,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
     if (!aud) return;
     if (!vid) return;
     const play = () => {
-      aud.currentTime = vid.currentTime % (aud.duration || 1);
+      const offsetSeconds = moment.music ? moment.music.offsetMs / 1000 : 0;
+      const duration = aud.duration || 1;
+      aud.currentTime = (offsetSeconds + vid.currentTime) % duration;
+      aud.volume = moment.music?.volume ?? 0.75;
       void aud.play().catch(() => undefined);
     };
     const pause = () => aud.pause();
@@ -189,7 +193,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       vid.removeEventListener("pause", pause);
       aud.pause();
     };
-  }, [moment.music?.url]);
+  }, [moment.music]);
 
   const likeMutation = useMutation({
     mutationFn: () => like({ data: { momentId: moment.id } }),

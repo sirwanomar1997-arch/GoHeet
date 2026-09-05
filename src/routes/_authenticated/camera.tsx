@@ -2,12 +2,13 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search } from "lucide-react";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
   Sheet,
   SheetContent,
@@ -77,7 +78,19 @@ function CameraPage() {
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
-  const [track, setTrack] = useState<{ id: string; title: string; artist: string } | null>(null);
+  const [track, setTrack] = useState<{
+    id: string;
+    title: string;
+    artist: string;
+    url: string | null;
+    durationMs: number | null;
+  } | null>(null);
+  const [musicSearch, setMusicSearch] = useState("");
+  const [musicOffsetMs, setMusicOffsetMs] = useState(0);
+  const [musicVolume, setMusicVolume] = useState(0.75);
+  const [originalAudioVolume, setOriginalAudioVolume] = useState(1);
+  const [previewingTrackId, setPreviewingTrackId] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const openSession = useServerFn(startCapture);
   const fetchTracks = useServerFn(listMusicTracks);
@@ -87,6 +100,29 @@ function CameraPage() {
     enabled: musicOpen,
   });
   const publish = useServerFn(publishMoment);
+  const visibleTracks = (music?.tracks ?? []).filter((item) => {
+    const query = musicSearch.trim().toLowerCase();
+    return !query || `${item.title} ${item.artist} ${item.mood ?? ""} ${item.genres.join(" ")}`.toLowerCase().includes(query);
+  });
+
+  useEffect(() => () => previewAudioRef.current?.pause(), []);
+
+  function toggleTrackPreview(item: { id: string; url: string | null }) {
+    const current = previewAudioRef.current;
+    if (previewingTrackId === item.id && current) {
+      current.pause();
+      setPreviewingTrackId(null);
+      return;
+    }
+    current?.pause();
+    if (!item.url) return;
+    const audio = new Audio(item.url);
+    audio.volume = 0.75;
+    audio.onended = () => setPreviewingTrackId(null);
+    previewAudioRef.current = audio;
+    setPreviewingTrackId(item.id);
+    void audio.play().catch(() => setPreviewingTrackId(null));
+  }
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -209,6 +245,9 @@ function CameraPage() {
     setPlace("");
     setOverlay(null);
     setTrack(null);
+    setMusicOffsetMs(0);
+    setMusicVolume(0.75);
+    setOriginalAudioVolume(1);
     setLook("none");
   }
 
@@ -245,6 +284,8 @@ function CameraPage() {
           ...(look !== "none" ? { styleFilter: look } : {}),
           ...(overlay?.text.trim() ? { overlay } : {}),
           ...(track ? { musicTrackId: track.id } : {}),
+          ...(track ? { musicOffsetMs, musicVolume } : {}),
+          originalAudioVolume,
         },
       });
       toast.success("Published. That's a real one.");
@@ -348,6 +389,32 @@ function CameraPage() {
               </button>
             ))}
           </div>
+
+          {track ? (
+            <div className="mt-4 space-y-4 rounded-2xl border border-border bg-surface-raised p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{track.title}</p>
+                  <p className="truncate text-xs text-muted-foreground">{track.artist}</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(track)} aria-label="Preview selected track">
+                  {previewingTrackId === track.id ? <Pause className="size-4" /> : <Play className="size-4" />}
+                </Button>
+              </div>
+              <label className="block space-y-2 text-xs text-muted-foreground">
+                <span className="flex justify-between"><span>Start point</span><span>{Math.floor(musicOffsetMs / 1000)}s</span></span>
+                <Slider value={[musicOffsetMs]} min={0} max={Math.max(0, (track.durationMs ?? 30000) - 1000)} step={1000} onValueChange={([value]) => setMusicOffsetMs(value ?? 0)} />
+              </label>
+              <label className="block space-y-2 text-xs text-muted-foreground">
+                <span>Music volume</span>
+                <Slider value={[musicVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setMusicVolume(value ?? 0.75)} />
+              </label>
+              <label className="block space-y-2 text-xs text-muted-foreground">
+                <span>Original sound</span>
+                <Slider value={[originalAudioVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setOriginalAudioVolume(value ?? 1)} />
+              </label>
+            </div>
+          ) : null}
 
           <div className="mt-5 space-y-4">
             <Textarea
@@ -467,36 +534,45 @@ function CameraPage() {
           <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
             <SheetHeader className="px-0">
               <SheetTitle className="font-display">Add a track</SheetTitle>
-              <SheetDescription>Licensed music from the Reelzy library.</SheetDescription>
+              <SheetDescription>Music cleared for use inside Reelzy.</SheetDescription>
             </SheetHeader>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={musicSearch} onChange={(event) => setMusicSearch(event.target.value)} placeholder="Search tracks, artists or moods" className="h-11 bg-surface-raised pl-10" />
+            </div>
             <div className="flex-1 space-y-2 overflow-y-auto pb-6">
               {musicLoading ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
               ) : (music?.tracks.length ?? 0) === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                  The music library is empty. Licensed tracks have to be added before anyone can
-                  put music on a moment.
+                  Reelzy's licensed catalog is awaiting provider approval. Tracks will appear here
+                  only after their usage rights are verified.
                 </p>
               ) : (
-                music?.tracks.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => {
-                      setTrack({ id: t.id, title: t.title, artist: t.artist });
-                      setMusicOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised px-3 py-3 text-left"
-                  >
-                    <span className="ember-fill grid size-10 shrink-0 place-items-center rounded-xl text-primary-foreground">
-                      <Music2 className="size-4" />
-                    </span>
+                visibleTracks.map((t) => (
+                  <div key={t.id} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3">
+                    <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(t)} aria-label={`Preview ${t.title}`} className="shrink-0 overflow-hidden rounded-xl">
+                      {t.artworkUrl ? <img src={t.artworkUrl} alt="" className="size-full object-cover" /> : previewingTrackId === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}
+                    </Button>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{t.title}</span>
                       <span className="block truncate text-xs text-muted-foreground">{t.artist}</span>
                     </span>
-                    {track?.id === t.id ? <Check className="size-4 text-primary" /> : null}
-                  </button>
+                    <Button
+                      variant={track?.id === t.id ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => {
+                        previewAudioRef.current?.pause();
+                        setPreviewingTrackId(null);
+                        setTrack({ id: t.id, title: t.title, artist: t.artist, url: t.url, durationMs: t.durationMs });
+                        setMusicOffsetMs(0);
+                        setMusicOpen(false);
+                      }}
+                      aria-label={`Use ${t.title}`}
+                    >
+                      <Check className="size-4" />
+                    </Button>
+                  </div>
                 ))
               )}
             </div>
