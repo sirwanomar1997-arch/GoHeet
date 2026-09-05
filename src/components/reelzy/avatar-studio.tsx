@@ -6,7 +6,6 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
-import { AvatarPreview } from "@/components/reelzy/avatar-preview";
 
 
 const STYLE_BASE =
@@ -475,7 +474,6 @@ export function AvatarStudio({
   // Fixed pose + seed keep the character consistent between edits.
   const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
   const runRef = useRef(0);
-  const firstBuild = useRef(true);
 
 
   const stopStream = useCallback(() => {
@@ -552,7 +550,6 @@ export function AvatarStudio({
   // into a single render.
   useEffect(() => {
     if (mode !== "build" || !traits.gender) return;
-    if (firstBuild.current) firstBuild.current = false;
     const id = setTimeout(() => {
       void generate(look, traits, null);
     }, 700);
@@ -622,10 +619,10 @@ export function AvatarStudio({
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="flex gap-2">
-        <button type="button" onClick={() => setMode("selfie")} className={chip(mode === "selfie")}>
+        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); }} className={chip(mode === "selfie")}>
           Snap a selfie
         </button>
-        <button type="button" onClick={() => setMode("build")} className={chip(mode === "build")}>
+        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); }} className={chip(mode === "build")}>
           Build it instead
         </button>
       </div>
@@ -830,7 +827,7 @@ export function AvatarStudio({
             type="button"
             onClick={() => void keep()}
             disabled={saving}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+            className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             <Check className="size-4" /> {saving ? "Saving…" : "This is me"}
           </button>
