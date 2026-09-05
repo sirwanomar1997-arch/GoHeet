@@ -6,6 +6,7 @@ import mouthSheet from "@/assets/av/mouth-sheet.png";
 import hairMaleSheet from "@/assets/av/hair-male-sheet.png";
 import hairFemaleSheet from "@/assets/av/hair-female-sheet.png";
 import makeupSheet from "@/assets/av/makeup-sheet.png";
+import beardSheet from "@/assets/av/beard-sheet.png";
 import outfitSheet from "@/assets/av/outfit-sheet.png";
 import accessorySheet from "@/assets/av/accessory-sheet.png";
 import outfitMaleCasualSheet from "@/assets/av/outfit-male-casual.png";
@@ -43,6 +44,7 @@ export const SHEETS = {
   hairMale: { src: hairMaleSheet, cols: 5, rows: 4 },
   hairFemale: { src: hairFemaleSheet, cols: 6, rows: 5 },
   makeup: { src: makeupSheet, cols: 4, rows: 3 },
+  beard: { src: beardSheet, cols: 4, rows: 3 },
   outfit: { src: outfitSheet, cols: 5, rows: 4 },
   accessory: { src: accessorySheet, cols: 6, rows: 5 },
   outfitMaleCasual: { src: outfitMaleCasualSheet, cols: 5, rows: 4 },
@@ -264,6 +266,21 @@ export const HAIR_FEMALE = cells([
   "Short curly",
 ]);
 
+export const BEARDS = cells([
+  "Clean shaven",
+  "Light stubble",
+  "Heavy stubble",
+  "Short boxed beard",
+  "Full thick beard",
+  "Goatee",
+  "Moustache",
+  "Handlebar moustache",
+  "Chin strap beard",
+  "Long full beard",
+  "Van dyke",
+  "Mutton chops",
+]);
+
 export const MAKEUP = cells([
   "None",
   "Soft nude",
@@ -409,6 +426,7 @@ export type Traits = {
   hair: string;
   hairColor: string;
   makeup: string;
+  beard: string;
   outfit: string;
   outfitColor: string;
   accessories: string[];
@@ -427,8 +445,9 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     nose: "Straight",
     mouth: female ? "Full lips" : "Slight smirk",
     hair: female ? "Long waves" : "Swept back waves",
-    hairColor: female ? "Chestnut brown" : "Salt and pepper",
+    hairColor: female ? "Chestnut brown" : "Dark brown",
     makeup: female ? "Soft nude" : "None",
+    beard: female ? "Clean shaven" : "Light stubble",
     outfit: female ? "Dusty rose knit" : "White linen shirt",
     outfitColor: female ? "Dusty pink" : "White",
     accessories: [],

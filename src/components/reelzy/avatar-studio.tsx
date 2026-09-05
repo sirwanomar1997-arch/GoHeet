@@ -9,6 +9,7 @@ import { streamAvatar } from "@/lib/stream-avatar";
 import {
   ACCESSORIES,
   AVATAR_AGES,
+  BEARDS,
   BROWS,
   EYE_COLORS,
   EYE_SHAPES,
@@ -41,8 +42,8 @@ const STYLE_BASE =
   "friendly approachable head-and-shoulders portrait facing the camera with a warm natural smile, " +
   "large expressive eyes with crisp catchlights, smooth soft-shaded skin, clean sculpted hair with " +
   "clear texture, believable everyday clothing with visible fabric detail, " +
-  "even soft studio lighting with a gentle contact shadow, " +
-  "PURE WHITE seamless background, high-quality clean render, " +
+  "even soft studio lighting with a warm cinematic rim light, " +
+  "smooth vibrant warm ORANGE-TO-CORAL-PINK gradient background, high-quality clean render, " +
   "vertical portrait with the WHOLE head, complete hairstyle and any headwear fully inside the frame " +
   "with generous margin above the hair, shoulders and upper chest visible, nothing cropped, " +
   "no text, no watermark, no logo.";
@@ -57,8 +58,11 @@ function describe(t: Traits) {
     "60+": "older adult, age 60 or above, with natural dignified age detail",
   }[t.age];
   const bits = [
-    female ? "feminine female character" : "masculine male character",
+    female
+      ? "feminine female character"
+      : "handsome masculine male character with a clean youthful jawline, smooth skin, no wrinkles unless the age says otherwise",
     ageDescription,
+    female ? "" : `${t.beard.toLowerCase()} facial hair`,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -601,6 +605,15 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           value={traits.mouth}
           onPick={(v) => update({ mouth: v })}
         />
+        {traits.gender === "Male" ? (
+          <SheetRow
+            title="Beard"
+            sheet={SHEETS.beard}
+            opts={BEARDS}
+            value={traits.beard}
+            onPick={(v) => update({ beard: v })}
+          />
+        ) : null}
         </div> : null}
         {category === "Hair" ? <div className="space-y-5">
         <SheetRow
