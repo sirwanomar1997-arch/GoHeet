@@ -253,7 +253,7 @@ export function AvatarStudio({
   const [camError, setCamError] = useState<string | null>(null);
   const [traits, setTraits] = useState<Traits>({
     gender: "",
-    age: "30s",
+    age: "20s",
     skin: "Light olive",
     face: "Oval",
     eyeColor: "Dark brown",
@@ -265,7 +265,12 @@ export function AvatarStudio({
     hair: "Short swept-back",
     hairColor: "Dark brown",
     facialHair: "Clean shaven",
-    extra: "",
+    expression: "Warm half-smile",
+    outfit: "Hoodie",
+    outfitColor: "Black",
+    headwear: "None",
+    background: "Warm orange-pink glow",
+    extras: [],
   });
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
