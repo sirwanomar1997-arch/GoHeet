@@ -27,7 +27,7 @@ export const HAIR_COLORS = [
   { name: "Chestnut", base: "#6b3c1f", shade: "#4d2915" },
   { name: "Auburn", base: "#8b3a1d", shade: "#652713" },
   { name: "Ginger", base: "#c25a1d", shade: "#9a4213" },
-  { name: "Blonde", base: "#d9a martingale", shade: "#b8853c" },
+  { name: "Blonde", base: "#d9a94f", shade: "#b8853c" },
   { name: "Platinum", base: "#e5dccb", shade: "#c2b6a2" },
   { name: "Salt & pepper", base: "#6f6a6b", shade: "#4b4647" },
   { name: "Silver", base: "#c9c6ce", shade: "#a09da6" },
