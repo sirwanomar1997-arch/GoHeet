@@ -6,7 +6,6 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
-import { AvatarPreview } from "@/components/reelzy/avatar-preview";
 
 
 const STYLE_BASE =
@@ -287,7 +286,7 @@ function randomTraits(): Traits {
   };
 }
 
-function buildPrompt(t: Traits) {
+function buildPrompt(t: Traits, pose: string, seed: number) {
   const bits = [
     `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
     `${t.skin.toLowerCase()} skin tone`,
@@ -307,15 +306,14 @@ function buildPrompt(t: Traits) {
     t.jewelry.length ? `jewellery: ${t.jewelry.join(", ").toLowerCase()}` : "",
     ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
-  // A unique pose + variation seed keeps every single render one of a kind,
-  // even when two people pick identical options.
-  const pose = pick(POSES);
-  const seed = Math.floor(Math.random() * 1_000_000);
+  // The pose + variation seed stay fixed while the user is styling, so only the
+  // thing they just tapped changes. Shuffle / Try another rolls a new one.
   return (
     `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
     `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
   );
 }
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
@@ -470,10 +468,13 @@ export function AvatarStudio({
   const [section, setSection] = useState("face");
 
   const [frame, setFrame] = useState<string | null>(null);
-  const [showRender, setShowRender] = useState(false);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Fixed pose + seed keep the character consistent between edits.
+  const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
+  const runRef = useRef(0);
+
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -521,23 +522,40 @@ export function AvatarStudio({
     stopStream();
   }
 
-  async function generate() {
-    setBusy(true);
-    setShowRender(true);
-    setFrame(null);
-    setIsFinal(false);
-    try {
-      const prompt = mode === "selfie" ? SELFIE_PROMPT : buildPrompt(traits);
-      await streamAvatar(prompt, mode === "selfie" ? selfie : null, (url, final) => {
-        setFrame(url);
-        if (final) setIsFinal(true);
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const generate = useCallback(
+    async (l: { pose: string; seed: number }, t: Traits, useSelfie: string | null) => {
+      const run = ++runRef.current;
+      setBusy(true);
+      setIsFinal(false);
+      try {
+        const prompt = useSelfie ? SELFIE_PROMPT : buildPrompt(t, l.pose, l.seed);
+        await streamAvatar(prompt, useSelfie, (url, final) => {
+          if (runRef.current !== run) return;
+          setFrame(url);
+          if (final) setIsFinal(true);
+        });
+      } catch (e) {
+        if (runRef.current === run) {
+          toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
+        }
+      } finally {
+        if (runRef.current === run) setBusy(false);
+      }
+    },
+    [],
+  );
+
+  // Every tap re-renders the real 3D avatar, so the user always sees the
+  // finished look — never a flat sketch. Debounced so rapid taps collapse
+  // into a single render.
+  useEffect(() => {
+    if (mode !== "build" || !traits.gender) return;
+    const id = setTimeout(() => {
+      void generate(look, traits, null);
+    }, 700);
+    return () => clearTimeout(id);
+  }, [mode, traits, look, generate]);
+
 
   async function keep() {
     if (!frame) return;
@@ -595,32 +613,27 @@ export function AvatarStudio({
 
   const buildReady = !!traits.gender;
 
-  // Any change flips the stage back to the live preview so the user always
-  // sees what they just picked, straight away.
-  const edit = (fn: (t: Traits) => Traits) => {
-    setShowRender(false);
-    setTraits(fn);
-  };
+  const edit = (fn: (t: Traits) => Traits) => setTraits(fn);
 
 
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="flex gap-2">
-        <button type="button" onClick={() => setMode("selfie")} className={chip(mode === "selfie")}>
+        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); }} className={chip(mode === "selfie")}>
           Snap a selfie
         </button>
-        <button type="button" onClick={() => setMode("build")} className={chip(mode === "build")}>
+        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); }} className={chip(mode === "build")}>
           Build it instead
         </button>
       </div>
 
       <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-surface">
-        {frame && (mode === "selfie" || showRender) ? (
+        {frame ? (
           <img
             src={frame}
             alt="Your avatar"
             className={`size-full object-cover transition-[filter] duration-500 ${
-              isFinal ? "blur-0" : "blur-2xl"
+              isFinal && !busy ? "blur-0" : "blur-xl"
             }`}
           />
         ) : mode === "selfie" && selfie ? (
@@ -633,39 +646,19 @@ export function AvatarStudio({
             className={`size-full object-cover ${facing === "user" ? "-scale-x-100" : ""}`}
           />
         ) : buildReady ? (
-          <AvatarPreview t={traits} className="size-full object-cover" />
+          <div className="grid size-full animate-pulse place-items-center bg-gradient-to-b from-primary/25 to-background">
+            <Sparkles className="size-8 text-primary" />
+          </div>
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Pick who you are below — your avatar appears here straight away, and changes with
+              Pick who you are below — your avatar is rendered here in full 3D, and re-renders with
               every single thing you tap.
             </p>
           </div>
         )}
 
 
-        {mode === "build" && frame && !busy ? (
-          <div className="absolute left-1/2 top-3 flex -translate-x-1/2 gap-1 rounded-full bg-background/70 p-1 backdrop-blur">
-            <button
-              type="button"
-              onClick={() => setShowRender(false)}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                showRender ? "text-muted-foreground" : "ember-fill text-primary-foreground"
-              }`}
-            >
-              Editing
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRender(true)}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                showRender ? "ember-fill text-primary-foreground" : "text-muted-foreground"
-              }`}
-            >
-              3D render
-            </button>
-          </div>
-        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
@@ -804,11 +797,23 @@ export function AvatarStudio({
           >
             <Camera className="size-4" /> Take the shot
           </button>
+        ) : mode === "build" ? (
+          <button
+            type="button"
+            onClick={() =>
+              setLook({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) })
+            }
+            disabled={busy || !buildReady}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+          >
+            <RefreshCw className="size-4" />
+            {busy ? "Rendering…" : "Try another take"}
+          </button>
         ) : (
           <button
             type="button"
-            onClick={() => void generate()}
-            disabled={busy || (mode === "build" && !buildReady)}
+            onClick={() => void generate(look, traits, selfie)}
+            disabled={busy}
             className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             {frame ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
@@ -816,12 +821,13 @@ export function AvatarStudio({
           </button>
         )}
 
+
         {frame && isFinal ? (
           <button
             type="button"
             onClick={() => void keep()}
             disabled={saving}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+            className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             <Check className="size-4" /> {saving ? "Saving…" : "This is me"}
           </button>
