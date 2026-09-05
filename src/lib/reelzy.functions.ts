@@ -289,6 +289,10 @@ export const updateProfile = createServerFn({ method: "POST" })
     isPrivate?: boolean;
     discoverable?: boolean;
     allowComments?: string;
+    allowMessages?: string;
+    showFollowing?: boolean;
+    showLikes?: boolean;
+    showSaves?: boolean;
     socialLinks?: Record<string, string>;
   }) => ({
     displayName: z.string().trim().max(40).optional().parse(d.displayName),
@@ -299,6 +303,12 @@ export const updateProfile = createServerFn({ method: "POST" })
     allowComments: d.allowComments
       ? z.enum(["everyone", "followers", "nobody"]).parse(d.allowComments)
       : undefined,
+    allowMessages: d.allowMessages
+      ? z.enum(["everyone", "followers", "nobody"]).parse(d.allowMessages)
+      : undefined,
+    showFollowing: d.showFollowing,
+    showLikes: d.showLikes,
+    showSaves: d.showSaves,
     socialLinks: d.socialLinks ? socialSchema.parse(d.socialLinks) : undefined,
   }))
   .handler(async ({ data, context }) => {
@@ -310,6 +320,10 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.isPrivate !== undefined) patch["is_private"] = data.isPrivate;
     if (data.discoverable !== undefined) patch["discoverable"] = data.discoverable;
     if (data.allowComments !== undefined) patch["allow_comments"] = data.allowComments;
+    if (data.allowMessages !== undefined) patch["allow_messages"] = data.allowMessages;
+    if (data.showFollowing !== undefined) patch["show_following"] = data.showFollowing;
+    if (data.showLikes !== undefined) patch["show_likes"] = data.showLikes;
+    if (data.showSaves !== undefined) patch["show_saves"] = data.showSaves;
     if (data.socialLinks !== undefined) patch["social_links"] = data.socialLinks;
     // Profile pictures are avatars only — avatar_url is set exclusively by saveAvatar.
 
@@ -329,6 +343,25 @@ export const updateProfile = createServerFn({ method: "POST" })
     const { error } = await sb.from("profiles").update(patch as never).eq("id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const updateBirthDate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { birthDate: string }) => ({
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date.").parse(d.birthDate),
+  }))
+  .handler(async ({ data, context }) => {
+    const age = ageFrom(data.birthDate);
+    if (Number.isNaN(age) || age < 13) {
+      throw new Error("Reelzy is for people aged 13 and over.");
+    }
+    if (age > 120) throw new Error("Pick a valid date of birth.");
+    const sb = await admin();
+    const { error } = await sb
+      .from("profile_private")
+      .upsert({ user_id: context.userId, birth_date: data.birthDate }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true, birthDate: data.birthDate };
   });
 
 /* ------------------------------------------------------------------ */
