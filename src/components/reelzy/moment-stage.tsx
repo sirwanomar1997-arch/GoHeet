@@ -48,11 +48,11 @@ import { formatCount, timeAgo } from "./format";
 import { ShareSheet } from "./share-sheet";
 import {
   filterCss,
-  overlayFontClass,
-  overlayPlaceClass,
-  overlayStyleClass,
+  overlayFontStyle,
+  overlayStyleProps,
   parseOverlay,
 } from "./creative";
+
 
 const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "harassment", label: "Harassment" },
@@ -472,20 +472,25 @@ export function MomentStage({
       <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
 
       {overlay ? (
-        <div
-          className={`pointer-events-none absolute inset-0 flex justify-center px-8 text-center ${overlayPlaceClass(
-            overlay.place,
-          )}`}
-        >
+        <div className="pointer-events-none absolute inset-0">
           <p
-            className={`max-w-[85%] text-[26px] leading-tight ${overlayFontClass(
-              overlay.font,
-            )} ${overlayStyleClass(overlay.style)}`}
+            className={`absolute max-w-[80%] whitespace-pre-wrap text-center leading-tight ${
+              overlayStyleProps(overlay.style, overlay.color).className
+            }`}
+            style={{
+              left: `${overlay.x}%`,
+              top: `${overlay.y}%`,
+              transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
+              fontSize: `${overlay.size}px`,
+              ...overlayFontStyle(overlay.font),
+              ...overlayStyleProps(overlay.style, overlay.color).style,
+            }}
           >
             {overlay.text}
           </p>
         </div>
       ) : null}
+
 
       {moment.music?.url ? (
         <audio ref={audioRef} src={moment.music.url} loop preload="none" muted={muted} />

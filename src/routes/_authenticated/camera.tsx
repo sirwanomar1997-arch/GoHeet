@@ -27,15 +27,16 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
   OVERLAY_FONTS,
+  OVERLAY_COLORS,
+  OVERLAY_STYLES,
+  DEFAULT_OVERLAY,
   filterCss,
-  overlayFontClass,
-  overlayPlaceClass,
-  overlayStyleClass,
+  overlayFontStyle,
+  overlayStyleProps,
   type FilterId,
   type MomentOverlay,
-  type OverlayPlace,
-  type OverlayStyle,
 } from "@/components/reelzy/creative";
+
 
 export const Route = createFileRoute("/_authenticated/camera")({
   component: CameraPage,
@@ -90,6 +91,25 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef(false);
+
+  const startDrag = (e: React.PointerEvent<HTMLElement>) => {
+    draggingRef.current = true;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    const box = stageRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
+    const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
+    setOverlay((o) => (o ? { ...o, x, y } : o));
+  };
+  const endDrag = () => {
+    draggingRef.current = false;
+  };
+
   const [musicOpen, setMusicOpen] = useState(false);
   const [track, setTrack] = useState<{
     id: string;
@@ -408,20 +428,40 @@ function CameraPage() {
             )}
             {overlay?.text ? (
               <div
-                className={`pointer-events-none absolute inset-0 flex justify-center px-6 text-center ${overlayPlaceClass(
-                  overlay.place,
-                )}`}
+                ref={stageRef}
+                className="absolute inset-0 touch-none"
+                onPointerMove={onDragMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
               >
                 <p
-                  className={`max-w-[85%] text-[24px] leading-tight ${overlayFontClass(
-                    overlay.font,
-                  )} ${overlayStyleClass(overlay.style)}`}
+                  onPointerDown={startDrag}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Drag to move your text"
+                  className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
+                    overlayStyleProps(overlay.style, overlay.color).className
+                  }`}
+                  style={{
+                    left: `${overlay.x}%`,
+                    top: `${overlay.y}%`,
+                    transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
+                    fontSize: `${overlay.size}px`,
+                    ...overlayFontStyle(overlay.font),
+                    ...overlayStyleProps(overlay.style, overlay.color).style,
+                  }}
                 >
                   {overlay.text}
                 </p>
               </div>
             ) : null}
           </div>
+          {overlay?.text ? (
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              Drag the text anywhere on the frame.
+            </p>
+          ) : null}
+
 
           {/* Creative tools — a look, a line of type, a track. Nothing heavier. */}
           <div className="mt-4 flex gap-2">
@@ -527,66 +567,118 @@ function CameraPage() {
         <Sheet open={textOpen} onOpenChange={setTextOpen}>
           <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
             <SheetHeader className="px-0">
-              <SheetTitle className="font-display">Put a line on it</SheetTitle>
-              <SheetDescription>One line of type, styled to fit Reelzy.</SheetDescription>
+              <SheetTitle className="font-display">Say it loud</SheetTitle>
+              <SheetDescription>
+                Pick a voice, a colour and a finish — then drag it onto the frame.
+              </SheetDescription>
             </SheetHeader>
-            <div className="space-y-4 pb-8">
+            <div className="max-h-[70svh] space-y-5 overflow-y-auto pb-8">
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
                 onChange={(e) =>
-                  setOverlay({
+                  setOverlay((o) => ({
+                    ...(o ?? { ...DEFAULT_OVERLAY }),
                     text: e.target.value.slice(0, 120),
-                    font: overlay?.font ?? "display",
-                    style: overlay?.style ?? "plain",
-                    place: overlay?.place ?? "middle",
-                  })
+                  }))
                 }
                 placeholder="Say it in a few words"
                 className="h-12 bg-surface-raised"
               />
-              <div className="flex gap-2">
-                {OVERLAY_FONTS.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => overlay && setOverlay({ ...overlay, font: f.id })}
-                    className={`h-11 flex-1 rounded-xl border text-sm ${f.className} ${
-                      overlay?.font === f.id ? "border-primary text-primary" : "border-border"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+
+              <div>
+                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Font
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {OVERLAY_FONTS.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => overlay && setOverlay({ ...overlay, font: f.id })}
+                      className={`h-14 shrink-0 rounded-2xl border px-4 text-lg ${
+                        overlay?.font === f.id
+                          ? "border-primary text-primary"
+                          : "border-border text-foreground"
+                      }`}
+                      style={overlayFontStyle(f.id)}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {(["plain", "ember", "block"] as OverlayStyle[]).map((st) => (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => overlay && setOverlay({ ...overlay, style: st })}
-                    className={`h-11 flex-1 rounded-xl border text-xs uppercase tracking-[0.14em] ${
-                      overlay?.style === st ? "border-primary text-primary" : "border-border"
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
+
+              <div>
+                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Colour
+                </p>
+                <div className="flex gap-2.5 overflow-x-auto pb-1">
+                  {OVERLAY_COLORS.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      aria-label={c.label}
+                      onClick={() => overlay && setOverlay({ ...overlay, color: c.value })}
+                      className={`size-9 shrink-0 rounded-full border-2 transition-transform ${
+                        overlay?.color === c.value
+                          ? "border-primary scale-110"
+                          : "border-border/60"
+                      }`}
+                      style={{ background: c.value }}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {(["top", "middle", "bottom"] as OverlayPlace[]).map((pl) => (
-                  <button
-                    key={pl}
-                    type="button"
-                    onClick={() => overlay && setOverlay({ ...overlay, place: pl })}
-                    className={`h-11 flex-1 rounded-xl border text-xs uppercase tracking-[0.14em] ${
-                      overlay?.place === pl ? "border-primary text-primary" : "border-border"
-                    }`}
-                  >
-                    {pl}
-                  </button>
-                ))}
+
+              <div>
+                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Finish
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {OVERLAY_STYLES.map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => overlay && setOverlay({ ...overlay, style: st.id })}
+                      className={`h-11 shrink-0 rounded-xl border px-4 text-xs uppercase tracking-[0.14em] ${
+                        overlay?.style === st.id
+                          ? "border-primary text-primary"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <label className="block space-y-2 text-xs text-muted-foreground">
+                <span>Size</span>
+                <Slider
+                  value={[overlay?.size ?? DEFAULT_OVERLAY.size]}
+                  min={14}
+                  max={64}
+                  step={1}
+                  onValueChange={([v]) =>
+                    overlay && setOverlay({ ...overlay, size: v ?? overlay.size })
+                  }
+                />
+              </label>
+
+              <label className="block space-y-2 text-xs text-muted-foreground">
+                <span>Tilt</span>
+                <Slider
+                  value={[overlay?.rotate ?? 0]}
+                  min={-30}
+                  max={30}
+                  step={1}
+                  onValueChange={([v]) =>
+                    overlay && setOverlay({ ...overlay, rotate: v ?? overlay.rotate })
+                  }
+                />
+              </label>
+
               <div className="flex gap-2">
                 <Button
                   variant="ghost"

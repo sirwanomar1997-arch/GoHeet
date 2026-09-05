@@ -98,6 +98,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap",
       },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Bungee&family=Fredoka:wght@600;700&family=Permanent+Marker&family=Pacifico&family=Righteous&family=Archivo+Black&family=Caveat:wght@700&family=Shrikhand&family=Rubik+Mono+One&display=swap",
+      },
+
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),

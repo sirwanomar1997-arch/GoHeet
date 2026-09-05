@@ -144,7 +144,7 @@ export type MomentCard = {
   liked: boolean;
   saved: boolean;
   styleFilter: string | null;
-  overlay: { text: string; font: string; style: string; place: string } | null;
+  overlay: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number } | null;
   music: {
     id: string;
     title: string;
@@ -408,7 +408,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     caption?: string;
     locationLabel?: string;
     styleFilter?: string;
-    overlay?: { text: string; font: string; style: string; place: string };
+    overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number };
     musicTrackId?: string;
     musicOffsetMs?: number;
     musicVolume?: number;
@@ -428,6 +428,11 @@ export const publishMoment = createServerFn({ method: "POST" })
         font: z.string().max(16),
         style: z.string().max(16),
         place: z.string().max(16),
+        color: z.string().max(12).optional(),
+        x: z.number().min(0).max(100).optional(),
+        y: z.number().min(0).max(100).optional(),
+        size: z.number().min(10).max(80).optional(),
+        rotate: z.number().min(-45).max(45).optional(),
       })
       .optional()
       .parse(d.overlay),
@@ -708,7 +713,7 @@ type FeedRow = {
   comment_count: number;
   author_id: string;
   style_filter?: string | null;
-  overlay?: { text: string; font: string; style: string; place: string } | null;
+  overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number } | null;
   music_offset_ms?: number;
   music_volume?: number;
   original_audio_volume?: number;
