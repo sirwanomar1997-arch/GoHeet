@@ -1,5 +1,6 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search, Heart } from "lucide-react";
+import { useRef } from "react";
 import { useMe } from "@/lib/use-me";
 
 function ReelzIcon({ className }: { className?: string }) {
