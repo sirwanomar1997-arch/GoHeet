@@ -188,10 +188,10 @@ function AuthPage() {
 
         <button
           type="button"
-          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="mt-6 w-full text-center text-sm text-muted-foreground underline"
         >
-          {mode === "signup" ? "I already have an account" : "I need an account"}
+          {mode === "signin" ? "Create account" : "Log in"}
         </button>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
