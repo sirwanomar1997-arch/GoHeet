@@ -216,10 +216,16 @@ export const getMe = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId);
+    const { data: priv } = await context.supabase
+      .from("profile_private")
+      .select("birth_date")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     const avatars = await signAvatars([data.avatar_url]);
     return {
       profile: {
         ...data,
+        birth_date: priv?.birth_date ?? null,
         avatar_url: data.avatar_url ? (avatars[data.avatar_url] ?? null) : null,
       },
       roles: (roles ?? []).map((r) => r.role),
