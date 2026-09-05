@@ -881,21 +881,45 @@ export function AvatarStudio({
             <Camera className="size-4" /> Take the shot
           </button>
         ) : mode === "build" ? (
-          <button
-            type="button"
-            onClick={() =>
-              setLook({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) })
-            }
-            disabled={busy || !buildReady}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
-          >
-            <RefreshCw className="size-4" />
-            {busy ? "Rendering…" : "Try another take"}
-          </button>
+          pending.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => renderLook(traits, look, baseImage, pending)}
+              disabled={busy || !buildReady}
+              className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              <Sparkles className="size-4" />
+              {busy ? "Updating…" : `Update my avatar (${pending.length})`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
+                setLook(l);
+                void generate({
+                  prompt: baseImage
+                    ? "Keep the EXACT same character from the reference image — identical face, hair, " +
+                      `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
+                      "feature-film render style and lighting. No text, no watermark."
+                    : buildPrompt(traits, l.pose, l.seed),
+                  reference: baseImage,
+                  traits,
+                });
+              }}
+              disabled={busy || !buildReady}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+            >
+              <RefreshCw className="size-4" />
+              {busy ? "Rendering…" : "Try another take"}
+            </button>
+          )
         ) : (
           <button
             type="button"
-            onClick={() => void generate(look, traits, selfie)}
+            onClick={() =>
+              void generate({ prompt: SELFIE_PROMPT, reference: selfie, isSelfie: true })
+            }
             disabled={busy}
             className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
