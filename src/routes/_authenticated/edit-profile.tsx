@@ -23,6 +23,7 @@ const PLATFORMS = [
   { key: "twitter", label: "X (Twitter)", placeholder: "https://x.com/you" },
   { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/you" },
   { key: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/you" },
+  { key: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/46701234567" },
 ] as const;
 
 function EditProfilePage() {

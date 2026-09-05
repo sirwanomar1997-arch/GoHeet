@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Music2, type LucideIcon } from "lucide-react";
+import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -154,6 +154,7 @@ function ProfilePage() {
                   twitter: { Icon: Twitter, label: "X (Twitter)", color: "oklch(0.75 0.02 250)" },
                   facebook: { Icon: Facebook, label: "Facebook", color: "oklch(0.6 0.18 255)" },
                   snapchat: { Icon: Ghost, label: "Snapchat", color: "oklch(0.88 0.16 100)" },
+                  whatsapp: { Icon: MessageCircle, label: "WhatsApp", color: "oklch(0.72 0.17 150)" },
                 };
                 const meta = icons[key];
                 if (!meta) return null;

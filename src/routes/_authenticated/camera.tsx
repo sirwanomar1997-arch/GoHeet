@@ -5,6 +5,13 @@ import { toast } from "sonner";
 import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search } from "lucide-react";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  primeCaptureSounds,
+  playCountdownTick,
+  playRecordStart,
+  playRecordStop,
+  playPauseBlip,
+} from "@/lib/capture-sounds";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -230,6 +237,7 @@ function CameraPage() {
     elapsedRef.current = 0;
     rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
     rec.onstop = async () => {
+      playRecordStop();
       const duration = elapsedRef.current;
       const poster = await grabPoster();
       const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
@@ -246,13 +254,16 @@ function CameraPage() {
     recorderRef.current = rec;
     startedAtRef.current = Date.now();
     rec.start(250);
+    playRecordStart();
     setRecording(true);
   }
 
   /** 3 · 2 · 1 before the first frame, so you can get in place. */
   function startCountdown() {
     if (countdown !== null) return;
+    primeCaptureSounds();
     setCountdown(3);
+    playCountdownTick(3);
     countdownRef.current = setInterval(() => {
       setCountdown((n) => {
         if (n === null) return null;
@@ -262,6 +273,7 @@ function CameraPage() {
           void beginRecording();
           return null;
         }
+        playCountdownTick(n - 1);
         return n - 1;
       });
     }, 1000);
@@ -281,11 +293,13 @@ function CameraPage() {
     if (paused) {
       startedAtRef.current = Date.now();
       rec.resume();
+      playPauseBlip(true);
       setPaused(false);
     } else {
       accumulatedRef.current += Date.now() - startedAtRef.current;
       elapsedRef.current = accumulatedRef.current;
       rec.pause();
+      playPauseBlip(false);
       setPaused(true);
     }
   }
