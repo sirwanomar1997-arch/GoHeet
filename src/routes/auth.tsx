@@ -116,7 +116,7 @@ function AuthPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signup"
-            ? "Capture your moment, right as it happens — just life, pressed into a reality frame."
+            ? "Capture your moment, right as it happens. Just life, pressed into a reality frame."
             : "Your moments are waiting."}
         </p>
 
