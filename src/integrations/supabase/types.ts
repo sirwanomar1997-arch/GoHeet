@@ -38,6 +38,24 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_generation_logs: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           blocked_id: string
@@ -619,15 +637,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_blocked_between: { Args: { _a: string; _b: string }; Returns: boolean }
-      is_staff: { Args: { _user_id: string }; Returns: boolean }
       username_taken: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {

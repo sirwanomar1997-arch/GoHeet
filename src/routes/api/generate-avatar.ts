@@ -1,13 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+
+const MAX_GENERATIONS_PER_HOUR = 12;
 
 /**
  * Streams a Reelzy 3D-style avatar portrait from the Lovable AI Gateway.
  * Accepts an optional selfie (data URL) captured in the Reelzy camera.
+ * Requires a signed-in user; rate limited per user.
  */
 export const Route = createFileRoute("/api/generate-avatar")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // --- Auth: require a valid user session ---
+        const authHeader = request.headers.get("authorization");
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token || token.split(".").length !== 3) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const supabase = createClient<Database>(
+          process.env["SUPABASE_URL"]!,
+          process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+          {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+            auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+          },
+        );
+        const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+        const userId = claimsData?.claims?.sub;
+        if (claimsError || !userId) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
+        // --- Per-user rate limit (avatar generation spends paid AI credits) ---
+        const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { count } = await supabase
+          .from("avatar_generation_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since);
+        if ((count ?? 0) >= MAX_GENERATIONS_PER_HOUR) {
+          return new Response("Avatar generation limit reached. Try again later.", { status: 429 });
+        }
+        await supabase.from("avatar_generation_logs").insert({ user_id: userId });
+
         const body = (await request.json()) as {
           prompt?: string;
           selfie?: string | null;
