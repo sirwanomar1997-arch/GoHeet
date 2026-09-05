@@ -38,8 +38,14 @@ function AuthPage() {
   const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // A leading "+" means the user is signing in with a phone number (SMS code),
+  // which keeps it unambiguous from a username.
+  const isPhone = identifier.trim().startsWith("+");
 
   const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
 
@@ -65,17 +71,40 @@ function AuthPage() {
           return;
         }
         await navigate({ to: "/onboarding" });
-      } else {
-        const res = await signInWithIdentifier({
-          data: { identifier: identifier.trim(), password },
-        });
-        const { error } = await supabase.auth.setSession({
-          access_token: res.accessToken,
-          refresh_token: res.refreshToken,
+        return;
+      }
+
+      // Sign in
+      const id = identifier.trim();
+      if (id.startsWith("+")) {
+        const phone = "+" + id.replace(/[^\d]/g, "");
+        if (!otpSent) {
+          const { error } = await supabase.auth.signInWithOtp({ phone });
+          if (error) throw error;
+          setOtpSent(true);
+          toast("We sent a code to your phone.");
+          return;
+        }
+        const { error } = await supabase.auth.verifyOtp({
+          phone,
+          token: code.trim(),
+          type: "sms",
         });
         if (error) throw error;
         await navigate({ to: dest });
+        return;
       }
+
+      // Email or username — resolved securely on the server
+      const res = await signInWithIdentifier({
+        data: { identifier: id, password },
+      });
+      const { error } = await supabase.auth.setSession({
+        access_token: res.accessToken,
+        refresh_token: res.refreshToken,
+      });
+      if (error) throw error;
+      await navigate({ to: dest });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -165,39 +194,84 @@ function AuthPage() {
         )}
 
         <form onSubmit={submit} className="space-y-4">
-          <div>
-            <Label htmlFor="identifier">
-              {mode === "signin" ? "Email, phone or username" : "Email"}
-            </Label>
-            <Input
-              id="identifier"
-              type={mode === "signup" ? "email" : "text"}
-              autoComplete={mode === "signup" ? "email" : "username"}
-              required
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="mt-1.5 h-12 bg-surface-raised"
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1.5 h-12 bg-surface-raised"
-            />
-          </div>
+          {mode === "signin" && isPhone && otpSent ? (
+            <div>
+              <Label htmlFor="code">Enter the code</Label>
+              <Input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="mt-1.5 h-12 bg-surface-raised"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                We texted a code to {identifier.trim()}.{" "}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setCode("");
+                  }}
+                >
+                  Change number
+                </button>
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <Label htmlFor="identifier">
+                  {mode === "signin" ? (isPhone ? "Phone number" : "Email or username") : "Email"}
+                </Label>
+                <Input
+                  id="identifier"
+                  type={mode === "signup" ? "email" : "text"}
+                  inputMode={isPhone ? "tel" : undefined}
+                  autoComplete={mode === "signup" ? "email" : isPhone ? "tel" : "username"}
+                  required
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (otpSent) setOtpSent(false);
+                  }}
+                  className="mt-1.5 h-12 bg-surface-raised"
+                />
+              </div>
+              {(mode === "signup" || (mode === "signin" && !isPhone)) && (
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1.5 h-12 bg-surface-raised"
+                  />
+                </div>
+              )}
+            </>
+          )}
           <Button
             type="submit"
             disabled={busy}
             className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
           >
-            {busy ? "One moment…" : mode === "signin" ? "Log in" : "Create account"}
+            {busy
+              ? "One moment…"
+              : mode === "signup"
+                ? "Create account"
+                : isPhone
+                  ? otpSent
+                    ? "Verify & log in"
+                    : "Send code"
+                  : "Log in"}
           </Button>
         </form>
 
