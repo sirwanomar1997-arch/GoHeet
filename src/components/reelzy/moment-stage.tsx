@@ -138,6 +138,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
+    vid.volume = moment.originalAudioVolume;
     let last = 0;
     const onTime = () => {
       const t = vid.currentTime * 1000;
@@ -159,7 +160,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       vid.removeEventListener("timeupdate", onTime);
       vid.removeEventListener("ended", onEnded);
     };
-  }, [flushView]);
+  }, [flushView, moment.originalAudioVolume]);
 
   // Photos still count as seen after a short dwell.
   useEffect(() => {
@@ -261,7 +262,6 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           playsInline
           loop
           muted={muted}
-          volume={moment.originalAudioVolume}
           preload="metadata"
           onClick={togglePlayback}
         />
