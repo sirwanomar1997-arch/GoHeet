@@ -447,9 +447,13 @@ function CameraPage() {
               >
                 <p
                   onPointerDown={startDrag}
+                  onClick={onTextTap}
                   role="button"
                   tabIndex={0}
-                  aria-label="Drag to move your text"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setTextOpen(true);
+                  }}
+                  aria-label="Tap to edit, drag to move your text"
                   className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
                     overlayStyleProps(overlay.style, overlay.color).className
                   }`}
