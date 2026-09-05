@@ -9,11 +9,14 @@ import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, looking at camera, " +
-  "large expressive photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores and peach fuzz, " +
-  "individually rendered hair strands, soft cinematic studio key light from the upper left with gentle rim light, " +
-  "smooth studio gradient background, shallow depth of field, octane-quality render, " +
+  "head and shoulders, three-quarter view, warm friendly gaze straight into camera, " +
+  "slightly stylized proportions with large expressive photoreal eyes, crisp catchlights and detailed irises, " +
+  "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on the cheeks and nose, " +
+  "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
+  "soft cinematic studio key light from the upper left with warm rim light, " +
+  "smooth vertical gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
+
 
 type Traits = {
   gender: string;
