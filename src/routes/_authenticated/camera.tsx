@@ -173,14 +173,16 @@ function CameraPage() {
   }, [openSession]);
 
   useEffect(() => {
-    if (!recording) return;
+    if (!recording || paused) return;
     const id = setInterval(() => {
-      const ms = Date.now() - startedAtRef.current;
+      const ms = accumulatedRef.current + (Date.now() - startedAtRef.current);
+      elapsedRef.current = ms;
       setElapsed(ms);
       if (ms >= MAX_MS) recorderRef.current?.stop();
     }, 100);
     return () => clearInterval(id);
-  }, [recording]);
+  }, [recording, paused]);
+
 
   function grabPoster(): Promise<Blob | null> {
     return new Promise((resolve) => {
