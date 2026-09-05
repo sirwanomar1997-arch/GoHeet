@@ -35,6 +35,20 @@ function ProfilePage() {
     },
   });
 
+  const [tab, setTab] = useState<"reelz" | "liked" | "saved">("reelz");
+  const fetchFeed = useServerFn(getFeed);
+  const isSelf = data?.isSelf ?? false;
+  const { data: likedData } = useQuery({
+    queryKey: ["profile", username, "liked"],
+    queryFn: () => fetchFeed({ data: { scope: "liked" } }),
+    enabled: isSelf && tab === "liked",
+  });
+  const { data: savedData } = useQuery({
+    queryKey: ["profile", username, "saved"],
+    queryFn: () => fetchFeed({ data: { scope: "saved" } }),
+    enabled: isSelf && tab === "saved",
+  });
+
   if (isLoading) {
     return (
       <AppShell>
