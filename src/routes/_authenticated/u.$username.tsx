@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, type LucideIcon } from "lucide-react";
-import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
+import { getProfile, getFeed, toggleFollow, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentStage } from "@/components/reelzy/moment-stage";
@@ -19,6 +19,9 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const fetchProfile = useServerFn(getProfile);
   const follow = useServerFn(toggleFollow);
+  const startChat = useServerFn(sendMessage);
+  const [messageText, setMessageText] = useState("");
+  const [composing, setComposing] = useState(false);
   const report = useServerFn(submitReport);
   const qc = useQueryClient();
   const [open, setOpen] = useState<MomentCard | null>(null);
@@ -266,6 +269,13 @@ function ProfilePage() {
               </button>
               <button
                 type="button"
+                onClick={() => setComposing((v) => !v)}
+                className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
+              >
+                Message
+              </button>
+              <button
+                type="button"
                 aria-label="Report this person"
                 onClick={async () => {
                   await report({
@@ -279,6 +289,50 @@ function ProfilePage() {
               </button>
             </div>
           )}
+          {!data.isSelf && composing ? (
+            <form
+              className="mt-3 w-full rounded-2xl border border-border bg-surface p-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const text = messageText.trim();
+                if (!text) return;
+                try {
+                  const res = await startChat({ data: { toUserId: p.id, body: text } });
+                  setMessageText("");
+                  setComposing(false);
+                  toast.success(
+                    res.status === "pending"
+                      ? "Message request sent. They have to accept it first."
+                      : "Message sent.",
+                  );
+                  void navigate({
+                    to: "/messages/$conversationId",
+                    params: { conversationId: res.conversationId },
+                  });
+                } catch (err) {
+                  toast.error((err as Error).message);
+                }
+              }}
+            >
+              <textarea
+                value={messageText}
+                rows={2}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder={`Say something to @${p.username}`}
+                className="w-full resize-none rounded-xl border border-border bg-surface-raised px-3 py-2 text-sm outline-none"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                If you don&apos;t follow each other, this goes as a request first.
+              </p>
+              <button
+                type="submit"
+                disabled={!messageText.trim()}
+                className="ember-fill tap-target mt-2 w-full rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                Send
+              </button>
+            </form>
+          ) : null}
         </div>
       </section>
 
