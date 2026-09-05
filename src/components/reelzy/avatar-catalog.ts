@@ -91,7 +91,7 @@ export const OUTFIT_COLORS: Swatch[] = [
   { name: "Charcoal", hex: "#3a3c40" },
   { name: "White", hex: "#f3f0ea" },
   { name: "Cream", hex: "#e6dcc7" },
-  { name: "Sand", hex: "#cdb georgia" },
+  { name: "Sand", hex: "#cdb08a" },
   { name: "Camel", hex: "#b98a58" },
   { name: "Rust", hex: "#a34a25" },
   { name: "Crimson", hex: "#9c2231" },
@@ -345,10 +345,6 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     outfitColor: female ? "Dusty pink" : "White",
     accessories: [],
   };
-}
-
-export function accessoriesFor(gender: "Male" | "Female"): Cell[] {
-  return ACCESSORIES;
 }
 
 export function hairFor(gender: "Male" | "Female") {
