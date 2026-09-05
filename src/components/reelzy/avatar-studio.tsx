@@ -469,10 +469,14 @@ export function AvatarStudio({
   const [section, setSection] = useState("face");
 
   const [frame, setFrame] = useState<string | null>(null);
-  const [showRender, setShowRender] = useState(false);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Fixed pose + seed keep the character consistent between edits.
+  const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
+  const runRef = useRef(0);
+  const firstBuild = useRef(true);
+
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
