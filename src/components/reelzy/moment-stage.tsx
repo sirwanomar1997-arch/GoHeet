@@ -330,11 +330,29 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
-        <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
-        <span className="data-figure text-[11px] text-foreground">
-          {formatCount(moment.viewCount)} seen
+      <div
+        className={`absolute top-4 flex items-center gap-3 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md ${
+          fullscreen ? "left-1/2 -translate-x-1/2" : "left-4"
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
+          <span className="data-figure text-[11px] text-foreground">
+            {formatCount(moment.viewCount)} seen
+          </span>
         </span>
+        {fullscreen ? (
+          <>
+            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+              <Flame className="size-3" strokeWidth={2} />
+              {formatCount(likeCount)}
+            </span>
+            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+              <MessageCircle className="size-3" strokeWidth={2} />
+              {formatCount(moment.commentCount)}
+            </span>
+          </>
+        ) : null}
       </div>
 
       {moment.kind === "video" ? (
