@@ -160,7 +160,7 @@ function ProfilePage() {
 
           {/* bio lives under the username, only when the user adds one */}
           {p.bio ? (
-            <p className="mt-2 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
+            <p className="mt-5 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
               {p.bio}
             </p>
           ) : null}
