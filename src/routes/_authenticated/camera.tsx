@@ -90,6 +90,25 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef(false);
+
+  const startDrag = (e: React.PointerEvent<HTMLElement>) => {
+    draggingRef.current = true;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    const box = stageRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
+    const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
+    setOverlay((o) => (o ? { ...o, x, y } : o));
+  };
+  const endDrag = () => {
+    draggingRef.current = false;
+  };
+
   const [musicOpen, setMusicOpen] = useState(false);
   const [track, setTrack] = useState<{
     id: string;
