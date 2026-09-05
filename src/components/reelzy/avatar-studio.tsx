@@ -2,33 +2,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Camera, Check, Dices, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
+import { Camera, Check, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import {
-  AvatarArt,
-  BACKDROPS,
+  ACCESSORIES,
   BROWS,
-  EARS,
-  EXPRESSIONS,
   EYE_COLORS,
   EYE_SHAPES,
-  EYEWEAR,
-  FACE_SHAPES,
-  FACIAL_HAIR,
+  FACES,
   HAIR_COLORS,
-  HAIR_FEMALE,
-  HAIR_MALE,
-  HEADWEAR_FEMALE,
-  HEADWEAR_MALE,
-  LIPS,
+  MAKEUP,
   NOSES,
   OUTFIT_COLORS,
-  OUTFITS_FEMALE,
-  OUTFITS_MALE,
+  OUTFITS,
+  SHEETS,
   SKINS,
+  defaultTraits,
+  hairFor,
+  mouthsFor,
+  type Cell,
+  type Sheet,
+  type Swatch,
   type Traits,
-} from "@/components/reelzy/avatar-art";
+} from "@/components/reelzy/avatar-catalog";
 
 /* ------------------------------------------------------------------ */
 /* Prompt                                                              */
@@ -37,179 +34,167 @@ import {
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style: " +
   "head-and-shoulders close-up, slight three-quarter turn, warm friendly gaze into camera, " +
-  "big glossy photoreal eyes with crisp catchlights and detailed irises, " +
-  "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on cheeks and nose, " +
-  "individually rendered glossy hair strands with soft flyaways, realistic cloth weave, " +
+  "big glossy photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores " +
+  "and gentle blush, individually rendered glossy hair strands, realistic cloth weave, " +
   "soft cinematic studio key light from the upper left with a warm rim light, shallow depth of field, " +
-  "octane-quality 8k render, vertical portrait with the WHOLE head, complete hairstyle and any headwear " +
-  "fully inside the frame with generous margin above the hair, shoulders visible, nothing cropped, " +
-  "no text, no watermark, no logo.";
+  "smooth warm orange-to-pink gradient studio backdrop, octane-quality 8k render, " +
+  "vertical portrait with the WHOLE head, complete hairstyle and any headwear fully inside the frame " +
+  "with generous margin above the hair, shoulders visible, nothing cropped, no text, no watermark, no logo.";
 
-const AGES = ["Teen", "20s", "30s", "40s", "50s", "60+"] as const;
-
-const AGE_LOOK: Record<string, string> = {
-  Teen: "16 to 18 years old, fresh youthful face, completely smooth skin, no wrinkles, no grey hair",
-  "20s": "about 25 years old, smooth taut skin, no wrinkles, no grey hair",
-  "30s": "about 32 years old, youthful adult, smooth firm skin, no wrinkles, no grey hair",
-  "40s": "about 44 years old, only very faint smile lines, barely any grey",
-  "50s": "about 55 years old, light natural wrinkles, a little grey at the temples",
-  "60+": "about 66 years old, silver hair and gentle natural wrinkles",
-};
-
-function buildPrompt(t: Traits, seed: number) {
+function describe(t: Traits) {
   const female = t.gender === "Female";
   const bits = [
-    female
-      ? `beautiful feminine woman character with soft delicate features, ${AGE_LOOK[t.age] ?? ""}`
-      : `masculine man character, ${AGE_LOOK[t.age] ?? ""}`,
+    female ? "beautiful feminine young woman character" : "handsome masculine man character",
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
     `${t.brows.toLowerCase()} eyebrows`,
     `${t.nose.toLowerCase()} nose`,
-    `${t.lips.toLowerCase()} lips`,
-    `${t.ears.toLowerCase()} ears`,
-    t.hair === "Bald" ? "bald head" : `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
-    female ? "" : t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
-    `${t.expression.toLowerCase()} expression`,
+    `${t.mouth.toLowerCase()}`,
+    t.hair === "Bald" ? "bald head" : `${t.hair.toLowerCase()} hairstyle in ${t.hairColor.toLowerCase()}`,
+    t.makeup === "None" ? "" : `${t.makeup.toLowerCase()} make-up`,
     `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
-    t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
-    t.eyewear !== "None" ? `wearing ${t.eyewear.toLowerCase()}` : "",
+    t.accessories.length ? `wearing ${t.accessories.map((a) => a.toLowerCase()).join(" and ")}` : "",
   ].filter(Boolean);
-  return (
-    `${STYLE_BASE} Smooth ${t.backdrop.toLowerCase()} gradient studio backdrop. ` +
-    `The character is a ${bits.join(", ")}. Variation #${seed}.`
-  );
+  return bits.join(", ");
 }
+
+const buildPrompt = (t: Traits, seed: number) =>
+  `${STYLE_BASE} The character is a ${describe(t)}. Character seed #${seed}.`;
+
+const buildEditPrompt = (t: Traits) =>
+  `${STYLE_BASE} Keep the exact same character identity from the reference image and re-render them as: ` +
+  `${describe(t)}. Change only what differs from the reference; everything else stays identical.`;
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
   "keep their face shape, skin tone, eye colour and shape, nose, lips, hairstyle, hair colour, " +
-  "facial hair and glasses clearly recognisable — unmistakably the same person, only rendered in the animated film style. " +
-  "Smooth warm orange-to-pink gradient studio backdrop.";
+  "facial hair and glasses clearly recognisable — unmistakably the same person, only in the animated film style.";
 
 /* ------------------------------------------------------------------ */
-/* Steps                                                               */
+/* Tiles                                                               */
 /* ------------------------------------------------------------------ */
 
-type Key = keyof Traits;
+function SpriteTile({ sheet, index }: { sheet: Sheet; index: number }) {
+  const col = index % sheet.cols;
+  const rowIdx = Math.floor(index / sheet.cols);
+  return (
+    <span
+      aria-hidden
+      className="block aspect-square w-full bg-[#26262a]"
+      style={{
+        backgroundImage: `url(${sheet.src})`,
+        backgroundSize: `${sheet.cols * 100}% ${sheet.rows * 100}%`,
+        backgroundPosition: `${(col / Math.max(1, sheet.cols - 1)) * 100}% ${
+          (rowIdx / Math.max(1, sheet.rows - 1)) * 100
+        }%`,
+      }}
+    />
+  );
+}
 
-type Row = { label: string; key: Key; opts: readonly string[]; zoom: "head" | "face" | "bust" };
-
-const row = (label: string, key: Key, opts: readonly string[], zoom: Row["zoom"] = "head"): Row => ({
+function Tile({
+  active,
   label,
-  key,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      onClick={onClick}
+      className={`w-[76px] shrink-0 overflow-hidden rounded-2xl border-2 bg-surface transition-transform active:scale-95 ${
+        active
+          ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+          : "border-border"
+      }`}
+    >
+      {children}
+      <span className="block truncate px-1.5 py-1 text-[10px] font-semibold">{label}</span>
+    </button>
+  );
+}
+
+function SheetRow({
+  title,
+  sheet,
   opts,
-  zoom,
-});
-
-function stepsFor(gender: string) {
-  const female = gender === "Female";
-  return [
-    {
-      id: "you",
-      title: "The basics",
-      blurb: "Skin and age set the whole tone.",
-      rows: [
-        row("Skin tone", "skin", SKINS.map((s) => s.name)),
-        row("Age", "age", AGES),
-      ],
-    },
-    {
-      id: "face",
-      title: "Your face",
-      blurb: "Every tile is your avatar with that one feature changed.",
-      rows: [
-        row("Face shape", "face", FACE_SHAPES),
-        row("Eye shape", "eyeShape", EYE_SHAPES, "face"),
-        row("Eye colour", "eyeColor", EYE_COLORS.map((c) => c.name), "face"),
-        row("Eyebrows", "brows", BROWS, "face"),
-        row("Nose", "nose", NOSES, "face"),
-        row("Lips", "lips", LIPS, "face"),
-        row("Ears", "ears", EARS),
-      ],
-    },
-    {
-      id: "hair",
-      title: "Hair",
-      blurb: female ? "Cut and colour." : "Cut, colour and beard.",
-      rows: [
-        row("Hairstyle", "hair", female ? HAIR_FEMALE : HAIR_MALE),
-        row("Hair colour", "hairColor", HAIR_COLORS.map((c) => c.name)),
-        ...(female ? [] : [row("Facial hair", "facialHair", FACIAL_HAIR)]),
-      ],
-    },
-    {
-      id: "wear",
-      title: "What you wear",
-      blurb: "Your everyday fit.",
-      rows: [
-        row("Outfit", "outfit", female ? OUTFITS_FEMALE : OUTFITS_MALE, "bust"),
-        row("Colour", "outfitColor", OUTFIT_COLORS.map((c) => c.name), "bust"),
-      ],
-    },
-    {
-      id: "extras",
-      title: "Finishing touches",
-      blurb: "Accessories, mood and the light you stand in.",
-      rows: [
-        row("Eyewear", "eyewear", EYEWEAR, "face"),
-        row("Headwear", "headwear", female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
-        row("Expression", "expression", EXPRESSIONS, "face"),
-        row("Backdrop", "backdrop", BACKDROPS.map((b) => b.name)),
-      ],
-    },
-  ];
+  value,
+  onPick,
+  multi,
+}: {
+  title: string;
+  sheet: Sheet;
+  opts: Cell[];
+  value: string | string[];
+  onPick: (name: string) => void;
+  multi?: boolean;
+}) {
+  const isOn = (n: string) => (Array.isArray(value) ? value.includes(n) : value === n);
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{title}</h3>
+        <span className="max-w-[55%] truncate text-[11px] text-muted-foreground">
+          {Array.isArray(value) ? (value.length ? value.join(", ") : multi ? "None" : "") : value}
+        </span>
+      </div>
+      <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+        {opts.map((o) => (
+          <Tile key={o.name} active={isOn(o.name)} label={o.name} onClick={() => onPick(o.name)}>
+            <SpriteTile sheet={sheet} index={o.index} />
+          </Tile>
+        ))}
+      </div>
+    </section>
+  );
 }
 
-const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
-
-function defaults(gender: "Male" | "Female"): Traits {
-  const female = gender === "Female";
-  return {
-    gender,
-    age: "20s",
-    skin: "Light olive",
-    face: "Oval",
-    eyeColor: "Dark brown",
-    eyeShape: "Almond",
-    brows: "Soft arched",
-    nose: "Straight",
-    lips: female ? "Full" : "Medium",
-    ears: "Medium",
-    hair: female ? "Long waves" : "Short crop",
-    hairColor: "Dark brown",
-    facialHair: female ? "Clean shaven" : "Light stubble",
-    expression: "Warm half-smile",
-    outfit: female ? "Knit sweater" : "Hoodie",
-    outfitColor: female ? "Dusty pink" : "Black",
-    eyewear: "None",
-    headwear: "None",
-    backdrop: "Warm orange-pink glow",
-  };
-}
-
-function randomTraits(gender: "Male" | "Female"): Traits {
-  const female = gender === "Female";
-  return {
-    ...defaults(gender),
-    age: pick(AGES),
-    skin: pick(SKINS).name,
-    face: pick(FACE_SHAPES),
-    eyeColor: pick(EYE_COLORS).name,
-    eyeShape: pick(EYE_SHAPES),
-    brows: pick(BROWS),
-    nose: pick(NOSES),
-    lips: pick(LIPS),
-    ears: pick(EARS),
-    hair: pick(female ? HAIR_FEMALE : HAIR_MALE),
-    hairColor: pick(HAIR_COLORS).name,
-    facialHair: female ? "Clean shaven" : pick(FACIAL_HAIR),
-    expression: pick(EXPRESSIONS),
-    outfit: pick(female ? OUTFITS_FEMALE : OUTFITS_MALE),
-    outfitColor: pick(OUTFIT_COLORS).name,
-    backdrop: pick(BACKDROPS).name,
-  };
+function SwatchRow({
+  title,
+  opts,
+  value,
+  onPick,
+}: {
+  title: string;
+  opts: Swatch[];
+  value: string;
+  onPick: (name: string) => void;
+}) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{title}</h3>
+        <span className="text-[11px] text-muted-foreground">{value}</span>
+      </div>
+      <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+        {opts.map((s) => (
+          <button
+            key={s.name}
+            type="button"
+            title={s.name}
+            aria-label={s.name}
+            aria-pressed={value === s.name}
+            onClick={() => onPick(s.name)}
+            className={`size-12 shrink-0 rounded-full border-2 transition-transform active:scale-95 ${
+              value === s.name
+                ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+                : "border-border"
+            }`}
+            style={{ background: s.hex }}
+          />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -220,52 +205,85 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const qc = useQueryClient();
   const persist = useServerFn(saveAvatar);
 
-  const [traits, setTraits] = useState<Traits>({ ...defaults("Male"), gender: "" });
-  const [stage, setStage] = useState<"gender" | "build" | "render">("gender");
-  const [stepIndex, setStepIndex] = useState(0);
+  const [gender, setGender] = useState<"Male" | "Female" | null>(null);
+  const [traits, setTraits] = useState<Traits>(defaultTraits("Male"));
+  const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
-  const [selfie, setSelfie] = useState<string | null>(null);
   const [selfieOpen, setSelfieOpen] = useState(false);
-
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+
   const runRef = useRef(0);
+  const baseRef = useRef<string | null>(null); // last finished render, used to keep identity
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const steps = useMemo(() => stepsFor(traits.gender), [traits.gender]);
-  const step = steps[Math.min(stepIndex, steps.length - 1)]!;
-
-  const set = (key: Key, value: string) => setTraits((t) => ({ ...t, [key]: value }));
+  const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
+  const mouths = useMemo(() => mouthsFor(traits.gender), [traits.gender]);
 
   const generate = useCallback(async (prompt: string, reference: string | null) => {
     const run = ++runRef.current;
     setBusy(true);
     setIsFinal(false);
-    setFrame(null);
     try {
       await streamAvatar(prompt, reference, (url, final) => {
         if (runRef.current !== run) return;
         setFrame(url);
-        if (final) setIsFinal(true);
+        if (final) {
+          setIsFinal(true);
+          baseRef.current = url;
+        }
       });
     } catch (e) {
-      if (runRef.current === run) toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
+      if (runRef.current === run) toast.error(e instanceof Error ? e.message : "Couldn't render your avatar.");
     } finally {
       if (runRef.current === run) setBusy(false);
     }
   }, []);
 
-  function renderIt(fromSelfie: string | null) {
-    setStage("render");
-    void generate(
-      fromSelfie ? SELFIE_PROMPT : buildPrompt(traits, Math.floor(Math.random() * 1_000_000)),
-      fromSelfie,
-    );
+  const queueRender = useCallback(
+    (next: Traits, fresh = false) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        const base = fresh ? null : baseRef.current;
+        void generate(base ? buildEditPrompt(next) : buildPrompt(next, seed), base);
+      }, fresh ? 0 : 650);
+    },
+    [generate, seed],
+  );
+
+  useEffect(() => () => void (timerRef.current && clearTimeout(timerRef.current)), []);
+
+  function update(patch: Partial<Traits>) {
+    setTraits((t) => {
+      const next = { ...t, ...patch };
+      queueRender(next);
+      return next;
+    });
+  }
+
+  function toggleAccessory(name: string) {
+    setTraits((t) => {
+      const on = t.accessories.includes(name);
+      const list = on ? t.accessories.filter((a) => a !== name) : [...t.accessories, name].slice(-3);
+      const next = { ...t, accessories: list };
+      queueRender(next);
+      return next;
+    });
+  }
+
+  function chooseGender(g: "Male" | "Female") {
+    const next = defaultTraits(g);
+    baseRef.current = null;
+    setGender(g);
+    setTraits(next);
+    setFrame(null);
+    queueRender(next, true);
   }
 
   async function keep() {
-    if (!frame) return;
+    if (!frame || !isFinal) return;
     setSaving(true);
     try {
       await persist({ data: { dataUrl: frame } });
@@ -279,30 +297,26 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     }
   }
 
-  /* ---------------- gender ---------------- */
+  /* ---------------- gender gate ---------------- */
 
-  if (stage === "gender") {
+  if (!gender) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          {(["Male", "Female"] as const).map((g) => {
-            const preview = defaults(g);
-            return (
-              <button
-                key={g}
-                type="button"
-                onClick={() => {
-                  setTraits(defaults(g));
-                  setStepIndex(0);
-                  setStage("build");
-                }}
-                className="overflow-hidden rounded-3xl border border-border bg-surface text-left transition-transform active:scale-[0.98]"
-              >
-                <AvatarArt traits={preview} className="aspect-[3/4] w-full" />
-                <span className="block px-4 py-3 font-display text-sm font-bold">{g}</span>
-              </button>
-            );
-          })}
+          {(["Male", "Female"] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => chooseGender(g)}
+              className="overflow-hidden rounded-3xl border border-border bg-surface text-left transition-transform active:scale-[0.98]"
+            >
+              <SpriteTile
+                sheet={g === "Female" ? SHEETS.hairFemale : SHEETS.hairMale}
+                index={g === "Female" ? 0 : 19}
+              />
+              <span className="block px-4 py-3 font-display text-sm font-bold">{g}</span>
+            </button>
+          ))}
         </div>
         <button
           type="button"
@@ -320,9 +334,11 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           <SelfieSheet
             onClose={() => setSelfieOpen(false)}
             onShot={(url) => {
-              setSelfie(url);
               setSelfieOpen(false);
-              renderIt(url);
+              setGender("Male");
+              baseRef.current = null;
+              setFrame(null);
+              void generate(SELFIE_PROMPT, url);
             }}
           />
         ) : null}
@@ -330,171 +346,150 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     );
   }
 
-  /* ---------------- render ---------------- */
+  /* ---------------- builder ---------------- */
 
-  if (stage === "render") {
-    return (
-      <div className="space-y-5">
-        <div className="relative overflow-hidden rounded-[2rem] border border-border bg-surface">
+  return (
+    <div className="space-y-5">
+      <div className="sticky top-0 z-10 -mx-1 rounded-[2rem] bg-background/85 px-1 pb-3 pt-1 backdrop-blur">
+        <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-surface">
           {frame ? (
             <img
               src={frame}
               alt="Your Reelzy avatar"
-              className={`aspect-[3/4] w-full object-cover transition-[filter] duration-500 ${
-                isFinal ? "blur-0" : "blur-xl"
+              className={`aspect-[4/5] w-full object-cover transition-[filter] duration-500 ${
+                isFinal ? "blur-0" : "blur-lg"
               }`}
             />
           ) : (
-            <div className="grid aspect-[3/4] w-full place-items-center">
-              <AvatarArt traits={traits} className="h-full w-full opacity-40" />
+            <div className="grid aspect-[4/5] w-full place-items-center text-xs text-muted-foreground">
+              Rendering the 3D you…
             </div>
           )}
           {busy ? (
-            <span className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-background/80 px-4 py-2 text-xs font-semibold backdrop-blur">
-              <Sparkles className="size-3.5 animate-pulse text-primary" /> Rendering the 3D you…
+            <span className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-background/80 px-4 py-2 text-xs font-semibold backdrop-blur">
+              <Sparkles className="size-3.5 animate-pulse text-primary" /> Updating…
             </span>
           ) : null}
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <button
             type="button"
             disabled={busy}
-            onClick={() => renderIt(selfie)}
-            className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface py-3 text-sm font-semibold disabled:opacity-50"
+            onClick={() => queueRender(traits, true)}
+            className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            <RefreshCw className="size-4" /> Try another
+            <RefreshCw className="size-4" /> Re-render
           </button>
           <button
             type="button"
             disabled={!isFinal || saving}
             onClick={() => void keep()}
-            className="ember-fill flex items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
+            className="ember-fill flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
             <Check className="size-4" /> This is me
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setSelfie(null);
-            setStage(traits.gender ? "build" : "gender");
-          }}
-          className="w-full text-xs text-muted-foreground underline"
-        >
-          Back to styling
-        </button>
-      </div>
-    );
-  }
-
-  /* ---------------- build ---------------- */
-
-  const last = stepIndex === steps.length - 1;
-
-  return (
-    <div className="space-y-5">
-      <div className="sticky top-0 z-10 -mx-1 rounded-[2rem] bg-background/85 px-1 pb-3 pt-1 backdrop-blur">
-        <div className="overflow-hidden rounded-[1.75rem] border border-border">
-          <AvatarArt traits={traits} className="aspect-[4/3] w-full" />
-        </div>
-        <div className="mt-3 flex items-center gap-1.5">
-          {steps.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setStepIndex(i)}
-              aria-label={s.title}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= stepIndex ? "ember-fill" : "bg-border"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="font-display text-xl font-extrabold tracking-[-0.03em]">{step.title}</h2>
-        <p className="text-sm text-muted-foreground">{step.blurb}</p>
       </div>
 
       <div className="space-y-5">
-        {step.rows.map((r) => (
-          <div key={r.key}>
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                {r.label}
-              </h3>
-              <span className="text-[11px] text-muted-foreground">{String(traits[r.key])}</span>
-            </div>
-            <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
-              {r.opts.map((opt) => {
-                const active = traits[r.key] === opt;
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    title={opt}
-                    aria-label={opt}
-                    aria-pressed={active}
-                    onClick={() => set(r.key, opt)}
-                    className={`w-[78px] shrink-0 overflow-hidden rounded-2xl border-2 transition-transform active:scale-95 ${
-                      active ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_25%,transparent)]" : "border-border"
-                    }`}
-                  >
-                    <AvatarArt
-                      traits={{ ...traits, [r.key]: opt } as Traits}
-                      zoom={r.zoom}
-                      className="aspect-square w-full"
-                    />
-                    <span className="block truncate bg-surface px-1.5 py-1 text-[10px] font-semibold">
-                      {opt}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <SwatchRow title="Skin" opts={SKINS} value={traits.skin} onPick={(v) => update({ skin: v })} />
+        <SheetRow
+          title="Face shape"
+          sheet={SHEETS.face}
+          opts={FACES}
+          value={traits.face}
+          onPick={(v) => update({ face: v })}
+        />
+        <SheetRow
+          title="Eyes"
+          sheet={SHEETS.eyes}
+          opts={EYE_SHAPES}
+          value={traits.eyeShape}
+          onPick={(v) => update({ eyeShape: v })}
+        />
+        <SwatchRow
+          title="Eye colour"
+          opts={EYE_COLORS}
+          value={traits.eyeColor}
+          onPick={(v) => update({ eyeColor: v })}
+        />
+        <SheetRow
+          title="Eyebrows"
+          sheet={SHEETS.brows}
+          opts={BROWS}
+          value={traits.brows}
+          onPick={(v) => update({ brows: v })}
+        />
+        <SheetRow
+          title="Nose"
+          sheet={SHEETS.nose}
+          opts={NOSES}
+          value={traits.nose}
+          onPick={(v) => update({ nose: v })}
+        />
+        <SheetRow
+          title="Mouth"
+          sheet={SHEETS.mouth}
+          opts={mouths}
+          value={traits.mouth}
+          onPick={(v) => update({ mouth: v })}
+        />
+        <SheetRow
+          title="Hairstyle"
+          sheet={hair.sheet}
+          opts={hair.opts}
+          value={traits.hair}
+          onPick={(v) => update({ hair: v })}
+        />
+        <SwatchRow
+          title="Hair colour"
+          opts={HAIR_COLORS}
+          value={traits.hairColor}
+          onPick={(v) => update({ hairColor: v })}
+        />
+        <SheetRow
+          title="Make-up"
+          sheet={SHEETS.makeup}
+          opts={MAKEUP}
+          value={traits.makeup}
+          onPick={(v) => update({ makeup: v })}
+        />
+        <SheetRow
+          title="Outfit"
+          sheet={SHEETS.outfit}
+          opts={OUTFITS}
+          value={traits.outfit}
+          onPick={(v) => update({ outfit: v })}
+        />
+        <SwatchRow
+          title="Outfit colour"
+          opts={OUTFIT_COLORS}
+          value={traits.outfitColor}
+          onPick={(v) => update({ outfitColor: v })}
+        />
+        <SheetRow
+          title="Accessories"
+          sheet={SHEETS.accessory}
+          opts={ACCESSORIES}
+          value={traits.accessories}
+          onPick={toggleAccessory}
+          multi
+        />
       </div>
 
-      <div className="flex items-center gap-2 pt-2">
-        <button
-          type="button"
-          onClick={() =>
-            stepIndex === 0 ? setStage("gender") : setStepIndex((i) => Math.max(0, i - 1))
-          }
-          className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-surface"
-          aria-label="Back"
-        >
-          <ArrowLeft className="size-5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setTraits(randomTraits(traits.gender === "Female" ? "Female" : "Male"))}
-          className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-surface"
-          aria-label="Surprise me"
-        >
-          <Dices className="size-5" />
-        </button>
-        {last ? (
-          <button
-            type="button"
-            onClick={() => renderIt(null)}
-            className="ember-fill flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold text-primary-foreground"
-          >
-            <Sparkles className="size-4" /> Create my avatar
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setStepIndex((i) => i + 1)}
-            className="ember-fill flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold text-primary-foreground"
-          >
-            Next <ArrowRight className="size-4" />
-          </button>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          runRef.current++;
+          baseRef.current = null;
+          setGender(null);
+          setFrame(null);
+          setBusy(false);
+        }}
+        className="w-full pb-4 text-xs text-muted-foreground underline"
+      >
+        Start over
+      </button>
     </div>
   );
 }
