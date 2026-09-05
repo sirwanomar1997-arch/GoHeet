@@ -59,7 +59,7 @@ export function MomentReel({
         className="h-[100svh] snap-y snap-mandatory overflow-y-auto overscroll-contain"
       >
         {moments.map((m) => (
-          <MomentStage key={m.id} moment={m} fullscreen onGone={onGone} />
+          <MomentStage key={m.id} moment={m} fullscreen {...(onGone ? { onGone } : {})} />
         ))}
       </div>
 
