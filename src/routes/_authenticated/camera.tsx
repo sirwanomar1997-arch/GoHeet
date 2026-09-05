@@ -27,15 +27,16 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
   OVERLAY_FONTS,
+  OVERLAY_COLORS,
+  OVERLAY_STYLES,
+  DEFAULT_OVERLAY,
   filterCss,
-  overlayFontClass,
-  overlayPlaceClass,
-  overlayStyleClass,
+  overlayFontStyle,
+  overlayStyleProps,
   type FilterId,
   type MomentOverlay,
-  type OverlayPlace,
-  type OverlayStyle,
 } from "@/components/reelzy/creative";
+
 
 export const Route = createFileRoute("/_authenticated/camera")({
   component: CameraPage,
