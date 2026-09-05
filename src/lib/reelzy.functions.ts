@@ -184,11 +184,15 @@ export const completeSignup = createServerFn({ method: "POST" })
         id: context.userId,
         username: data.username,
         display_name: data.displayName || data.username,
-        birth_date: data.birthDate,
       },
       { onConflict: "id" },
     );
     if (error) throw new Error(error.message);
+
+    const { error: privErr } = await sb
+      .from("profile_private")
+      .upsert({ user_id: context.userId, birth_date: data.birthDate }, { onConflict: "user_id" });
+    if (privErr) throw new Error(privErr.message);
 
     await sb.from("policy_acceptances").insert([
       { user_id: context.userId, policy_key: "terms", version: "2026-01" },
