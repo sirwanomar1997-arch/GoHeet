@@ -585,16 +585,26 @@ export function AvatarStudio({
   }
 
   const generate = useCallback(
-    async (l: { pose: string; seed: number }, t: Traits, useSelfie: string | null) => {
+    async (opts: {
+      prompt: string;
+      reference: string | null;
+      traits?: Traits;
+      isSelfie?: boolean;
+    }) => {
       const run = ++runRef.current;
       setBusy(true);
       setIsFinal(false);
       try {
-        const prompt = useSelfie ? SELFIE_PROMPT : buildPrompt(t, l.pose, l.seed);
-        await streamAvatar(prompt, useSelfie, (url, final) => {
+        await streamAvatar(opts.prompt, opts.reference, (url, final) => {
           if (runRef.current !== run) return;
           setFrame(url);
-          if (final) setIsFinal(true);
+          if (final) {
+            setIsFinal(true);
+            if (!opts.isSelfie) {
+              setBaseImage(url);
+              if (opts.traits) setAppliedTraits(opts.traits);
+            }
+          }
         });
       } catch (e) {
         if (runRef.current === run) {
@@ -607,16 +617,27 @@ export function AvatarStudio({
     [],
   );
 
-  // Every tap re-renders the real 3D avatar, so the user always sees the
-  // finished look — never a flat sketch. Debounced so rapid taps collapse
-  // into a single render.
+  const pending = appliedTraits ? diffTraits(appliedTraits, traits) : [];
+
+  const renderLook = useCallback(
+    (t: Traits, l: { pose: string; seed: number }, base: string | null, changed: (keyof Traits)[]) => {
+      const fresh = !base || changed.length === 0 || changed.includes("gender");
+      void generate({
+        prompt: fresh ? buildPrompt(t, l.pose, l.seed) : buildEditPrompt(t, changed),
+        reference: fresh ? null : base,
+        traits: t,
+      });
+    },
+    [generate],
+  );
+
+  // The very first render happens as soon as you pick male or female. After
+  // that nothing re-renders until you tap Update, so styling stays instant.
   useEffect(() => {
-    if (mode !== "build" || !traits.gender) return;
-    const id = setTimeout(() => {
-      void generate(look, traits, null);
-    }, 700);
-    return () => clearTimeout(id);
-  }, [mode, traits, look, generate]);
+    if (mode !== "build" || !traits.gender || appliedTraits) return;
+    renderLook(traits, look, null, []);
+  }, [mode, traits, look, appliedTraits, renderLook]);
+
 
 
   async function keep() {
