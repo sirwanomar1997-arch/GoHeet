@@ -666,18 +666,18 @@ export function AvatarStudio({
                 <Dices className="size-3.5" /> Shuffle
               </button>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex gap-2">
               {GENDER.map((o) => (
-                <button
+                <Tile
                   key={o}
-                  type="button"
+                  group="gender"
+                  value={o}
+                  active={traits.gender === o}
                   onClick={() => setTraits((t) => ({ ...t, gender: o }))}
-                  className={chip(traits.gender === o)}
-                >
-                  {o}
-                </button>
+                />
               ))}
             </div>
+
           </div>
 
           {buildReady ? (
