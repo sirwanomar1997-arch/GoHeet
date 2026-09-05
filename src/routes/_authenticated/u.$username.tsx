@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart } from "lucide-react";
+import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -97,6 +97,15 @@ function ProfilePage() {
           aria-hidden
           className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
         />
+        {data.isSelf ? (
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            className="absolute right-5 top-5 grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Settings className="size-4" />
+          </Link>
+        ) : null}
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
             {p.avatarUrl ? (
@@ -109,12 +118,20 @@ function ProfilePage() {
           </div>
 
           {data.isSelf ? (
-            <Link
-              to="/avatar"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground"
-            >
-              <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
-            </Link>
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Pencil className="size-3" /> Edit profile
+              </Link>
+              <Link
+                to="/avatar"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Sparkles className="size-3" /> {p.avatarUrl ? "Remake your avatar" : "Create your avatar"}
+              </Link>
+            </div>
           ) : null}
 
           <h1 className="mt-4 text-center font-display text-3xl font-extrabold tracking-[-0.045em]">
