@@ -220,21 +220,24 @@ function CameraPage() {
     stopStream();
   }
 
-  async function startRecording() {
+  async function beginRecording() {
     const stream = streamRef.current;
     if (!stream) return;
     const mimeType = pickMimeType();
     const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     chunksRef.current = [];
+    accumulatedRef.current = 0;
+    elapsedRef.current = 0;
     rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
     rec.onstop = async () => {
-      const duration = Date.now() - startedAtRef.current;
+      const duration = elapsedRef.current;
       const poster = await grabPoster();
       const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
       setRecording(false);
+      setPaused(false);
       setElapsed(0);
       if (duration < 800) {
-        toast.error("Hold the button to record.");
+        toast.error("Hold a moment longer — that clip was too short.");
         return;
       }
       setCaptured({ blob, url: URL.createObjectURL(blob), kind: "video", durationMs: duration, poster });
@@ -245,6 +248,48 @@ function CameraPage() {
     rec.start(250);
     setRecording(true);
   }
+
+  /** 3 · 2 · 1 before the first frame, so you can get in place. */
+  function startCountdown() {
+    if (countdown !== null) return;
+    setCountdown(3);
+    countdownRef.current = setInterval(() => {
+      setCountdown((n) => {
+        if (n === null) return null;
+        if (n <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          void beginRecording();
+          return null;
+        }
+        return n - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(
+    () => () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    },
+    [],
+  );
+
+  /** Pause banks the elapsed time; resume keeps adding to the same take. */
+  function togglePause() {
+    const rec = recorderRef.current;
+    if (!rec) return;
+    if (paused) {
+      startedAtRef.current = Date.now();
+      rec.resume();
+      setPaused(false);
+    } else {
+      accumulatedRef.current += Date.now() - startedAtRef.current;
+      elapsedRef.current = accumulatedRef.current;
+      rec.pause();
+      setPaused(true);
+    }
+  }
+
 
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
