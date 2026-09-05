@@ -46,7 +46,7 @@ type Traits = {
 };
 
 
-const GENDER = ["Male", "Female", "Non-binary"];
+const GENDER = ["Male", "Female"];
 const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
 const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
 const FACE = ["Oval", "Round", "Square jaw", "Heart", "Long", "Sharp cheekbones"];
@@ -260,7 +260,7 @@ const some = (arr: readonly string[], chance: number, max: number) =>
 
 function randomTraits(): Traits {
   return {
-    gender: pick(["Male", "Female", "Non-binary"]),
+    gender: pick(["Male", "Female"]),
     age: pick(AGE),
     skin: pick(SKIN),
     face: pick(FACE),
@@ -311,6 +311,63 @@ function buildPrompt(t: Traits, pose: string, seed: number) {
   return (
     `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
     `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
+  );
+}
+
+const TRAIT_LABEL: Record<string, string> = {
+  age: "age",
+  skin: "skin tone",
+  face: "face shape",
+  eyeColor: "eye colour",
+  eyeShape: "eye shape",
+  brows: "eyebrows",
+  nose: "nose",
+  lips: "lips",
+  ears: "ears",
+  hair: "hairstyle",
+  hairColor: "hair colour",
+  facialHair: "facial hair",
+  expression: "expression",
+  outfit: "outfit",
+  outfitColor: "outfit colour",
+  fabric: "fabric",
+  headwear: "headwear",
+  eyewear: "eyewear",
+  makeup: "make-up",
+  jewelry: "jewellery",
+  background: "backdrop",
+  extras: "details",
+};
+
+/** Keys whose value differs between two trait sets. */
+function diffTraits(a: Traits, b: Traits): (keyof Traits)[] {
+  return (Object.keys(b) as (keyof Traits)[]).filter((k) => {
+    const av = a[k];
+    const bv = b[k];
+    return Array.isArray(av) && Array.isArray(bv)
+      ? av.join("|") !== bv.join("|")
+      : av !== bv;
+  });
+}
+
+/**
+ * Prompt for editing an existing render: the previous frame is sent as the
+ * reference image so the character's identity is preserved and only the
+ * traits the user just tapped change.
+ */
+function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
+  const describe = (k: keyof Traits) => {
+    const v = t[k];
+    const value = Array.isArray(v) ? (v.length ? v.join(", ") : "none") : v;
+    return `${TRAIT_LABEL[k] ?? k}: ${String(value).toLowerCase()}`;
+  };
+  return (
+    "Edit the character in the reference image. Keep the EXACT same person — identical face, " +
+    "bone structure, skin tone, eye colour and shape, nose, lips, ears, age and overall likeness, " +
+    "same pose, same camera angle, same lighting and same render style. " +
+    `Change only the following: ${changed.map(describe).join("; ")}. ` +
+    "Everything else must stay pixel-consistent with the reference. " +
+    "Glossy premium 3D animated feature-film portrait, no text, no watermark."
   );
 }
 
@@ -471,6 +528,11 @@ export function AvatarStudio({
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // The last finished render — reused as the reference image so edits keep the
+  // same character instead of generating a brand new person.
+  const [baseImage, setBaseImage] = useState<string | null>(null);
+  // The traits the current render actually shows.
+  const [appliedTraits, setAppliedTraits] = useState<Traits | null>(null);
   // Fixed pose + seed keep the character consistent between edits.
   const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
   const runRef = useRef(0);
@@ -523,16 +585,26 @@ export function AvatarStudio({
   }
 
   const generate = useCallback(
-    async (l: { pose: string; seed: number }, t: Traits, useSelfie: string | null) => {
+    async (opts: {
+      prompt: string;
+      reference: string | null;
+      traits?: Traits;
+      isSelfie?: boolean;
+    }) => {
       const run = ++runRef.current;
       setBusy(true);
       setIsFinal(false);
       try {
-        const prompt = useSelfie ? SELFIE_PROMPT : buildPrompt(t, l.pose, l.seed);
-        await streamAvatar(prompt, useSelfie, (url, final) => {
+        await streamAvatar(opts.prompt, opts.reference, (url, final) => {
           if (runRef.current !== run) return;
           setFrame(url);
-          if (final) setIsFinal(true);
+          if (final) {
+            setIsFinal(true);
+            if (!opts.isSelfie) {
+              setBaseImage(url);
+              if (opts.traits) setAppliedTraits(opts.traits);
+            }
+          }
         });
       } catch (e) {
         if (runRef.current === run) {
@@ -545,16 +617,27 @@ export function AvatarStudio({
     [],
   );
 
-  // Every tap re-renders the real 3D avatar, so the user always sees the
-  // finished look — never a flat sketch. Debounced so rapid taps collapse
-  // into a single render.
+  const pending = appliedTraits ? diffTraits(appliedTraits, traits) : [];
+
+  const renderLook = useCallback(
+    (t: Traits, l: { pose: string; seed: number }, base: string | null, changed: (keyof Traits)[]) => {
+      const fresh = !base || changed.length === 0 || changed.includes("gender");
+      void generate({
+        prompt: fresh ? buildPrompt(t, l.pose, l.seed) : buildEditPrompt(t, changed),
+        reference: fresh ? null : base,
+        traits: t,
+      });
+    },
+    [generate],
+  );
+
+  // The very first render happens as soon as you pick male or female. After
+  // that nothing re-renders until you tap Update, so styling stays instant.
   useEffect(() => {
-    if (mode !== "build" || !traits.gender) return;
-    const id = setTimeout(() => {
-      void generate(look, traits, null);
-    }, 700);
-    return () => clearTimeout(id);
-  }, [mode, traits, look, generate]);
+    if (mode !== "build" || !traits.gender || appliedTraits) return;
+    renderLook(traits, look, null, []);
+  }, [mode, traits, look, appliedTraits, renderLook]);
+
 
 
   async function keep() {
@@ -619,10 +702,10 @@ export function AvatarStudio({
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="flex gap-2">
-        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); }} className={chip(mode === "selfie")}>
+        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "selfie")}>
           Snap a selfie
         </button>
-        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); }} className={chip(mode === "build")}>
+        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "build")}>
           Build it instead
         </button>
       </div>
@@ -652,18 +735,22 @@ export function AvatarStudio({
         ) : (
           <div className="grid size-full place-items-center px-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Pick who you are below — your avatar is rendered here in full 3D, and re-renders with
-              every single thing you tap.
+              Pick male or female below and your avatar appears here in full 3D. Style as much as you
+              like, then tap Update — it stays the same person.
             </p>
           </div>
         )}
 
-
+        {!busy && pending.length > 0 && frame ? (
+          <div className="absolute inset-x-0 bottom-0 bg-background/70 px-4 py-3 text-xs backdrop-blur">
+            {pending.length} change{pending.length > 1 ? "s" : ""} ready — tap Update my avatar.
+          </div>
+        ) : null}
 
         {busy ? (
           <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
             <Sparkles className="size-3.5 animate-pulse text-primary" />
-            Rendering your avatar…
+            {appliedTraits ? "Updating your avatar…" : "Rendering your avatar…"}
           </div>
         ) : null}
 
@@ -798,21 +885,45 @@ export function AvatarStudio({
             <Camera className="size-4" /> Take the shot
           </button>
         ) : mode === "build" ? (
-          <button
-            type="button"
-            onClick={() =>
-              setLook({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) })
-            }
-            disabled={busy || !buildReady}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
-          >
-            <RefreshCw className="size-4" />
-            {busy ? "Rendering…" : "Try another take"}
-          </button>
+          pending.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => renderLook(traits, look, baseImage, pending)}
+              disabled={busy || !buildReady}
+              className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              <Sparkles className="size-4" />
+              {busy ? "Updating…" : `Update my avatar (${pending.length})`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
+                setLook(l);
+                void generate({
+                  prompt: baseImage
+                    ? "Keep the EXACT same character from the reference image — identical face, hair, " +
+                      `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
+                      "feature-film render style and lighting. No text, no watermark."
+                    : buildPrompt(traits, l.pose, l.seed),
+                  reference: baseImage,
+                  traits,
+                });
+              }}
+              disabled={busy || !buildReady}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+            >
+              <RefreshCw className="size-4" />
+              {busy ? "Rendering…" : "Try another take"}
+            </button>
+          )
         ) : (
           <button
             type="button"
-            onClick={() => void generate(look, traits, selfie)}
+            onClick={() =>
+              void generate({ prompt: SELFIE_PROMPT, reference: selfie, isSelfie: true })
+            }
             disabled={busy}
             className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
