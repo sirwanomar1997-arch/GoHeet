@@ -6,6 +6,14 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
+import {
+  HAIR_MALE,
+  HAIR_FEMALE,
+  OUTFIT_MALE,
+  OUTFIT_FEMALE,
+  cellFor,
+  cellStyle,
+} from "@/components/reelzy/avatar-sheets";
 
 
 const STYLE_BASE =
@@ -69,28 +77,8 @@ const BROWS = ["Soft arched", "Straight", "Thick bold", "Thin", "Bushy"];
 const NOSE = ["Small button", "Straight", "Narrow", "Wide", "Roman bridge", "Upturned"];
 const LIPS = ["Thin", "Medium", "Full", "Wide smile"];
 const EARS = ["Small", "Medium", "Large", "Slightly protruding", "Pointed lobes"];
-const HAIR = [
-  "Short swept-back",
-  "Buzz cut",
-  "Crew cut",
-  "Messy short",
-  "Curly afro",
-  "Coily",
-  "Shoulder-length wavy",
-  "Long straight",
-  "Long wavy",
-  "Braids",
-  "Cornrows",
-  "Locs",
-  "Top knot",
-  "Bob",
-  "Pixie cut",
-  "Ponytail",
-  "Side part",
-  "Shaved sides",
-  "Bald",
-  "Hijab",
-];
+const HAIR = HAIR_MALE;
+
 const HAIR_COLOR = [
   "Jet black",
   "Dark brown",
