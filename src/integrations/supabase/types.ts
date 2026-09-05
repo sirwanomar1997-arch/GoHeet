@@ -574,6 +574,7 @@ export type Database = {
       profiles: {
         Row: {
           allow_comments: string
+          allow_messages: string
           avatar_url: string | null
           banned_at: string | null
           bio: string | null
@@ -587,6 +588,9 @@ export type Database = {
           id: string
           is_private: boolean
           moment_count: number
+          show_following: boolean
+          show_likes: boolean
+          show_saves: boolean
           social_links: Json
           suspended_until: string | null
           total_likes: number
@@ -596,6 +600,7 @@ export type Database = {
         }
         Insert: {
           allow_comments?: string
+          allow_messages?: string
           avatar_url?: string | null
           banned_at?: string | null
           bio?: string | null
@@ -609,6 +614,9 @@ export type Database = {
           id: string
           is_private?: boolean
           moment_count?: number
+          show_following?: boolean
+          show_likes?: boolean
+          show_saves?: boolean
           social_links?: Json
           suspended_until?: string | null
           total_likes?: number
@@ -618,6 +626,7 @@ export type Database = {
         }
         Update: {
           allow_comments?: string
+          allow_messages?: string
           avatar_url?: string | null
           banned_at?: string | null
           bio?: string | null
@@ -631,6 +640,9 @@ export type Database = {
           id?: string
           is_private?: boolean
           moment_count?: number
+          show_following?: boolean
+          show_likes?: boolean
+          show_saves?: boolean
           social_links?: Json
           suspended_until?: string | null
           total_likes?: number
