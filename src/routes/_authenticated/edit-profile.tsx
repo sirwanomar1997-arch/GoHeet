@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/edit-profile")({
 });
 
 const PLATFORMS = [
-  { key: "instagram", label: "Instagram", prefix: "instagram.com/" },
-  { key: "tiktok", label: "TikTok", prefix: "tiktok.com/@" },
-  { key: "youtube", label: "YouTube", prefix: "youtube.com/@" },
-  { key: "twitter", label: "X (Twitter)", prefix: "x.com/" },
-  { key: "facebook", label: "Facebook", prefix: "facebook.com/" },
-  { key: "snapchat", label: "Snapchat", prefix: "snapchat.com/add/" },
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/you" },
+  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@you" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@you" },
+  { key: "twitter", label: "X (Twitter)", placeholder: "https://x.com/you" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/you" },
+  { key: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/you" },
 ] as const;
 
 function EditProfilePage() {
@@ -135,7 +135,8 @@ function EditProfilePage() {
         <section className={card}>
           <h2 className="font-display text-base font-semibold">Your other platforms</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Add your handle and it shows as a link on your profile.
+            Paste the full link to your profile on each platform. It becomes a tappable icon on
+            your Reelzy profile.
           </p>
           <div className="mt-4 space-y-3">
             {PLATFORMS.map((pl) => (
@@ -143,19 +144,17 @@ function EditProfilePage() {
                 <Label htmlFor={pl.key} className="text-xs">
                   {pl.label}
                 </Label>
-                <div className="mt-1.5 flex items-center rounded-xl border border-border bg-surface-raised pl-3">
-                  <span className="text-xs text-muted-foreground">@</span>
-                  <Input
-                    id={pl.key}
-                    value={links[pl.key] ?? ""}
-                    maxLength={80}
-                    placeholder="yourhandle"
-                    onChange={(e) =>
-                      setLinks((l) => ({ ...l, [pl.key]: e.target.value.replace(/^@+/, "") }))
-                    }
-                    className="h-11 border-0 bg-transparent focus-visible:ring-0"
-                  />
-                </div>
+                <Input
+                  id={pl.key}
+                  value={links[pl.key] ?? ""}
+                  maxLength={300}
+                  inputMode="url"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  placeholder={pl.placeholder}
+                  onChange={(e) => setLinks((l) => ({ ...l, [pl.key]: e.target.value.trim() }))}
+                  className="mt-1.5 h-11 bg-surface-raised"
+                />
               </div>
             ))}
           </div>

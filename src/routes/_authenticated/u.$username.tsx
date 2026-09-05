@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil } from "lucide-react";
+import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Music2, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -145,26 +145,30 @@ function ProfilePage() {
           ) : null}
 
           {Object.keys(p.socialLinks ?? {}).length > 0 ? (
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
-              {Object.entries(p.socialLinks ?? {}).map(([key, handle]) => {
-                const base: Record<string, string> = {
-                  instagram: "https://instagram.com/",
-                  tiktok: "https://tiktok.com/@",
-                  youtube: "https://youtube.com/@",
-                  twitter: "https://x.com/",
-                  facebook: "https://facebook.com/",
-                  snapchat: "https://snapchat.com/add/",
+            <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+              {Object.entries(p.socialLinks ?? {}).map(([key, url]) => {
+                const icons: Record<string, { Icon: LucideIcon; label: string; color: string }> = {
+                  instagram: { Icon: Instagram, label: "Instagram", color: "oklch(0.65 0.24 350)" },
+                  tiktok: { Icon: Music2, label: "TikTok", color: "oklch(0.72 0.15 195)" },
+                  youtube: { Icon: Youtube, label: "YouTube", color: "oklch(0.6 0.22 25)" },
+                  twitter: { Icon: Twitter, label: "X (Twitter)", color: "oklch(0.75 0.02 250)" },
+                  facebook: { Icon: Facebook, label: "Facebook", color: "oklch(0.6 0.18 255)" },
+                  snapchat: { Icon: Ghost, label: "Snapchat", color: "oklch(0.88 0.16 100)" },
                 };
-                if (!base[key]) return null;
+                const meta = icons[key];
+                if (!meta) return null;
                 return (
                   <a
                     key={key}
-                    href={`${base[key]}${handle}`}
+                    href={url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium capitalize text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label={`${meta.label} profile`}
+                    title={meta.label}
+                    className="grid size-11 place-items-center rounded-2xl border border-border bg-surface transition-transform hover:scale-105 active:scale-95"
+                    style={{ color: meta.color }}
                   >
-                    {key}
+                    <meta.Icon className="size-5" />
                   </a>
                 );
               })}

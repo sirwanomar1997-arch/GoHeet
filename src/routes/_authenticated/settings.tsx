@@ -45,6 +45,7 @@ function SettingsPage() {
 
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -87,12 +88,20 @@ function SettingsPage() {
 
   const passwordMutation = useMutation({
     mutationFn: async () => {
+      if (!currentPassword) throw new Error("Enter your current password first.");
       if (newPassword.length < 8) throw new Error("Use at least 8 characters.");
       if (newPassword !== confirmPassword) throw new Error("The two passwords don't match.");
+      if (!email) throw new Error("No email on this account.");
+      const { error: check } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (check) throw new Error("Your current password is wrong.");
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
     },
     onSuccess: () => {
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       toast.success("Password changed.");
@@ -217,6 +226,17 @@ function SettingsPage() {
           </p>
           <div className="mt-4 space-y-4">
             <div>
+              <Label htmlFor="cur">Current password</Label>
+              <Input
+                id="cur"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="mt-1.5 h-11 bg-surface-raised"
+              />
+            </div>
+            <div>
               <Label htmlFor="np">New password</Label>
               <Input
                 id="np"
@@ -240,7 +260,7 @@ function SettingsPage() {
             </div>
             <Button
               variant="secondary"
-              disabled={!newPassword || passwordMutation.isPending}
+              disabled={!currentPassword || !newPassword || passwordMutation.isPending}
               onClick={() => passwordMutation.mutate()}
               className="h-11 w-full rounded-2xl"
             >
