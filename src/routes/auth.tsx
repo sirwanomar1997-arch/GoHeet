@@ -19,12 +19,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in to Reelzy" },
+      { title: "Log in to Reelzy" },
       {
         name: "description",
-        content: "Create your Reelzy account or sign back in to capture and share real moments.",
+        content: "Log back in to Reelzy to capture and share real moments, or create a new account.",
       },
-      { property: "og:title", content: "Sign in to Reelzy" },
+      { property: "og:title", content: "Log in to Reelzy" },
       { property: "og:description", content: "Camera-first social video. Real moments only." },
     ],
   }),
