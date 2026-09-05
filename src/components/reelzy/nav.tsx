@@ -116,9 +116,14 @@ export function ReelzyNav() {
             <span className={spark(pathname.startsWith("/u/"))} />
           </Link>
         ) : (
-          <span className={item(false, "text-nav-profile", "nav-glow-profile")} aria-label="Profile">
+          <Link
+            to="/onboarding"
+            className={item(pathname === "/onboarding", "text-nav-profile", "nav-glow-profile")}
+            aria-label="Finish your profile"
+          >
             <ProfileIcon className="size-8" />
-          </span>
+            <span className={spark(pathname === "/onboarding")} />
+          </Link>
         )}
       </div>
     </nav>
