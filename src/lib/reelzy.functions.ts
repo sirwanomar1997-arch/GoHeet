@@ -778,6 +778,7 @@ export const getProfile = createServerFn({ method: "POST" })
         followingCount: profile.following_count,
         momentCount: profile.moment_count,
         totalViews: Number(profile.total_views ?? 0),
+        totalLikes: Number(profile.total_likes ?? 0),
         isPrivate: profile.is_private,
         createdAt: profile.created_at,
       },
