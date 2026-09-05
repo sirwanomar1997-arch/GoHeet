@@ -415,31 +415,55 @@ export function MomentStage({
       }
       aria-label={`Moment by ${moment.author.username}`}
     >
-      {moment.kind === "video" && moment.mediaUrl ? (
-        <video
-          ref={videoRef}
-          src={moment.mediaUrl}
-          poster={moment.posterUrl ?? undefined}
-          className="size-full object-cover"
-          style={look ? { filter: look } : undefined}
-          playsInline
-          loop
-          muted={muted}
-          preload="metadata"
-          onClick={togglePlayback}
-        />
-      ) : moment.mediaUrl ? (
-        <img
-          src={moment.mediaUrl}
-          alt={moment.caption ?? `A moment by ${moment.author.username}`}
-          className="size-full object-cover"
-          style={look ? { filter: look } : undefined}
-        />
-      ) : (
-        <div className="grid size-full place-items-center text-sm text-muted-foreground">
-          This moment is unavailable.
-        </div>
-      )}
+      <div
+        ref={zoomWrapRef}
+        className="absolute inset-0 touch-none overflow-hidden"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onMediaTap}
+        onPointerCancel={endPointer}
+        style={{
+          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`,
+          transition: pinchRef.current ? "none" : "transform 120ms ease-out",
+        }}
+      >
+        {moment.kind === "video" && moment.mediaUrl ? (
+          <video
+            ref={videoRef}
+            src={moment.mediaUrl}
+            poster={moment.posterUrl ?? undefined}
+            className="size-full object-cover"
+            style={look ? { filter: look } : undefined}
+            playsInline
+            loop
+            muted={muted}
+            preload="metadata"
+          />
+        ) : moment.mediaUrl ? (
+          <img
+            src={moment.mediaUrl}
+            alt={moment.caption ?? `A moment by ${moment.author.username}`}
+            className="size-full object-cover"
+            style={look ? { filter: look } : undefined}
+            draggable={false}
+          />
+        ) : (
+          <div className="grid size-full place-items-center text-sm text-muted-foreground">
+            This moment is unavailable.
+          </div>
+        )}
+      </div>
+
+      {zoom > 1 ? (
+        <button
+          type="button"
+          onClick={resetZoom}
+          className="data-figure absolute bottom-[42%] left-1/2 z-10 -translate-x-1/2 rounded-full border border-[oklch(1_0_0/16%)] bg-background/60 px-3 py-1 text-[11px] backdrop-blur-md"
+        >
+          {zoom.toFixed(1)}× · reset
+        </button>
+      ) : null}
+
 
       {/* Film treatment: vignette + grain so real footage reads cinematic. */}
       <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
