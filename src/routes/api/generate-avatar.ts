@@ -49,6 +49,7 @@ export const Route = createFileRoute("/api/generate-avatar")({
         const body = (await request.json()) as {
           prompt?: string;
           selfie?: string | null;
+          visualReference?: string | null;
           stream?: boolean;
         };
         const prompt = (body.prompt ?? "").slice(0, 1200);
@@ -60,11 +61,16 @@ export const Route = createFileRoute("/api/generate-avatar")({
         const selfie = typeof body.selfie === "string" && body.selfie.startsWith("data:image/")
           ? body.selfie
           : null;
+        const visualReference =
+          typeof body.visualReference === "string" && body.visualReference.startsWith("data:image/")
+            ? body.visualReference
+            : null;
 
-        const content = selfie
+        const content = selfie || visualReference
           ? [
               { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: selfie } },
+              ...(selfie ? [{ type: "image_url", image_url: { url: selfie } }] : []),
+              ...(visualReference ? [{ type: "image_url", image_url: { url: visualReference } }] : []),
             ]
           : prompt;
 

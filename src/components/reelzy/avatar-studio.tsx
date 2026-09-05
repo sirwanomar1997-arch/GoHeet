@@ -154,11 +154,13 @@ function SpriteTile({ sheet, index }: { sheet: Sheet; index: number }) {
 function Tile({
   active,
   label,
+  showLabel = true,
   onClick,
   children,
 }: {
   active: boolean;
   label: string;
+  showLabel?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -177,7 +179,7 @@ function Tile({
       }`}
     >
       {children}
-      <span className="block truncate px-1.5 py-1 text-[10px] font-semibold">{label}</span>
+      {showLabel ? <span className="block truncate px-1.5 py-1 text-[10px] font-semibold">{label}</span> : null}
     </Button>
   );
 }
@@ -189,6 +191,7 @@ function SheetRow({
   value,
   onPick,
   multi,
+  picturesOnly,
 }: {
   title: string;
   sheet: Sheet;
@@ -196,19 +199,22 @@ function SheetRow({
   value: string | string[];
   onPick: (name: string) => void;
   multi?: boolean;
+  picturesOnly?: boolean;
 }) {
   const isOn = (n: string) => (Array.isArray(value) ? value.includes(n) : value === n);
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{title}</h3>
-        <span className="max-w-[55%] truncate text-[11px] text-muted-foreground">
-          {Array.isArray(value) ? (value.length ? value.join(", ") : multi ? "None" : "") : value}
-        </span>
+        {!picturesOnly ? (
+          <span className="max-w-[55%] truncate text-[11px] text-muted-foreground">
+            {Array.isArray(value) ? (value.length ? value.join(", ") : multi ? "None" : "") : value}
+          </span>
+        ) : null}
       </div>
       <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
         {opts.map((o) => (
-          <Tile key={o.name} active={isOn(o.name)} label={o.name} onClick={() => onPick(o.name)}>
+          <Tile key={o.name} active={isOn(o.name)} label={o.name} showLabel={!picturesOnly} onClick={() => onPick(o.name)}>
             <SpriteTile sheet={sheet} index={o.index} />
           </Tile>
         ))}
@@ -671,6 +677,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           opts={hair.opts}
           value={traits.hair}
           onPick={(v) => update({ hair: v })}
+          picturesOnly
         />
         <SwatchRow
           title="Hair colour"
