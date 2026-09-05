@@ -800,17 +800,30 @@ export function AvatarStudio({
           >
             <Camera className="size-4" /> Take the shot
           </button>
+        ) : mode === "build" ? (
+          <button
+            type="button"
+            onClick={() =>
+              setLook({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) })
+            }
+            disabled={busy || !buildReady}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
+          >
+            <RefreshCw className="size-4" />
+            {busy ? "Rendering…" : "Try another take"}
+          </button>
         ) : (
           <button
             type="button"
-            onClick={() => void generate()}
-            disabled={busy || (mode === "build" && !buildReady)}
+            onClick={() => void generate(look, traits, selfie)}
+            disabled={busy}
             className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             {frame ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
             {busy ? "Creating…" : frame ? "Try another" : "Create my avatar"}
           </button>
         )}
+
 
         {frame && isFinal ? (
           <button
