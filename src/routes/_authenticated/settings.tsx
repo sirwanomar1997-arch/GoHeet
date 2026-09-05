@@ -45,6 +45,7 @@ function SettingsPage() {
 
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -87,12 +88,20 @@ function SettingsPage() {
 
   const passwordMutation = useMutation({
     mutationFn: async () => {
+      if (!currentPassword) throw new Error("Enter your current password first.");
       if (newPassword.length < 8) throw new Error("Use at least 8 characters.");
       if (newPassword !== confirmPassword) throw new Error("The two passwords don't match.");
+      if (!email) throw new Error("No email on this account.");
+      const { error: check } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (check) throw new Error("Your current password is wrong.");
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
     },
     onSuccess: () => {
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       toast.success("Password changed.");
