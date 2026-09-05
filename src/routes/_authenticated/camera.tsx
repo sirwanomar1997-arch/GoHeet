@@ -760,12 +760,11 @@ function CameraPage() {
             }
             disabled={!ready || countdown !== null}
             onClick={() => (recording ? togglePause() : startCountdown())}
-            className={`grid size-20 place-items-center rounded-full bg-[image:var(--gradient-ember)] transition-transform active:scale-95 ${
+            className={`size-20 rounded-full bg-[image:var(--gradient-ember)] transition-transform active:scale-95 ${
               recording && !paused ? "rec-live" : ""
             }`}
-          >
-            <span className="ember-fill size-16 rounded-full" />
-          </button>
+            aria-hidden="true"
+          />
 
           {recording ? (
             <button
