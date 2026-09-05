@@ -1,5 +1,13 @@
 import { createParser } from "eventsource-parser";
 import { flushSync } from "react-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+async function avatarHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Sign in to create your avatar");
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
 
 type Payload = {
   type?: string;
