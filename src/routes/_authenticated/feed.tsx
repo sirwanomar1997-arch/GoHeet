@@ -31,23 +31,30 @@ function FeedPage() {
 
   return (
     <AppShell>
-      <header className="sticky top-0 z-30 flex items-center gap-3 bg-background/90 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-background via-background/90 to-transparent px-4 py-3 backdrop-blur-xl">
         <ReelzyMark className="size-7" />
-        <div className="flex flex-1 gap-1 rounded-full border border-border p-1">
+        <div className="flex flex-1 items-center gap-5">
           {(["following", "discover"] as const).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setScope(s)}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold capitalize transition-colors ${
-                scope === s ? "bg-surface-raised text-foreground" : "text-muted-foreground"
+              aria-pressed={scope === s}
+              className={`relative pb-1.5 font-display text-[15px] font-semibold tracking-tight transition-colors ${
+                scope === s ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               {s === "following" ? "Following" : "Out there"}
+              <span
+                className={`ember-fill absolute inset-x-0 -bottom-0.5 h-[3px] rounded-full transition-opacity duration-300 ${
+                  scope === s ? "opacity-100" : "opacity-0"
+                }`}
+              />
             </button>
           ))}
         </div>
       </header>
+
 
       {isLoading ? (
         <LoadingRail label="Gathering moments" />

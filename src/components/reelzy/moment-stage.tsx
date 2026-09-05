@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX } from "lucide-react";
+import { Flame, MessageCircle, Bookmark, MoreHorizontal, Send, Volume2, VolumeX, Play } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -60,6 +60,21 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   const [saved, setSaved] = useState(moment.saved);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const togglePlayback = useCallback(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (vid.paused) {
+      void vid.play().catch(() => undefined);
+      setPaused(false);
+    } else {
+      vid.pause();
+      setPaused(true);
+    }
+  }, []);
+
 
   const like = useServerFn(toggleLike);
   const save = useServerFn(toggleSave);
@@ -106,8 +121,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       const t = vid.currentTime * 1000;
       if (t > last) watchedRef.current += t - last;
       last = t;
+      if (vid.duration) setProgress(Math.min(1, vid.currentTime / vid.duration));
       if (watchedRef.current >= 1500) flushView(false);
     };
+
     const onEnded = () => {
       reportedRef.current = false;
       watchedRef.current = Math.max(watchedRef.current, 3000);
@@ -186,7 +203,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
   return (
     <section
       ref={containerRef}
-      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[28px] bg-surface"
+      className="animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
       aria-label={`Moment by ${moment.author.username}`}
     >
       {moment.kind === "video" && moment.mediaUrl ? (
@@ -199,7 +216,7 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           loop
           muted={muted}
           preload="metadata"
-          onClick={() => setMuted((m) => !m)}
+          onClick={togglePlayback}
         />
       ) : moment.mediaUrl ? (
         <img
@@ -213,8 +230,27 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
         </div>
       )}
 
-      {/* Seen ticker — Reelzy's honest view counter */}
-      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 backdrop-blur">
+      {/* Film treatment: vignette + grain so real footage reads cinematic. */}
+      <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
+      <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
+
+      {moment.kind === "video" && paused ? (
+        <button
+          type="button"
+          onClick={togglePlayback}
+          aria-label="Play"
+          className="absolute inset-0 grid place-items-center"
+        >
+          <span className="grid size-16 place-items-center rounded-full border border-[oklch(1_0_0/25%)] bg-background/45 backdrop-blur-md">
+            <Play className="ml-0.5 size-6" strokeWidth={1.8} />
+          </span>
+        </button>
+      ) : null}
+
+      {/* Top rail: honest seen ticker on the left, sound on the right */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
+
+      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
         <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
         <span className="data-figure text-[11px] text-foreground">
           {formatCount(moment.viewCount)} seen
@@ -226,14 +262,25 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
           type="button"
           onClick={() => setMuted((m) => !m)}
           aria-label={muted ? "Turn sound on" : "Turn sound off"}
-          className="tap-target absolute right-4 top-4 grid place-items-center rounded-full border border-border bg-background/70 backdrop-blur"
+          className="tap-target absolute right-4 top-4 grid place-items-center rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 backdrop-blur-md"
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
         </button>
       ) : null}
 
+      {/* Hairline scrub line — progress, never a control bar */}
+      {moment.kind === "video" ? (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-[oklch(1_0_0/8%)]" aria-hidden>
+          <div
+            className="ember-fill h-full origin-left transition-[width] duration-150 ease-linear"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+      ) : null}
+
+
       {/* Bottom information band + reaction rail */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-16">
+      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
         <div className="flex items-center gap-3">
           <Link to="/u/$username" params={{ username: moment.author.username }} className="shrink-0">
             <span className="ember-fill flex size-10 items-center justify-center rounded-2xl p-[2px]">
@@ -296,7 +343,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
         </div>
 
         {moment.caption ? (
-          <p className="mt-3 text-sm leading-relaxed text-foreground/90">{moment.caption}</p>
+          <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95">
+            {moment.caption}
+          </p>
+
         ) : null}
 
         <div className="mt-4 flex gap-2">
