@@ -44,6 +44,7 @@ export const SHEETS = {
   hairMale: { src: hairMaleSheet, cols: 5, rows: 4 },
   hairFemale: { src: hairFemaleSheet, cols: 6, rows: 5 },
   makeup: { src: makeupSheet, cols: 4, rows: 3 },
+  beard: { src: beardSheet, cols: 4, rows: 3 },
   outfit: { src: outfitSheet, cols: 5, rows: 4 },
   accessory: { src: accessorySheet, cols: 6, rows: 5 },
   outfitMaleCasual: { src: outfitMaleCasualSheet, cols: 5, rows: 4 },
