@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  Ban,
   Bookmark,
   ChevronRight,
   Heart,
@@ -239,7 +240,7 @@ function SettingsPage() {
           <div className="mt-2 divide-y divide-border">
             <Link to="/u/$username" params={{ username: me?.profile?.username ?? "" }} className={row}>
               <span className="flex items-center gap-3">
-                <History className="size-4 text-amber-400" /> Your Reelz
+                <History className="size-4 text-amber-400" /> Reelz history
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
