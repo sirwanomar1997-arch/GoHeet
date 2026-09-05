@@ -44,6 +44,49 @@ async function admin() {
   return supabaseAdmin;
 }
 
+/* ------------------------------------------------------------------ */
+/* Identifier sign-in — email or username (server-resolved, no leak)  */
+/* ------------------------------------------------------------------ */
+
+const identifierSchema = z.string().trim().min(3).max(254);
+const passwordSchema = z.string().min(8).max(128);
+
+export const signInWithIdentifier = createServerFn({ method: "POST" })
+  .inputValidator((d: { identifier: string; password: string }) => ({
+    identifier: identifierSchema.parse(d.identifier),
+    password: passwordSchema.parse(d.password),
+  }))
+  .handler(async ({ data }) => {
+    const id = data.identifier.trim();
+    const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
+    let email = id;
+    if (!looksEmail) {
+      // Username: resolve to the account's email server-side. The email is
+      // never returned to the client, so it can't be enumerated.
+      const lookup = serverPublicClient();
+      const { data: profile } = await lookup
+        .from("profiles")
+        .select("id")
+        .ilike("username", id)
+        .maybeSingle();
+      if (!profile) throw new Error("Invalid login.");
+      const adm = await admin();
+      const { data: user } = await adm.auth.admin.getUserById(profile.id);
+      if (!user?.email) throw new Error("Invalid login.");
+      email = user.email;
+    }
+    const sb = serverPublicClient();
+    const { data: res, error } = await sb.auth.signInWithPassword({
+      email,
+      password: data.password,
+    });
+    if (error || !res.session) throw new Error("Invalid login.");
+    return {
+      accessToken: res.session.access_token,
+      refreshToken: res.session.refresh_token,
+    };
+  });
+
 async function signMedia(paths: (string | null)[]) {
   const clean = [...new Set(paths.filter((p): p is string => !!p))];
   if (clean.length === 0) return {} as Record<string, string>;
