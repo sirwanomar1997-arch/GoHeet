@@ -473,7 +473,7 @@ function CameraPage() {
           </div>
           {overlay?.text ? (
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Drag the text anywhere on the frame.
+              Tap the text to style it — drag to move it.
             </p>
           ) : null}
 
@@ -579,15 +579,25 @@ function CameraPage() {
           </div>
         </div>
 
-        <Sheet open={textOpen} onOpenChange={setTextOpen}>
-          <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
-            <SheetHeader className="px-0">
-              <SheetTitle className="font-display">Say it loud</SheetTitle>
-              <SheetDescription>
-                Pick a voice, a colour and a finish — then drag it onto the frame.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="max-h-[70svh] space-y-5 overflow-y-auto pb-8">
+        {textOpen ? (
+          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg rounded-t-[28px] border border-border bg-surface p-5 shadow-[0_-18px_60px_rgba(0,0,0,0.55)]">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display text-lg">Say it loud</p>
+                <p className="text-xs text-muted-foreground">
+                  Everything updates live on your video as you tap.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTextOpen(false)}
+                aria-label="Close text editor"
+                className="tap-target -mr-1 -mt-1 text-muted-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="max-h-[46svh] space-y-5 overflow-y-auto pb-6">
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
