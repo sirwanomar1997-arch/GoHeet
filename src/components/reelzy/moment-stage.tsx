@@ -12,6 +12,7 @@ import {
   Volume2,
   VolumeX,
   Play,
+  Heart,
   Share2,
   Music2,
 } from "lucide-react";
@@ -38,6 +39,7 @@ import {
   recordView,
   submitReport,
   toggleBlock,
+  toggleCommentLike,
   toggleLike,
   toggleSave,
   type MomentCard,
@@ -104,6 +106,155 @@ export function MomentStage({
       setPaused(true);
     }
   }, []);
+
+  /* ---------------- Pinch / wheel zoom + pan ---------------- */
+  const zoomWrapRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const zoomStateRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
+  zoomStateRef.current = { zoom, offset };
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null);
+  const lastTapRef = useRef(0);
+  const movedRef = useRef(false);
+
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 5;
+  const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
+  const clampOffset = useCallback((x: number, y: number, z: number) => {
+    const el = zoomWrapRef.current;
+    if (!el || z <= 1) return { x: 0, y: 0 };
+    const maxX = (el.clientWidth * (z - 1)) / 2;
+    const maxY = (el.clientHeight * (z - 1)) / 2;
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  }, []);
+
+  const zoomAt = useCallback(
+    (nextZoomRaw: number, px: number, py: number) => {
+      const el = zoomWrapRef.current;
+      if (!el) return;
+      const { zoom: z, offset: o } = zoomStateRef.current;
+      const next = clampZoom(nextZoomRaw);
+      if (next === z) return;
+      const cx = el.clientWidth / 2;
+      const cy = el.clientHeight / 2;
+      const k = next / z;
+      const nx = px - cx - (px - cx - o.x) * k;
+      const ny = py - cy - (py - cy - o.y) * k;
+      const clamped = clampOffset(nx, ny, next);
+      setZoom(next);
+      setOffset(next <= 1 ? { x: 0, y: 0 } : clamped);
+    },
+    [clampOffset],
+  );
+
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
+
+  useEffect(() => {
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      const rect = el.getBoundingClientRect();
+      zoomAtRef.current(
+        zoomStateRef.current.zoom * Math.exp(-dy * 0.0018),
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+      );
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedRef.current = false;
+    if (pointersRef.current.size === 2) {
+      const [a, b] = [...pointersRef.current.values()];
+      if (a && b) {
+        pinchRef.current = {
+          dist: Math.hypot(a.x - b.x, a.y - b.y),
+          cx: (a.x + b.x) / 2,
+          cy: (a.y + b.y) / 2,
+        };
+      }
+    }
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const prev = pointersRef.current.get(e.pointerId);
+    if (!prev) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+
+    if (pointersRef.current.size >= 2 && pinchRef.current) {
+      const [a, b] = [...pointersRef.current.values()];
+      if (!a || !b) return;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const ratio = dist / (pinchRef.current.dist || dist);
+      pinchRef.current.dist = dist;
+      movedRef.current = true;
+      zoomAtRef.current(
+        zoomStateRef.current.zoom * ratio,
+        (a.x + b.x) / 2 - rect.left,
+        (a.y + b.y) / 2 - rect.top,
+      );
+      return;
+    }
+
+    if (zoomStateRef.current.zoom > 1) {
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      if (Math.abs(dx) + Math.abs(dy) > 2) movedRef.current = true;
+      const o = zoomStateRef.current.offset;
+      setOffset(clampOffset(o.x + dx, o.y + dy, zoomStateRef.current.zoom));
+    }
+  };
+
+  const endPointer = (e: React.PointerEvent) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+  };
+
+  const onMediaTap = (e: React.PointerEvent) => {
+    endPointer(e);
+    if (movedRef.current) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 280) {
+      lastTapRef.current = 0;
+      const el = zoomWrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (zoomStateRef.current.zoom > 1) {
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+      } else {
+        zoomAtRef.current(2.5, e.clientX - rect.left, e.clientY - rect.top);
+      }
+      return;
+    }
+    lastTapRef.current = now;
+    window.setTimeout(() => {
+      if (lastTapRef.current && Date.now() - lastTapRef.current >= 280) {
+        lastTapRef.current = 0;
+        if (moment.kind === "video") togglePlayback();
+      }
+    }, 300);
+  };
+
+  const resetZoom = () => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  };
 
 
   const like = useServerFn(toggleLike);
@@ -264,31 +415,55 @@ export function MomentStage({
       }
       aria-label={`Moment by ${moment.author.username}`}
     >
-      {moment.kind === "video" && moment.mediaUrl ? (
-        <video
-          ref={videoRef}
-          src={moment.mediaUrl}
-          poster={moment.posterUrl ?? undefined}
-          className="size-full object-cover"
-          style={look ? { filter: look } : undefined}
-          playsInline
-          loop
-          muted={muted}
-          preload="metadata"
-          onClick={togglePlayback}
-        />
-      ) : moment.mediaUrl ? (
-        <img
-          src={moment.mediaUrl}
-          alt={moment.caption ?? `A moment by ${moment.author.username}`}
-          className="size-full object-cover"
-          style={look ? { filter: look } : undefined}
-        />
-      ) : (
-        <div className="grid size-full place-items-center text-sm text-muted-foreground">
-          This moment is unavailable.
-        </div>
-      )}
+      <div
+        ref={zoomWrapRef}
+        className="absolute inset-0 touch-none overflow-hidden"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onMediaTap}
+        onPointerCancel={endPointer}
+        style={{
+          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`,
+          transition: pinchRef.current ? "none" : "transform 120ms ease-out",
+        }}
+      >
+        {moment.kind === "video" && moment.mediaUrl ? (
+          <video
+            ref={videoRef}
+            src={moment.mediaUrl}
+            poster={moment.posterUrl ?? undefined}
+            className="size-full object-cover"
+            style={look ? { filter: look } : undefined}
+            playsInline
+            loop
+            muted={muted}
+            preload="metadata"
+          />
+        ) : moment.mediaUrl ? (
+          <img
+            src={moment.mediaUrl}
+            alt={moment.caption ?? `A moment by ${moment.author.username}`}
+            className="size-full object-cover"
+            style={look ? { filter: look } : undefined}
+            draggable={false}
+          />
+        ) : (
+          <div className="grid size-full place-items-center text-sm text-muted-foreground">
+            This moment is unavailable.
+          </div>
+        )}
+      </div>
+
+      {zoom > 1 ? (
+        <button
+          type="button"
+          onClick={resetZoom}
+          className="data-figure absolute bottom-[42%] left-1/2 z-10 -translate-x-1/2 rounded-full border border-[oklch(1_0_0/16%)] bg-background/60 px-3 py-1 text-[11px] backdrop-blur-md"
+        >
+          {zoom.toFixed(1)}× · reset
+        </button>
+      ) : null}
+
 
       {/* Film treatment: vignette + grain so real footage reads cinematic. */}
       <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
@@ -546,6 +721,19 @@ export function MomentStage({
   );
 }
 
+type CommentRow = {
+  id: string;
+  body: string;
+  createdAt: string;
+  parentId: string | null;
+  likeCount: number;
+  liked: boolean;
+  isOwn: boolean;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
 function CommentSheet({
   momentId,
   open,
@@ -560,8 +748,10 @@ function CommentSheet({
   const fetchComments = useServerFn(listComments);
   const create = useServerFn(addComment);
   const remove = useServerFn(deleteComment);
+  const likeComment = useServerFn(toggleCommentLike);
   const removeReport = useServerFn(submitReport);
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -571,13 +761,114 @@ function CommentSheet({
   });
 
   const post = useMutation({
-    mutationFn: () => create({ data: { momentId, body } }),
+    mutationFn: () => create({ data: { momentId, body, parentId: replyTo?.id ?? null } }),
     onSuccess: () => {
       setBody("");
+      setReplyTo(null);
       void qc.invalidateQueries({ queryKey: ["comments", momentId] });
     },
     onError: (e: Error) => toast.error(e.message || "Couldn't post that comment."),
   });
+
+  const like = useMutation({
+    mutationFn: (commentId: string) => likeComment({ data: { commentId } }),
+    onMutate: (commentId: string) => {
+      qc.setQueryData(
+        ["comments", momentId],
+        (old: { comments: CommentRow[] } | undefined) =>
+          old
+            ? {
+                comments: old.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, liked: !c.liked, likeCount: c.likeCount + (c.liked ? -1 : 1) }
+                    : c,
+                ),
+              }
+            : old,
+      );
+    },
+    onError: () => {
+      toast.error("Couldn't register that.");
+      void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+    },
+  });
+
+  const all = (data?.comments ?? []) as CommentRow[];
+  const roots = all
+    .filter((c) => !c.parentId)
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const repliesOf = (id: string) =>
+    all
+      .filter((c) => c.parentId === id)
+      .slice()
+      .sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
+
+  const renderComment = (c: CommentRow, isReply: boolean) => (
+    <div key={c.id} className={`flex gap-3 ${isReply ? "ml-11" : ""}`}>
+      <span
+        className={`grid ${isReply ? "size-7" : "size-8"} shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase`}
+      >
+        {c.avatarUrl ? (
+          <img src={c.avatarUrl} alt="" className="size-full object-cover" />
+        ) : (
+          c.username.slice(0, 1)
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground">
+          @{c.username} · {timeAgo(c.createdAt)}
+        </p>
+        <p className="text-sm text-foreground">{c.body}</p>
+        <div className="mt-1 flex items-center gap-3">
+          <button
+            type="button"
+            aria-pressed={c.liked}
+            aria-label={c.liked ? "Unlike comment" : "Like comment"}
+            onClick={() => like.mutate(c.id)}
+            className={`flex items-center gap-1 text-[11px] ${
+              c.liked ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <Heart className="size-3.5" strokeWidth={c.liked ? 2.6 : 1.8} fill={c.liked ? "currentColor" : "none"} />
+            {c.likeCount > 0 ? <span className="data-figure">{formatCount(c.likeCount)}</span> : null}
+          </button>
+          <button
+            type="button"
+            className="text-[11px] text-muted-foreground underline"
+            onClick={() => setReplyTo({ id: c.parentId ?? c.id, username: c.username })}
+          >
+            Reply
+          </button>
+          {c.isOwn ? (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground underline"
+              onClick={async () => {
+                await remove({ data: { commentId: c.id } });
+                void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+              }}
+            >
+              Delete
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground underline"
+              onClick={async () => {
+                await removeReport({
+                  data: { targetType: "comment", targetId: c.id, category: "harassment" },
+                });
+                toast.success("Reported.");
+              }}
+            >
+              Report
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -590,63 +881,34 @@ function CommentSheet({
         <div className="flex-1 space-y-4 overflow-y-auto pb-4">
           {isLoading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : (data?.comments.length ?? 0) === 0 ? (
+          ) : roots.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Nobody has said anything yet. Be first.
             </p>
           ) : (
-            data?.comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase">
-                  {c.avatarUrl ? (
-                    <img src={c.avatarUrl} alt="" className="size-full object-cover" />
-                  ) : (
-                    c.username.slice(0, 1)
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    @{c.username} · {timeAgo(c.createdAt)}
-                  </p>
-                  <p className="text-sm text-foreground">{c.body}</p>
-                  <div className="mt-1 flex gap-3">
-                    {c.isOwn ? (
-                      <button
-                        type="button"
-                        className="text-[11px] text-muted-foreground underline"
-                        onClick={async () => {
-                          await remove({ data: { commentId: c.id } });
-                          void qc.invalidateQueries({ queryKey: ["comments", momentId] });
-                        }}
-                      >
-                        Delete
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-[11px] text-muted-foreground underline"
-                        onClick={async () => {
-                          await removeReport({
-                            data: { targetType: "comment", targetId: c.id, category: "harassment" },
-                          });
-                          toast.success("Reported.");
-                        }}
-                      >
-                        Report
-                      </button>
-                    )}
-                  </div>
-                </div>
+            roots.map((c) => (
+              <div key={c.id} className="space-y-3">
+                {renderComment(c, false)}
+                {repliesOf(c.id).map((r) => renderComment(r, true))}
               </div>
             ))
           )}
         </div>
 
+        {replyTo ? (
+          <div className="flex items-center justify-between rounded-xl bg-surface-raised px-3 py-2 text-[12px] text-muted-foreground">
+            <span>Replying to @{replyTo.username}</span>
+            <button type="button" className="underline" onClick={() => setReplyTo(null)}>
+              Cancel
+            </button>
+          </div>
+        ) : null}
+
         <div className="flex items-end gap-2 border-t border-border pt-3">
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value.slice(0, 500))}
-            placeholder="Say something real…"
+            placeholder={replyTo ? `Reply to @${replyTo.username}…` : "Say something real…"}
             rows={1}
             className="min-h-11 resize-none bg-surface-raised"
           />
@@ -664,3 +926,4 @@ function CommentSheet({
     </Sheet>
   );
 }
+

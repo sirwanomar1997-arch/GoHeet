@@ -995,23 +995,40 @@ export const listComments = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows } = await context.supabase
       .from("comments")
-      .select("id, body, created_at, author_id, profiles!comments_author_profile_fkey(username, display_name, avatar_url)")
+      .select("id, body, created_at, author_id, parent_id, profiles!comments_author_profile_fkey(username, display_name, avatar_url)")
       .eq("moment_id", data.momentId)
       .order("created_at", { ascending: false })
-      .limit(60);
+      .limit(200);
     const list = (rows ?? []) as unknown as Array<{
       id: string;
       body: string;
       created_at: string;
       author_id: string;
+      parent_id: string | null;
       profiles: { username: string; display_name: string | null; avatar_url: string | null } | null;
     }>;
+    const ids = list.map((c) => c.id);
+    const { data: likeRows } = ids.length
+      ? await context.supabase
+          .from("comment_likes")
+          .select("comment_id, user_id")
+          .in("comment_id", ids)
+      : { data: [] as Array<{ comment_id: string; user_id: string }> };
+    const counts = new Map<string, number>();
+    const mine = new Set<string>();
+    for (const r of (likeRows ?? []) as Array<{ comment_id: string; user_id: string }>) {
+      counts.set(r.comment_id, (counts.get(r.comment_id) ?? 0) + 1);
+      if (r.user_id === context.userId) mine.add(r.comment_id);
+    }
     const avatars = await signAvatars(list.map((c) => c.profiles?.avatar_url ?? null));
     return {
       comments: list.map((c) => ({
         id: c.id,
         body: c.body,
         createdAt: c.created_at,
+        parentId: c.parent_id,
+        likeCount: counts.get(c.id) ?? 0,
+        liked: mine.has(c.id),
         isOwn: c.author_id === context.userId,
         username: c.profiles?.username ?? "someone",
         displayName: c.profiles?.display_name ?? null,
@@ -1020,11 +1037,34 @@ export const listComments = createServerFn({ method: "POST" })
     };
   });
 
+export const toggleCommentLike = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { commentId: string }) => ({ commentId: z.string().uuid().parse(d.commentId) }))
+  .handler(async ({ data, context }) => {
+    const { data: existing } = await context.supabase
+      .from("comment_likes")
+      .select("id")
+      .eq("comment_id", data.commentId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (existing) {
+      await context.supabase.from("comment_likes").delete().eq("id", existing.id);
+      return { liked: false };
+    }
+    const { error } = await context.supabase
+      .from("comment_likes")
+      .insert({ comment_id: data.commentId, user_id: context.userId });
+    if (error) throw new Error(error.message);
+    return { liked: true };
+  });
+
+
 export const addComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { momentId: string; body: string }) => ({
+  .inputValidator((d: { momentId: string; body: string; parentId?: string | null }) => ({
     momentId: z.string().uuid().parse(d.momentId),
     body: z.string().trim().min(1).max(500).parse(d.body),
+    parentId: d.parentId ? z.string().uuid().parse(d.parentId) : null,
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
@@ -1059,7 +1099,12 @@ export const addComment = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase
       .from("comments")
-      .insert({ moment_id: data.momentId, author_id: context.userId, body: data.body });
+      .insert({
+        moment_id: data.momentId,
+        author_id: context.userId,
+        body: data.body,
+        parent_id: data.parentId,
+      });
     if (error) throw new Error(error.message);
     await track(context.userId, "comment_created");
     return { ok: true };
