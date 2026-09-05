@@ -524,23 +524,41 @@ export function AvatarStudio({
     stopStream();
   }
 
-  async function generate() {
-    setBusy(true);
-    setShowRender(true);
-    setFrame(null);
-    setIsFinal(false);
-    try {
-      const prompt = mode === "selfie" ? SELFIE_PROMPT : buildPrompt(traits);
-      await streamAvatar(prompt, mode === "selfie" ? selfie : null, (url, final) => {
-        setFrame(url);
-        if (final) setIsFinal(true);
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const generate = useCallback(
+    async (l: { pose: string; seed: number }, t: Traits, useSelfie: string | null) => {
+      const run = ++runRef.current;
+      setBusy(true);
+      setIsFinal(false);
+      try {
+        const prompt = useSelfie ? SELFIE_PROMPT : buildPrompt(t, l.pose, l.seed);
+        await streamAvatar(prompt, useSelfie, (url, final) => {
+          if (runRef.current !== run) return;
+          setFrame(url);
+          if (final) setIsFinal(true);
+        });
+      } catch (e) {
+        if (runRef.current === run) {
+          toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
+        }
+      } finally {
+        if (runRef.current === run) setBusy(false);
+      }
+    },
+    [],
+  );
+
+  // Every tap re-renders the real 3D avatar, so the user always sees the
+  // finished look — never a flat sketch. Debounced so rapid taps collapse
+  // into a single render.
+  useEffect(() => {
+    if (mode !== "build" || !traits.gender) return;
+    if (firstBuild.current) firstBuild.current = false;
+    const id = setTimeout(() => {
+      void generate(look, traits, null);
+    }, 700);
+    return () => clearTimeout(id);
+  }, [mode, traits, look, generate]);
+
 
   async function keep() {
     if (!frame) return;
