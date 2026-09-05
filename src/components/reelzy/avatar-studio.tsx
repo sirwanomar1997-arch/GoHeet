@@ -8,6 +8,7 @@ import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import {
   ACCESSORIES,
+  AVATAR_AGES,
   BROWS,
   EYE_COLORS,
   EYE_SHAPES,
@@ -47,8 +48,16 @@ const STYLE_BASE =
 
 function describe(t: Traits) {
   const female = t.gender === "Female";
+  const ageDescription = {
+    Teen: "teenage, around 15 to 17 years old, clearly youthful and age-appropriate",
+    "Young adult": "young adult, around 20 to 29 years old",
+    Adult: "adult, around 30 to 44 years old",
+    Mature: "mature adult, around 45 to 59 years old, with natural age detail",
+    "60+": "older adult, age 60 or above, with natural dignified age detail",
+  }[t.age];
   const bits = [
-    female ? "beautiful feminine young woman character" : "handsome masculine man character",
+    female ? "feminine female character" : "masculine male character",
+    ageDescription,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -241,8 +250,8 @@ function OutfitGrid({
   );
 }
 
-type StudioCategory = "Outfits" | "Face" | "Hair" | "Make-up" | "Accessories";
-const CATEGORIES: StudioCategory[] = ["Outfits", "Face", "Hair", "Make-up", "Accessories"];
+type StudioCategory = "Age" | "Outfits" | "Face" | "Hair" | "Make-up" | "Accessories";
+const CATEGORIES: StudioCategory[] = ["Age", "Outfits", "Face", "Hair", "Make-up", "Accessories"];
 
 /* ------------------------------------------------------------------ */
 /* Studio                                                              */
@@ -337,7 +346,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     setFrame(BASE_AVATARS[g]);
     finalFrameRef.current = BASE_AVATARS[g];
     setIsFinal(true);
-    setCategory("Outfits");
+    setCategory("Age");
     setOutfitCollection("Everyday");
   }
 
@@ -501,6 +510,34 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             </Button>
           ))}
         </nav>
+
+        {category === "Age" ? (
+          <section>
+            <div className="mb-4">
+              <h3 className="font-display text-lg font-bold">Choose your age</h3>
+              <p className="text-xs text-muted-foreground">Your avatar will reflect your stage of life.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {AVATAR_AGES.map((option) => (
+                <Button
+                  key={option.name}
+                  type="button"
+                  variant="ghost"
+                  aria-pressed={traits.age === option.name}
+                  onClick={() => update({ age: option.name })}
+                  className={`h-20 flex-col items-start rounded-xl border px-4 text-left ${
+                    traits.age === option.name
+                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                      : "border-border bg-muted/50"
+                  }`}
+                >
+                  <span className="font-display text-base font-bold">{option.name}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{option.range}</span>
+                </Button>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {category === "Outfits" ? (
           <section>
