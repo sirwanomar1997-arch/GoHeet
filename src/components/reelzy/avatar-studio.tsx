@@ -9,6 +9,7 @@ import { streamAvatar } from "@/lib/stream-avatar";
 import {
   ACCESSORIES,
   AVATAR_AGES,
+  BEARDS,
   BROWS,
   EYE_COLORS,
   EYE_SHAPES,
