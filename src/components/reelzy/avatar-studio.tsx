@@ -30,6 +30,7 @@ type Traits = {
   facialHair: string;
   expression: string;
   outfit: string;
+  outfitColor: string;
   headwear: string;
   background: string;
   extras: string[];
@@ -156,6 +157,32 @@ const POSES = [
   "shoulders angled softly",
 ];
 
+const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
+
+function randomTraits(): Traits {
+  return {
+    gender: pick(["Male", "Female", "Non-binary"]),
+    age: pick(AGE),
+    skin: pick(SKIN),
+    face: pick(FACE),
+    eyeColor: pick(EYE_COLOR),
+    eyeShape: pick(EYE_SHAPE),
+    brows: pick(BROWS),
+    nose: pick(NOSE),
+    lips: pick(LIPS),
+    ears: pick(EARS),
+    hair: pick(HAIR),
+    hairColor: pick(HAIR_COLOR),
+    facialHair: pick(FACIAL_HAIR),
+    expression: pick(EXPRESSION),
+    outfit: pick(OUTFIT),
+    outfitColor: pick(OUTFIT_COLOR),
+    headwear: pick(HEADWEAR),
+    background: pick(BACKGROUND),
+    extras: EXTRA.filter(() => Math.random() < 0.18).slice(0, 2),
+  };
+}
+
 function buildPrompt(t: Traits) {
   const bits = [
     `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
@@ -168,9 +195,19 @@ function buildPrompt(t: Traits) {
     `${t.ears.toLowerCase()} ears`,
     `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
     t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
-    t.extra ? t.extra.toLowerCase() : "",
+    `${t.expression.toLowerCase()} expression`,
+    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
+    t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
+    ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
-  return `${STYLE_BASE} The character is a ${bits.join(", ")}.`;
+  // A unique pose + variation seed keeps every single render one of a kind,
+  // even when two people pick identical options.
+  const pose = pick(POSES);
+  const seed = Math.floor(Math.random() * 1_000_000);
+  return (
+    `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
+    `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
+  );
 }
 
 const SELFIE_PROMPT =
@@ -191,6 +228,11 @@ const GROUPS = [
   ["Hair", HAIR, "hair"],
   ["Hair colour", HAIR_COLOR, "hairColor"],
   ["Facial hair", FACIAL_HAIR, "facialHair"],
+  ["Expression", EXPRESSION, "expression"],
+  ["Outfit", OUTFIT, "outfit"],
+  ["Outfit colour", OUTFIT_COLOR, "outfitColor"],
+  ["Headwear", HEADWEAR, "headwear"],
+  ["Background", BACKGROUND, "background"],
 ] as const;
 
 export function AvatarStudio({
