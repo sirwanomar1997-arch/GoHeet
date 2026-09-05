@@ -121,8 +121,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
       const t = vid.currentTime * 1000;
       if (t > last) watchedRef.current += t - last;
       last = t;
+      if (vid.duration) setProgress(Math.min(1, vid.currentTime / vid.duration));
       if (watchedRef.current >= 1500) flushView(false);
     };
+
     const onEnded = () => {
       reportedRef.current = false;
       watchedRef.current = Math.max(watchedRef.current, 3000);
