@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Search, Heart } from "lucide-react";
 import { useMe } from "@/lib/use-me";
 
 function ReelzIcon({ className }: { className?: string }) {
@@ -13,19 +13,6 @@ function ReelzIcon({ className }: { className?: string }) {
   );
 }
 
-function PaperPlaneIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path
-        d="M27.6 4.7 4.9 13.2c-1.4.5-1.4 2.4.1 2.8l8.5 2.4 2.4 8.5c.4 1.5 2.3 1.5 2.8.1l8.5-22.7c.1-.3-.2-.5-.5-.4L12.8 17.8"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 function ProfileIcon({ className }: { className?: string }) {
   return (
@@ -91,9 +78,6 @@ export function ReelzyNav() {
         >
           <span className="capture-face relative grid size-20 place-items-center overflow-hidden rounded-full">
             <span className="capture-shine absolute inset-x-3 top-1.5 h-7 rounded-full" />
-            <span className="relative grid size-12 place-items-center rounded-full border-[3px] border-primary-foreground/90">
-              <span className="size-[18px] rounded-full bg-primary-foreground/90 shadow-sm" />
-            </span>
           </span>
         </Link>
 
