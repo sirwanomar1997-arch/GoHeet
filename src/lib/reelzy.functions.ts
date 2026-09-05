@@ -857,10 +857,13 @@ export const getFeed = createServerFn({ method: "POST" })
       .select(MOMENT_SELECT)
       .eq("status", "published")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(data.sort === "new" ? limit : 24);
 
-    if (data.cursor) query = query.lt("created_at", data.cursor);
+    if (data.sort === "views") query = query.order("view_count", { ascending: false });
+    else if (data.sort === "old") query = query.order("created_at", { ascending: true });
+    else query = query.order("created_at", { ascending: false });
+
+    if (data.cursor && data.sort === "new") query = query.lt("created_at", data.cursor);
 
     if (data.scope === "following") {
       const { data: follows } = await context.supabase
