@@ -624,8 +624,7 @@ function CameraPage() {
                 <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
               ) : (music?.tracks.length ?? 0) === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                  Reelzy's licensed catalog is awaiting provider approval. Tracks will appear here
-                  only after their usage rights are verified.
+                  No tracks available right now. Try again in a moment.
                 </p>
               ) : (
                 visibleTracks.map((t) => (
@@ -635,7 +634,11 @@ function CameraPage() {
                     </Button>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{t.title}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{t.artist}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {t.artist}
+                        {t.mood ? ` · ${t.mood}` : ""}
+                        {t.durationMs ? ` · ${Math.floor(t.durationMs / 60000)}:${String(Math.round((t.durationMs % 60000) / 1000)).padStart(2, "0")}` : ""}
+                      </span>
                     </span>
                     <Button
                       variant={track?.id === t.id ? "default" : "outline"}
