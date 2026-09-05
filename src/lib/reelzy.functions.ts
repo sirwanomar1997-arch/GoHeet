@@ -71,9 +71,9 @@ export const signInWithIdentifier = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!profile) throw new Error("Invalid login.");
       const adm = await admin();
-      const { data: user } = await adm.auth.admin.getUserById(profile.id);
-      if (!user?.email) throw new Error("Invalid login.");
-      email = user.email;
+      const { data: userData } = await adm.auth.admin.getUserById(profile.id);
+      if (!userData?.user?.email) throw new Error("Invalid login.");
+      email = userData.user.email;
     }
     const sb = serverPublicClient();
     const { data: res, error } = await sb.auth.signInWithPassword({
