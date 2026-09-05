@@ -702,10 +702,10 @@ export function AvatarStudio({
   return (
     <div className="mx-auto w-full max-w-sm">
       <div className="flex gap-2">
-        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); }} className={chip(mode === "selfie")}>
+        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "selfie")}>
           Snap a selfie
         </button>
-        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); }} className={chip(mode === "build")}>
+        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "build")}>
           Build it instead
         </button>
       </div>
