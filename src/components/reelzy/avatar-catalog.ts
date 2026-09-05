@@ -22,6 +22,15 @@ export type Cell = { name: string; index: number };
 export type Swatch = { name: string; hex: string };
 export type OutfitCollection = "Everyday" | "Smart" | "World";
 export type OutfitOption = Cell & { collection: OutfitCollection; sheet: Sheet };
+export type AvatarAge = "Teen" | "Young adult" | "Adult" | "Mature" | "60+";
+
+export const AVATAR_AGES: { name: AvatarAge; range: string }[] = [
+  { name: "Teen", range: "13–17" },
+  { name: "Young adult", range: "18–29" },
+  { name: "Adult", range: "30–44" },
+  { name: "Mature", range: "45–59" },
+  { name: "60+", range: "60 and up" },
+];
 
 export const BASE_AVATARS = { Male: baseMale, Female: baseFemale } as const;
 
@@ -389,6 +398,7 @@ export const ACCESSORIES = cells([
 
 export type Traits = {
   gender: "Male" | "Female";
+  age: AvatarAge;
   skin: string;
   face: string;
   eyeShape: string;
@@ -408,6 +418,7 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
   const female = gender === "Female";
   return {
     gender,
+    age: "Young adult",
     skin: "Light olive",
     face: female ? "Heart" : "Square",
     eyeShape: female ? "Wide doe" : "Almond",
