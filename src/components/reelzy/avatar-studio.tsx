@@ -708,21 +708,22 @@ export function AvatarStudio({
                         {g.label}
                         {g.kind === "multi" ? " — pick as many as you like" : ""}
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
                         {g.opts.map((o) =>
                           g.kind === "single" ? (
-                            <button
+                            <Tile
                               key={o}
-                              type="button"
+                              group={g.key as IconKey}
+                              value={o}
+                              active={traits[g.key] === o}
                               onClick={() => setTraits((t) => ({ ...t, [g.key]: o }))}
-                              className={chip(traits[g.key] === o)}
-                            >
-                              {o}
-                            </button>
+                            />
                           ) : (
-                            <button
+                            <Tile
                               key={o}
-                              type="button"
+                              group={g.key as IconKey}
+                              value={o}
+                              active={traits[g.key].includes(o)}
                               onClick={() =>
                                 setTraits((t) => {
                                   const cur = t[g.key];
@@ -734,13 +735,11 @@ export function AvatarStudio({
                                   };
                                 })
                               }
-                              className={chip(traits[g.key].includes(o))}
-                            >
-                              {o}
-                            </button>
+                            />
                           ),
                         )}
                       </div>
+
                     </div>
                   ))}
                   {s.id === "wardrobe" || s.id === "accessories" ? (
