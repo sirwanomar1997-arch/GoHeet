@@ -149,19 +149,18 @@ function ProfilePage() {
             </Link>
           ) : null}
 
-          {/* nickname — the real display name, right under the avatar button */}
-          <h2 className="mt-3 text-center font-display text-xl font-bold tracking-tight text-foreground">
+          {/* nickname + username — compact, tight under the avatar button */}
+          <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground">
             {p.displayName || p.username}
           </h2>
 
-          {/* username sits under the nickname */}
-          <p className="data-figure mt-1 text-center text-xs font-normal tracking-normal text-muted-foreground">
+          <p className="data-figure mt-0.5 text-center text-[11px] font-normal tracking-normal text-muted-foreground">
             @{p.username}
           </p>
 
           {/* bio lives under the username, only when the user adds one */}
           {p.bio ? (
-            <p className="mt-2 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
+            <p className="mt-5 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
               {p.bio}
             </p>
           ) : null}
@@ -198,30 +197,20 @@ function ProfilePage() {
             </div>
           ) : null}
 
-          {/* stat band — a premium segmented strip, brand accent on REELZ */}
+          {/* stat band — a premium segmented strip */}
           <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
-              ["Reelz", formatCount(p.momentCount), true],
-              ["Followers", formatCount(p.followerCount), false],
-              ["Following", formatCount(p.followingCount), false],
-              ["Views", formatCount(p.totalViews), false],
-              ["Likes", formatCount(p.totalLikes), false],
-            ].map(([k, v, accent]) => (
+              ["Reelz", formatCount(p.momentCount)],
+              ["Followers", formatCount(p.followerCount)],
+              ["Following", formatCount(p.followingCount)],
+              ["Views", formatCount(p.totalViews)],
+              ["Likes", formatCount(p.totalLikes)],
+            ].map(([k, v]) => (
               <div
                 key={k as string}
                 className="relative flex flex-col items-center gap-1 px-1 py-3.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
               >
-                {accent ? (
-                  <span
-                    aria-hidden
-                    className="ember-fill absolute inset-x-0 top-0 h-[3px]"
-                  />
-                ) : null}
-                <p
-                  className={`data-figure text-lg leading-none tabular-nums ${
-                    accent ? "text-primary" : "text-foreground"
-                  }`}
-                >
+                <p className="data-figure text-lg leading-none tabular-nums text-foreground">
                   {v}
                 </p>
                 <p className="data-figure text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
