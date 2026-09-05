@@ -1,0 +1,20 @@
+INSERT INTO public.music_tracks
+  (title, artist, audio_path, duration_ms, mood, genres, active, provider, provider_track_id,
+   license_id, license_scope, attribution_text, status, license_starts_at)
+VALUES
+  ('Beach Bum','Kevin MacLeod','free/beach-bum.mp3',52344,'Sunny',ARRAY['Reggae','Chill'],true,'incompetech','beach-bum','CC-BY-4.0','worldwide-ugc','Beach Bum by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Blue Ska','Kevin MacLeod','free/blue-ska.mp3',146260,'Playful',ARRAY['Ska','Upbeat'],true,'incompetech','blue-ska','CC-BY-4.0','worldwide-ugc','Blue Ska by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Bossa Antigua','Kevin MacLeod','free/bossa-antigua.mp3',283350,'Smooth',ARRAY['Bossa Nova','Jazz'],true,'incompetech','bossa-antigua','CC-BY-4.0','worldwide-ugc','Bossa Antigua by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Carefree','Kevin MacLeod','free/carefree.mp3',205140,'Happy',ARRAY['Acoustic','Folk'],true,'incompetech','carefree','CC-BY-4.0','worldwide-ugc','Carefree by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Cheery Monday','Kevin MacLeod','free/cheery-monday.mp3',80222,'Bright',ARRAY['Pop','Upbeat'],true,'incompetech','cheery-monday','CC-BY-4.0','worldwide-ugc','Cheery Monday by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Deliberate Thought','Kevin MacLeod','free/deliberate-thought.mp3',177456,'Calm',ARRAY['Piano','Ambient'],true,'incompetech','deliberate-thought','CC-BY-4.0','worldwide-ugc','Deliberate Thought by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Dreamer','Kevin MacLeod','free/dreamer.mp3',204069,'Dreamy',ARRAY['Chill','Electronic'],true,'incompetech','dreamer','CC-BY-4.0','worldwide-ugc','Dreamer by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Feelin Good','Kevin MacLeod','free/feelin-good.mp3',225411,'Feel-good',ARRAY['Funk','Groove'],true,'incompetech','feelin-good','CC-BY-4.0','worldwide-ugc','Feelin Good by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Inspired','Kevin MacLeod','free/inspired.mp3',286067,'Uplifting',ARRAY['Cinematic','Piano'],true,'incompetech','inspired','CC-BY-4.0','worldwide-ugc','Inspired by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Life of Riley','Kevin MacLeod','free/life-of-riley.mp3',235363,'Sunny',ARRAY['Indie','Upbeat'],true,'incompetech','life-of-riley','CC-BY-4.0','worldwide-ugc','Life of Riley by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Local Forecast - Elevator','Kevin MacLeod','free/local-forecast-elevator.mp3',189205,'Quirky',ARRAY['Lounge','Retro'],true,'incompetech','local-forecast-elevator','CC-BY-4.0','worldwide-ugc','Local Forecast - Elevator by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Monkeys Spinning Monkeys','Kevin MacLeod','free/monkeys-spinning-monkeys.mp3',125074,'Funny',ARRAY['Comedy','Playful'],true,'incompetech','monkeys-spinning-monkeys','CC-BY-4.0','worldwide-ugc','Monkeys Spinning Monkeys by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Odyssey','Kevin MacLeod','free/odyssey.mp3',306077,'Epic',ARRAY['Cinematic','Orchestral'],true,'incompetech','odyssey','CC-BY-4.0','worldwide-ugc','Odyssey by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Sunday Dub','Kevin MacLeod','free/sunday-dub.mp3',209476,'Laid-back',ARRAY['Dub','Reggae'],true,'incompetech','sunday-dub','CC-BY-4.0','worldwide-ugc','Sunday Dub by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now()),
+  ('Wallpaper','Kevin MacLeod','free/wallpaper.mp3',220056,'Chill',ARRAY['Electronic','Chill'],true,'incompetech','wallpaper','CC-BY-4.0','worldwide-ugc','Wallpaper by Kevin MacLeod — Creative Commons Attribution 4.0','licensed', now())
+ON CONFLICT (provider, provider_track_id) WHERE provider_track_id IS NOT NULL DO NOTHING;
