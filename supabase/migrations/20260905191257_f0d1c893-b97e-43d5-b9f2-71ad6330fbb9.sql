@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.tg_message_bump() FROM PUBLIC, anon, authenticated;
