@@ -80,9 +80,49 @@ function describe(t: Traits) {
 const buildPrompt = (t: Traits, seed: number) =>
   `${STYLE_BASE} The character is a ${describe(t)}. Character seed #${seed}.`;
 
-const buildEditPrompt = (t: Traits) =>
-  `${STYLE_BASE} Keep the exact same character identity from the reference image and re-render them as: ` +
-  `${describe(t)}. Change only what differs from the reference; everything else stays identical.`;
+/** Human wording for each trait that just changed, so the render can't ignore it. */
+function changeLabels(prev: Traits, next: Traits): string[] {
+  const out: string[] = [];
+  if (prev.age !== next.age) out.push(`age is now ${next.age.toLowerCase()}`);
+  if (prev.skin !== next.skin) out.push(`skin tone is now ${next.skin.toLowerCase()}`);
+  if (prev.face !== next.face) out.push(`face shape is now ${next.face.toLowerCase()}`);
+  if (prev.eyeShape !== next.eyeShape) out.push(`eye shape is now ${next.eyeShape.toLowerCase()}`);
+  if (prev.eyeColor !== next.eyeColor) out.push(`eye colour is now ${next.eyeColor.toLowerCase()}`);
+  if (prev.brows !== next.brows) out.push(`eyebrows are now ${next.brows.toLowerCase()}`);
+  if (prev.nose !== next.nose) out.push(`nose is now ${next.nose.toLowerCase()}`);
+  if (prev.mouth !== next.mouth) out.push(`mouth is now ${next.mouth.toLowerCase()}`);
+  if (prev.beard !== next.beard)
+    out.push(
+      next.beard === "Clean shaven"
+        ? "completely clean shaven, absolutely no facial hair"
+        : `facial hair is now a ${next.beard.toLowerCase()}`,
+    );
+  if (prev.hair !== next.hair)
+    out.push(next.hair === "Bald" ? "completely bald, no hair at all" : `hairstyle is now ${next.hair.toLowerCase()}`);
+  if (prev.hairColor !== next.hairColor) out.push(`hair colour is now ${next.hairColor.toLowerCase()}`);
+  if (prev.makeup !== next.makeup)
+    out.push(next.makeup === "None" ? "no make-up at all" : `make-up is now ${next.makeup.toLowerCase()}`);
+  if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit.toLowerCase()}`);
+  if (prev.outfitColor !== next.outfitColor) out.push(`clothing colour is now ${next.outfitColor.toLowerCase()}`);
+  if (prev.accessories.join("|") !== next.accessories.join("|")) {
+    out.push(
+      next.accessories.length
+        ? `wearing exactly these accessories and no others: ${next.accessories.map((a) => a.toLowerCase()).join(", ")}`
+        : "no accessories at all, remove every accessory",
+    );
+  }
+  return out;
+}
+
+const buildEditPrompt = (t: Traits, changes: string[]) =>
+  `${STYLE_BASE} Keep the exact same character identity from the reference image. ` +
+  (changes.length
+    ? `APPLY THESE CHANGES AND MAKE THEM CLEARLY VISIBLE: ${changes.join("; ")}. ` +
+      "These changes are mandatory and must be obvious in the result. "
+    : "") +
+  `The finished character is: ${describe(t)}. ` +
+  "Everything not listed above stays identical to the reference.";
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
@@ -282,6 +322,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const baseRef = useRef<string | null>(null); // last finished render, used to keep identity
   const finalFrameRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const renderedRef = useRef<Traits | null>(null); // traits of the last render request
+
 
   const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
   const mouths = useMemo(() => mouthsFor(traits.gender), [traits.gender]);
@@ -317,8 +359,10 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         const base = fresh ? null : baseRef.current;
-        void generate(base ? buildEditPrompt(next) : buildPrompt(next, seed), base);
-      }, fresh ? 0 : 1100);
+        const changes = renderedRef.current ? changeLabels(renderedRef.current, next) : [];
+        renderedRef.current = next;
+        void generate(base ? buildEditPrompt(next, changes) : buildPrompt(next, seed), base);
+      }, fresh ? 0 : 900);
     },
     [generate, seed],
   );
@@ -328,6 +372,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   function update(patch: Partial<Traits>) {
     setTraits((t) => {
       const next = { ...t, ...patch };
+      const unchanged = (Object.keys(patch) as (keyof Traits)[]).every((k) => t[k] === next[k]);
+      if (unchanged) return t;
       queueRender(next);
       return next;
     });
@@ -343,9 +389,11 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     });
   }
 
+
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
     baseRef.current = null;
+    renderedRef.current = null;
     setGender(g);
     setTraits(next);
     setFrame(BASE_AVATARS[g]);
@@ -419,6 +467,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               setSelfieOpen(false);
               setGender("Male");
               baseRef.current = null;
+              renderedRef.current = null;
               setFrame(null);
               void generate(SELFIE_PROMPT, url);
             }}
@@ -652,6 +701,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           onShot={(url) => {
             setSelfieOpen(false);
             baseRef.current = null;
+            renderedRef.current = null;
             setFrame(null);
             void generate(SELFIE_PROMPT, url);
           }}
