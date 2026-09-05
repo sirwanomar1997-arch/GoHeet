@@ -310,8 +310,11 @@ export type Database = {
           location_label: string | null
           media_path: string
           moderation_state: string
+          music_track_id: string | null
+          overlay: Json | null
           save_count: number
           status: string
+          style_filter: string | null
           thumbnail_path: string | null
           view_count: number
         }
@@ -330,8 +333,11 @@ export type Database = {
           location_label?: string | null
           media_path: string
           moderation_state?: string
+          music_track_id?: string | null
+          overlay?: Json | null
           save_count?: number
           status?: string
+          style_filter?: string | null
           thumbnail_path?: string | null
           view_count?: number
         }
@@ -350,8 +356,11 @@ export type Database = {
           location_label?: string | null
           media_path?: string
           moderation_state?: string
+          music_track_id?: string | null
+          overlay?: Json | null
           save_count?: number
           status?: string
+          style_filter?: string | null
           thumbnail_path?: string | null
           view_count?: number
         }
@@ -370,7 +379,47 @@ export type Database = {
             referencedRelation: "capture_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "moments_music_track_id_fkey"
+            columns: ["music_track_id"]
+            isOneToOne: false
+            referencedRelation: "music_tracks"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      music_tracks: {
+        Row: {
+          active: boolean
+          artist: string
+          audio_path: string
+          created_at: string
+          duration_ms: number | null
+          id: string
+          mood: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          artist: string
+          audio_path: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          mood?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          artist?: string
+          audio_path?: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          mood?: string | null
+          title?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
