@@ -763,7 +763,6 @@ function CameraPage() {
             className={`size-20 rounded-full bg-[image:var(--gradient-ember)] transition-transform active:scale-95 ${
               recording && !paused ? "rec-live" : ""
             }`}
-            aria-hidden="true"
           />
 
           {recording ? (
