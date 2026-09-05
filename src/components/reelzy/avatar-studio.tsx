@@ -322,6 +322,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const baseRef = useRef<string | null>(null); // last finished render, used to keep identity
   const finalFrameRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const renderedRef = useRef<Traits | null>(null); // traits of the last render request
+
 
   const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
   const mouths = useMemo(() => mouthsFor(traits.gender), [traits.gender]);
