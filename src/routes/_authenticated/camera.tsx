@@ -303,8 +303,9 @@ function CameraPage() {
     if (!rec) return;
     if (paused) {
       startedAtRef.current = Date.now();
-      rec.resume();
       playPauseBlip(true);
+      silenceMicFor(500);
+      rec.resume();
       setPaused(false);
     } else {
       accumulatedRef.current += Date.now() - startedAtRef.current;
