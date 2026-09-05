@@ -8,10 +8,22 @@ import hairFemaleSheet from "@/assets/av/hair-female-sheet.png";
 import makeupSheet from "@/assets/av/makeup-sheet.png";
 import outfitSheet from "@/assets/av/outfit-sheet.png";
 import accessorySheet from "@/assets/av/accessory-sheet.png";
+import outfitMaleCasualSheet from "@/assets/av/outfit-male-casual.png";
+import outfitMaleSmartSheet from "@/assets/av/outfit-male-smart.png";
+import outfitMaleWorldSheet from "@/assets/av/outfit-male-world.png";
+import outfitFemaleCasualSheet from "@/assets/av/outfit-female-casual.png";
+import outfitFemaleSmartSheet from "@/assets/av/outfit-female-smart.png";
+import outfitFemaleWorldSheet from "@/assets/av/outfit-female-world.png";
+import baseMale from "@/assets/av/base-male.jpg";
+import baseFemale from "@/assets/av/base-female.jpg";
 
 export type Sheet = { src: string; cols: number; rows: number };
 export type Cell = { name: string; index: number };
 export type Swatch = { name: string; hex: string };
+export type OutfitCollection = "Everyday" | "Smart" | "World";
+export type OutfitOption = Cell & { collection: OutfitCollection; sheet: Sheet };
+
+export const BASE_AVATARS = { Male: baseMale, Female: baseFemale } as const;
 
 export const SHEETS = {
   face: { src: faceSheet, cols: 5, rows: 2 },
@@ -24,6 +36,12 @@ export const SHEETS = {
   makeup: { src: makeupSheet, cols: 4, rows: 3 },
   outfit: { src: outfitSheet, cols: 5, rows: 4 },
   accessory: { src: accessorySheet, cols: 6, rows: 5 },
+  outfitMaleCasual: { src: outfitMaleCasualSheet, cols: 5, rows: 4 },
+  outfitMaleSmart: { src: outfitMaleSmartSheet, cols: 5, rows: 4 },
+  outfitMaleWorld: { src: outfitMaleWorldSheet, cols: 5, rows: 4 },
+  outfitFemaleCasual: { src: outfitFemaleCasualSheet, cols: 5, rows: 4 },
+  outfitFemaleSmart: { src: outfitFemaleSmartSheet, cols: 5, rows: 4 },
+  outfitFemaleWorld: { src: outfitFemaleWorldSheet, cols: 5, rows: 4 },
 } satisfies Record<string, Sheet>;
 
 const cells = (names: readonly string[]): Cell[] => names.map((name, index) => ({ name, index }));
@@ -275,6 +293,65 @@ export const OUTFITS = cells([
   "Kimono top",
 ]);
 
+const outfitCollection = (
+  names: readonly string[],
+  collection: OutfitCollection,
+  sheet: Sheet,
+): OutfitOption[] => names.map((name, index) => ({ name, index, collection, sheet }));
+
+const MALE_EVERYDAY = [
+  "White linen shirt", "Black tee", "Cream knit", "Denim jacket", "Olive overshirt",
+  "Charcoal hoodie", "Striped polo", "Varsity jacket", "Flannel shirt", "Suede jacket",
+  "Bomber jacket", "Soft cardigan", "Henley shirt", "Rugby shirt", "Utility vest",
+  "Light windbreaker", "Resort shirt", "Corduroy jacket", "Athletic tank", "Relaxed sweatshirt",
+] as const;
+const MALE_SMART = [
+  "Navy blazer", "Charcoal suit", "Black tuxedo", "Camel blazer", "Tailored waistcoat",
+  "Oxford shirt", "Turtleneck blazer", "Double-breasted suit", "Velvet dinner jacket", "Ceremonial jacket",
+  "Mandarin jacket", "Pinstripe suit", "Burgundy blazer", "Linen summer suit", "Formal black shirt",
+  "Checked sport coat", "Luxury trench", "Academic gown", "White dinner jacket", "Three-piece suit",
+] as const;
+const MALE_WORLD = [
+  "Modern tracksuit", "Basketball jersey", "Football jersey", "Running jacket", "Ski jacket",
+  "Puffer coat", "Rain shell", "Sailing jacket", "Embroidered kaftan", "Kurdish traditional jacket",
+  "Dashiki", "Sherwani", "Changshan", "Thobe", "Japanese haori",
+  "Nordic knit", "Tropical resort shirt", "Festival jacket", "Western shirt", "Shearling coat",
+] as const;
+const FEMALE_EVERYDAY = [
+  "Dusty rose knit", "White linen blouse", "Black fitted tee", "Denim jacket", "Cream cardigan",
+  "Cropped hoodie", "Striped top", "Varsity jacket", "Soft flannel", "Suede jacket",
+  "Bomber jacket", "Ribbed turtleneck", "Wrap top", "Relaxed sweatshirt", "Utility vest",
+  "Light windbreaker", "Floral blouse", "Corduroy jacket", "Athletic top", "Off-shoulder knit",
+] as const;
+const FEMALE_SMART = [
+  "Ivory silk blouse", "Navy blazer", "Black evening dress", "Camel blazer", "Tailored waistcoat",
+  "Oxford shirt", "Turtleneck blazer", "Double-breasted suit", "Velvet evening jacket", "Cocktail dress",
+  "Mandarin jacket", "Pinstripe suit", "Burgundy blazer", "Linen summer suit", "Formal black blouse",
+  "Checked sport coat", "Luxury trench", "Graduation gown", "Pearl formal jacket", "Elegant pantsuit",
+] as const;
+const FEMALE_WORLD = [
+  "Modern tracksuit", "Basketball jersey", "Football jersey", "Running jacket", "Ski jacket",
+  "Puffer coat", "Rain shell", "Sailing jacket", "Embroidered kaftan", "Kurdish traditional dress",
+  "Ankara top", "Sari drape", "Qipao top", "Abaya", "Japanese kimono",
+  "Nordic knit", "Tropical resort blouse", "Festival jacket", "Western shirt", "Shearling coat",
+] as const;
+
+export const OUTFITS_MALE: OutfitOption[] = [
+  ...outfitCollection(MALE_EVERYDAY, "Everyday", SHEETS.outfitMaleCasual),
+  ...outfitCollection(MALE_SMART, "Smart", SHEETS.outfitMaleSmart),
+  ...outfitCollection(MALE_WORLD, "World", SHEETS.outfitMaleWorld),
+];
+
+export const OUTFITS_FEMALE: OutfitOption[] = [
+  ...outfitCollection(FEMALE_EVERYDAY, "Everyday", SHEETS.outfitFemaleCasual),
+  ...outfitCollection(FEMALE_SMART, "Smart", SHEETS.outfitFemaleSmart),
+  ...outfitCollection(FEMALE_WORLD, "World", SHEETS.outfitFemaleWorld),
+];
+
+export function outfitsFor(gender: "Male" | "Female") {
+  return gender === "Female" ? OUTFITS_FEMALE : OUTFITS_MALE;
+}
+
 export const ACCESSORIES = cells([
   "Gold hoop earrings",
   "Pearl stud earrings",
@@ -341,7 +418,7 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     hair: female ? "Long waves" : "Swept back waves",
     hairColor: female ? "Chestnut brown" : "Salt and pepper",
     makeup: female ? "Soft nude" : "None",
-    outfit: female ? "Knit sweater" : "Linen shirt",
+    outfit: female ? "Dusty rose knit" : "White linen shirt",
     outfitColor: female ? "Dusty pink" : "White",
     accessories: [],
   };
