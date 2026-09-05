@@ -266,6 +266,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
 
   const runRef = useRef(0);
   const baseRef = useRef<string | null>(null); // last finished render, used to keep identity
+  const finalFrameRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
@@ -283,10 +284,15 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
         if (final) {
           setIsFinal(true);
           baseRef.current = url;
+          finalFrameRef.current = url;
         }
       });
     } catch (e) {
-      if (runRef.current === run) toast.error(e instanceof Error ? e.message : "Couldn't render your avatar.");
+      if (runRef.current === run) {
+        if (finalFrameRef.current) setFrame(finalFrameRef.current);
+        setIsFinal(true);
+        toast.error(e instanceof Error ? e.message : "Couldn't render your avatar.");
+      }
     } finally {
       if (runRef.current === run) setBusy(false);
     }
@@ -298,7 +304,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       timerRef.current = setTimeout(() => {
         const base = fresh ? null : baseRef.current;
         void generate(base ? buildEditPrompt(next) : buildPrompt(next, seed), base);
-      }, fresh ? 0 : 650);
+      }, fresh ? 0 : 1100);
     },
     [generate, seed],
   );
@@ -329,6 +335,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     setGender(g);
     setTraits(next);
     setFrame(BASE_AVATARS[g]);
+    finalFrameRef.current = BASE_AVATARS[g];
     setIsFinal(true);
     setCategory("Outfits");
     setOutfitCollection("Everyday");
@@ -439,6 +446,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               runRef.current++;
               setGender(null);
               setFrame(null);
+              finalFrameRef.current = null;
               setBusy(false);
             }} className="rounded-full bg-background/30 text-foreground backdrop-blur" aria-label="Back">
               <ArrowLeft />

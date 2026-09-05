@@ -30,7 +30,11 @@ export async function streamAvatar(
     body: JSON.stringify({ prompt, selfie }),
   });
   if (!res.ok || !res.body) {
-    throw new Error(`Avatar generation failed: ${res.status} ${await res.text().catch(() => "")}`);
+    const message = await res.text().catch(() => "");
+    if (res.status === 429) {
+      throw new Error(message || "You’ve reached the hourly avatar limit. Try again in a little while.");
+    }
+    throw new Error(message || `Avatar generation failed (${res.status})`);
   }
 
   let sawAnyEvent = false;

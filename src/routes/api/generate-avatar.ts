@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-const MAX_GENERATIONS_PER_HOUR = 12;
+// A detailed avatar can take many quick visual choices in one studio session.
+const MAX_GENERATIONS_PER_HOUR = 60;
 
 /**
  * Streams a Reelzy 3D-style avatar portrait from the Lovable AI Gateway.
