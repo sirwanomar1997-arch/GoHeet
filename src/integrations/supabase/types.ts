@@ -814,6 +814,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_following: {
+        Args: { _follower: string; _following: string }
+        Returns: boolean
+      }
       username_taken: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
