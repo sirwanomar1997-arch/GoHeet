@@ -197,30 +197,20 @@ function ProfilePage() {
             </div>
           ) : null}
 
-          {/* stat band — a premium segmented strip, brand accent on REELZ */}
+          {/* stat band — a premium segmented strip */}
           <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
-              ["Reelz", formatCount(p.momentCount), true],
-              ["Followers", formatCount(p.followerCount), false],
-              ["Following", formatCount(p.followingCount), false],
-              ["Views", formatCount(p.totalViews), false],
-              ["Likes", formatCount(p.totalLikes), false],
-            ].map(([k, v, accent]) => (
+              ["Reelz", formatCount(p.momentCount)],
+              ["Followers", formatCount(p.followerCount)],
+              ["Following", formatCount(p.followingCount)],
+              ["Views", formatCount(p.totalViews)],
+              ["Likes", formatCount(p.totalLikes)],
+            ].map(([k, v]) => (
               <div
                 key={k as string}
                 className="relative flex flex-col items-center gap-1 px-1 py-3.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
               >
-                {accent ? (
-                  <span
-                    aria-hidden
-                    className="ember-fill absolute inset-x-0 top-0 h-[3px]"
-                  />
-                ) : null}
-                <p
-                  className={`data-figure text-lg leading-none tabular-nums ${
-                    accent ? "text-primary" : "text-foreground"
-                  }`}
-                >
+                <p className="data-figure text-lg leading-none tabular-nums text-foreground">
                   {v}
                 </p>
                 <p className="data-figure text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
