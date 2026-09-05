@@ -1312,3 +1312,298 @@ export const listMyComments = createServerFn({ method: "POST" })
       .limit(50);
     return { comments: data ?? [] };
   });
+
+/* ------------------------------------------------------------------ */
+/* Direct messages — requests first when you aren't mutual follows     */
+/* ------------------------------------------------------------------ */
+
+const PENDING_MESSAGE_LIMIT = 3;
+
+function pair(a: string, b: string) {
+  return a < b ? { user_a: a, user_b: b } : { user_a: b, user_b: a };
+}
+
+async function areMutualFollows(a: string, b: string) {
+  const sb = await admin();
+  const { data } = await sb
+    .from("follows")
+    .select("follower_id, following_id")
+    .or(
+      `and(follower_id.eq.${a},following_id.eq.${b}),and(follower_id.eq.${b},following_id.eq.${a})`,
+    );
+  const rows = data ?? [];
+  return (
+    rows.some((r) => r.follower_id === a && r.following_id === b) &&
+    rows.some((r) => r.follower_id === b && r.following_id === a)
+  );
+}
+
+async function blockedBetween(a: string, b: string) {
+  const sb = await admin();
+  const { data } = await sb
+    .from("blocks")
+    .select("id")
+    .or(
+      `and(blocker_id.eq.${a},blocked_id.eq.${b}),and(blocker_id.eq.${b},blocked_id.eq.${a})`,
+    )
+    .limit(1);
+  return (data ?? []).length > 0;
+}
+
+/** Opens (or reuses) a conversation and sends the first/next message. */
+export const sendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { toUserId?: string; conversationId?: string; body: string }) => ({
+    toUserId: d.toUserId ? z.string().uuid().parse(d.toUserId) : undefined,
+    conversationId: d.conversationId ? z.string().uuid().parse(d.conversationId) : undefined,
+    body: z.string().trim().min(1, "Write something first.").max(2000).parse(d.body),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+
+    let convo: {
+      id: string;
+      user_a: string;
+      user_b: string;
+      requester_id: string;
+      status: string;
+    } | null = null;
+
+    if (data.conversationId) {
+      const { data: row } = await sb
+        .from("conversations")
+        .select("id, user_a, user_b, requester_id, status")
+        .eq("id", data.conversationId)
+        .maybeSingle();
+      if (!row || (row.user_a !== me && row.user_b !== me)) throw new Error("Chat not found.");
+      convo = row;
+    } else {
+      if (!data.toUserId) throw new Error("Pick someone to message.");
+      if (data.toUserId === me) throw new Error("You can't message yourself.");
+      const { user_a, user_b } = pair(me, data.toUserId);
+      const { data: row } = await sb
+        .from("conversations")
+        .select("id, user_a, user_b, requester_id, status")
+        .eq("user_a", user_a)
+        .eq("user_b", user_b)
+        .maybeSingle();
+      convo = row ?? null;
+    }
+
+    const other = convo
+      ? convo.user_a === me
+        ? convo.user_b
+        : convo.user_a
+      : (data.toUserId as string);
+
+    if (await blockedBetween(me, other)) throw new Error("You can't message this person.");
+
+    if (!convo) {
+      const { data: target } = await sb
+        .from("profiles")
+        .select("allow_messages, banned_at, deleted_at")
+        .eq("id", other)
+        .maybeSingle();
+      if (!target || target.banned_at || target.deleted_at) throw new Error("Person not found.");
+      const mutual = await areMutualFollows(me, other);
+      const setting = (target as { allow_messages?: string }).allow_messages ?? "everyone";
+      if (setting === "nobody") throw new Error("This person isn't accepting messages.");
+      if (setting === "followers") {
+        const { data: follows } = await sb
+          .from("follows")
+          .select("id")
+          .eq("follower_id", other)
+          .eq("following_id", me)
+          .maybeSingle();
+        if (!follows) throw new Error("This person only accepts messages from people they follow.");
+      }
+      const { user_a, user_b } = pair(me, other);
+      const { data: created, error } = await sb
+        .from("conversations")
+        .insert({
+          user_a,
+          user_b,
+          requester_id: me,
+          status: mutual ? "accepted" : "pending",
+        })
+        .select("id, user_a, user_b, requester_id, status")
+        .single();
+      if (error || !created) throw new Error(error?.message ?? "Couldn't start the chat.");
+      convo = created;
+    }
+
+    if (convo.status === "rejected") throw new Error("This person declined your message request.");
+
+    if (convo.status === "pending") {
+      if (convo.requester_id !== me) {
+        throw new Error("Accept the request before replying.");
+      }
+      const { count } = await sb
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", convo.id)
+        .eq("sender_id", me);
+      if ((count ?? 0) >= PENDING_MESSAGE_LIMIT) {
+        throw new Error("Wait until your request is accepted before sending more.");
+      }
+    }
+
+    const { data: msg, error: msgErr } = await sb
+      .from("messages")
+      .insert({ conversation_id: convo.id, sender_id: me, body: data.body })
+      .select("id, body, created_at, sender_id")
+      .single();
+    if (msgErr) throw new Error(msgErr.message);
+
+    await track(me, "message_sent", { pending: convo.status === "pending" });
+    return { conversationId: convo.id, status: convo.status, message: msg };
+  });
+
+export const listConversations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: rows } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b, requester_id, status, last_message_at")
+      .or(`user_a.eq.${me},user_b.eq.${me}`)
+      .order("last_message_at", { ascending: false })
+      .limit(100);
+
+    const list = rows ?? [];
+    if (list.length === 0) return { chats: [], requests: [] };
+
+    const otherIds = list.map((c) => (c.user_a === me ? c.user_b : c.user_a));
+    const { data: people } = await sb
+      .from("profiles")
+      .select("id, username, display_name, avatar_url")
+      .in("id", otherIds);
+    const avatars = await signAvatars((people ?? []).map((p) => p.avatar_url));
+    const byId = new Map((people ?? []).map((p) => [p.id, p]));
+
+    const { data: lastMsgs } = await sb
+      .from("messages")
+      .select("id, conversation_id, body, sender_id, created_at, read_at")
+      .in("conversation_id", list.map((c) => c.id))
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    const lastByConvo = new Map<string, { body: string; created_at: string; sender_id: string }>();
+    const unreadByConvo = new Map<string, number>();
+    for (const m of lastMsgs ?? []) {
+      if (!lastByConvo.has(m.conversation_id)) lastByConvo.set(m.conversation_id, m);
+      if (m.sender_id !== me && !m.read_at) {
+        unreadByConvo.set(m.conversation_id, (unreadByConvo.get(m.conversation_id) ?? 0) + 1);
+      }
+    }
+
+    const decorate = (c: (typeof list)[number]) => {
+      const otherId = c.user_a === me ? c.user_b : c.user_a;
+      const p = byId.get(otherId);
+      const last = lastByConvo.get(c.id) ?? null;
+      return {
+        id: c.id,
+        status: c.status,
+        isRequester: c.requester_id === me,
+        lastMessageAt: c.last_message_at,
+        unread: unreadByConvo.get(c.id) ?? 0,
+        lastMessage: last ? { body: last.body, createdAt: last.created_at } : null,
+        person: {
+          id: otherId,
+          username: p?.username ?? "someone",
+          displayName: p?.display_name ?? p?.username ?? "Someone",
+          avatarUrl: p?.avatar_url ? (avatars[p.avatar_url] ?? p.avatar_url) : null,
+        },
+      };
+    };
+
+    const decorated = list.map(decorate);
+    return {
+      chats: decorated.filter((c) => c.status === "accepted"),
+      requests: decorated.filter((c) => c.status === "pending" && !c.isRequester),
+      sent: decorated.filter((c) => c.status === "pending" && c.isRequester),
+    };
+  });
+
+export const getConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { conversationId: string }) => ({
+    conversationId: z.string().uuid().parse(d.conversationId),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b, requester_id, status")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+
+    const otherId = convo.user_a === me ? convo.user_b : convo.user_a;
+    const { data: p } = await sb
+      .from("profiles")
+      .select("id, username, display_name, avatar_url")
+      .eq("id", otherId)
+      .maybeSingle();
+    const avatars = await signAvatars([p?.avatar_url ?? null]);
+
+    const { data: msgs } = await sb
+      .from("messages")
+      .select("id, body, sender_id, created_at")
+      .eq("conversation_id", convo.id)
+      .order("created_at", { ascending: true })
+      .limit(300);
+
+    await sb
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("conversation_id", convo.id)
+      .neq("sender_id", me)
+      .is("read_at", null);
+
+    return {
+      id: convo.id,
+      status: convo.status,
+      isRequester: convo.requester_id === me,
+      person: {
+        id: otherId,
+        username: p?.username ?? "someone",
+        displayName: p?.display_name ?? p?.username ?? "Someone",
+        avatarUrl: p?.avatar_url ? (avatars[p.avatar_url] ?? p.avatar_url) : null,
+      },
+      messages: (msgs ?? []).map((m) => ({
+        id: m.id,
+        body: m.body,
+        createdAt: m.created_at,
+        mine: m.sender_id === me,
+      })),
+    };
+  });
+
+export const respondToMessageRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { conversationId: string; accept: boolean }) => ({
+    conversationId: z.string().uuid().parse(d.conversationId),
+    accept: z.boolean().parse(d.accept),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b, requester_id, status")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+    if (convo.requester_id === me) throw new Error("You started this chat.");
+    const { error } = await sb
+      .from("conversations")
+      .update({ status: data.accept ? "accepted" : "rejected" })
+      .eq("id", convo.id);
+    if (error) throw new Error(error.message);
+    await track(me, data.accept ? "message_request_accepted" : "message_request_rejected");
+    return { ok: true, status: data.accept ? "accepted" : "rejected" };
+  });

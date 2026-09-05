@@ -249,6 +249,12 @@ function SettingsPage() {
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
+            <Link to="/messages" className={row}>
+              <span className="flex items-center gap-3">
+                <MessageCircle className="size-4 text-violet-400" /> Messages & requests
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
             <Link to="/activity" className={row}>
               <span className="flex items-center gap-3">
                 <Heart className="size-4 text-rose-400" /> Likes, follows & notifications
