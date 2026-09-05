@@ -678,7 +678,6 @@ function CameraPage() {
       <video
         ref={videoRef}
         className="size-full object-cover"
-        style={filterCss(look) ? { filter: filterCss(look) } : undefined}
         playsInline
         muted
         autoPlay
