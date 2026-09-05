@@ -93,13 +93,20 @@ function CameraPage() {
   const [textOpen, setTextOpen] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const dragMovedRef = useRef(false);
 
   const startDrag = (e: React.PointerEvent<HTMLElement>) => {
     draggingRef.current = true;
+    dragMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.hypot(dx, dy) > 6) dragMovedRef.current = true;
     const box = stageRef.current?.getBoundingClientRect();
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
@@ -108,6 +115,10 @@ function CameraPage() {
   };
   const endDrag = () => {
     draggingRef.current = false;
+  };
+  const onTextTap = () => {
+    // A tap without a drag opens the editor; a drag just moves the text.
+    if (!dragMovedRef.current) setTextOpen(true);
   };
 
   const [musicOpen, setMusicOpen] = useState(false);
