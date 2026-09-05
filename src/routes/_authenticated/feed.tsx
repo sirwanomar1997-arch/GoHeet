@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/feed")({
 });
 
 function FeedPage() {
-  const [scope, setScope] = useState<"following" | "discover">("following");
+  const [scope, setScope] = useState<"following" | "discover">("discover");
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { data: me, isLoading: meLoading } = useMe();
   const fetchFeed = useServerFn(getFeed);
@@ -31,7 +31,7 @@ function FeedPage() {
       <header className="sticky top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-background via-background/90 to-transparent px-4 py-3 backdrop-blur-xl">
         <ReelzyMark className="size-7" />
         <div className="flex flex-1 items-center gap-5">
-          {(["following", "discover"] as const).map((s) => (
+          {(["discover", "following"] as const).map((s) => (
             <button
               key={s}
               type="button"
