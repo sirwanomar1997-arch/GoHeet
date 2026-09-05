@@ -263,8 +263,9 @@ function CameraPage() {
     };
     recorderRef.current = rec;
     startedAtRef.current = Date.now();
-    rec.start(250);
     playRecordStart();
+    silenceMicFor(700);
+    rec.start(250);
     setRecording(true);
   }
 
