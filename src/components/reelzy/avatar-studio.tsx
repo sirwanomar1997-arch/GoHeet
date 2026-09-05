@@ -28,7 +28,11 @@ type Traits = {
   hair: string;
   hairColor: string;
   facialHair: string;
-  extra: string;
+  expression: string;
+  outfit: string;
+  headwear: string;
+  background: string;
+  extras: string[];
 };
 
 const GENDER = ["Male", "Female", "Non-binary"];
@@ -47,13 +51,21 @@ const HAIR = [
   "Crew cut",
   "Messy short",
   "Curly afro",
+  "Coily",
   "Shoulder-length wavy",
   "Long straight",
+  "Long wavy",
   "Braids",
+  "Cornrows",
+  "Locs",
   "Top knot",
   "Bob",
+  "Pixie cut",
   "Ponytail",
+  "Side part",
+  "Shaved sides",
   "Bald",
+  "Hijab",
 ];
 const HAIR_COLOR = [
   "Jet black",
@@ -64,9 +76,85 @@ const HAIR_COLOR = [
   "Platinum",
   "Salt & pepper",
   "Ginger",
+  "Pastel pink",
+  "Teal",
 ];
 const FACIAL_HAIR = ["Clean shaven", "Stubble", "Short beard", "Full beard", "Moustache", "Goatee"];
-const EXTRA = ["Glasses", "Freckles", "Dimples", "Earrings", "Hoodie", "White shirt", "Cap"];
+const EXPRESSION = [
+  "Warm half-smile",
+  "Big joyful grin",
+  "Calm and confident",
+  "Playful smirk",
+  "Thoughtful",
+  "Surprised delight",
+];
+const OUTFIT = [
+  "White shirt",
+  "Hoodie",
+  "Denim jacket",
+  "Leather jacket",
+  "Crewneck sweater",
+  "Turtleneck",
+  "Tank top",
+  "Blazer",
+  "Graphic tee",
+  "Flannel shirt",
+];
+const OUTFIT_COLOR = [
+  "Black",
+  "White",
+  "Cream",
+  "Charcoal",
+  "Burnt orange",
+  "Crimson",
+  "Mustard",
+  "Forest green",
+  "Navy",
+  "Dusty pink",
+  "Lavender",
+  "Teal",
+];
+const HEADWEAR = [
+  "None",
+  "Cap",
+  "Beanie",
+  "Bucket hat",
+  "Headband",
+  "Bandana",
+  "Beret",
+  "Headscarf",
+];
+const BACKGROUND = [
+  "Warm orange-pink glow",
+  "Deep amber",
+  "Crimson dusk",
+  "Peach sunrise",
+  "Soft sand",
+  "Midnight ember",
+  "Rose gold",
+  "Golden hour",
+];
+const EXTRA = [
+  "Glasses",
+  "Sunglasses",
+  "Freckles",
+  "Dimples",
+  "Hoop earrings",
+  "Stud earrings",
+  "Nose ring",
+  "Necklace",
+  "Beauty spot",
+  "Vitiligo",
+];
+
+const POSES = [
+  "chin tilted slightly up",
+  "head turned a touch to the left",
+  "head turned a touch to the right",
+  "relaxed straight-on pose",
+  "slight lean toward camera",
+  "shoulders angled softly",
+];
 
 function buildPrompt(t: Traits) {
   const bits = [
