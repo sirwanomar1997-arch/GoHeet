@@ -42,6 +42,12 @@ function AuthPage() {
 
   const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) void navigate({ to: dest });
+    });
+  }, [navigate, dest]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -70,12 +76,12 @@ function AuthPage() {
     }
   }
 
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
+  async function oauth(provider: "google" | "apple") {
+    const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error("Google sign-in didn't work. Try email instead.");
+      toast.error("Sign-in didn't work. Try email instead.");
       return;
     }
     if (result.redirected) return;
