@@ -227,6 +227,16 @@ function CameraPage() {
     stopStream();
   }
 
+  /** Cue sounds are for the person filming — never for the clip. Mute the mic while they play. */
+  function silenceMicFor(ms: number) {
+    const tracks = streamRef.current?.getAudioTracks() ?? [];
+    if (!tracks.length) return;
+    tracks.forEach((t) => (t.enabled = false));
+    window.setTimeout(() => {
+      tracks.forEach((t) => (t.enabled = true));
+    }, ms);
+  }
+
   async function beginRecording() {
     const stream = streamRef.current;
     if (!stream) return;
@@ -253,8 +263,9 @@ function CameraPage() {
     };
     recorderRef.current = rec;
     startedAtRef.current = Date.now();
-    rec.start(250);
     playRecordStart();
+    silenceMicFor(700);
+    rec.start(250);
     setRecording(true);
   }
 
@@ -292,8 +303,9 @@ function CameraPage() {
     if (!rec) return;
     if (paused) {
       startedAtRef.current = Date.now();
-      rec.resume();
       playPauseBlip(true);
+      silenceMicFor(500);
+      rec.resume();
       setPaused(false);
     } else {
       accumulatedRef.current += Date.now() - startedAtRef.current;
@@ -666,7 +678,6 @@ function CameraPage() {
       <video
         ref={videoRef}
         className="size-full object-cover"
-        style={filterCss(look) ? { filter: filterCss(look) } : undefined}
         playsInline
         muted
         autoPlay
@@ -715,22 +726,9 @@ function CameraPage() {
         </div>
       ) : null}
 
+      {/* No looks while filming — the frame stays true. Filters come after, before posting. */}
       <div className="absolute inset-x-0 bottom-0 pb-10">
-        <div className="mb-5 flex gap-2.5 overflow-x-auto px-5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setLook(f.id)}
-              aria-label={f.label}
-              aria-pressed={look === f.id}
-              className={`size-11 shrink-0 rounded-2xl border-2 transition-transform ${
-                look === f.id ? "border-white scale-110" : "border-white/25"
-              }`}
-              style={{ backgroundImage: f.swatch }}
-            />
-          ))}
-        </div>
+
         <div className="flex items-center justify-around px-8">
           {recording ? (
             <button
