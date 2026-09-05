@@ -343,7 +343,10 @@ export function MomentStage({ moment, onGone }: { moment: MomentCard; onGone?: (
         </div>
 
         {moment.caption ? (
-          <p className="mt-3 text-sm leading-relaxed text-foreground/90">{moment.caption}</p>
+          <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95">
+            {moment.caption}
+          </p>
+
         ) : null}
 
         <div className="mt-4 flex gap-2">
