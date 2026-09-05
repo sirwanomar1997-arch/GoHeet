@@ -314,6 +314,63 @@ function buildPrompt(t: Traits, pose: string, seed: number) {
   );
 }
 
+const TRAIT_LABEL: Record<string, string> = {
+  age: "age",
+  skin: "skin tone",
+  face: "face shape",
+  eyeColor: "eye colour",
+  eyeShape: "eye shape",
+  brows: "eyebrows",
+  nose: "nose",
+  lips: "lips",
+  ears: "ears",
+  hair: "hairstyle",
+  hairColor: "hair colour",
+  facialHair: "facial hair",
+  expression: "expression",
+  outfit: "outfit",
+  outfitColor: "outfit colour",
+  fabric: "fabric",
+  headwear: "headwear",
+  eyewear: "eyewear",
+  makeup: "make-up",
+  jewelry: "jewellery",
+  background: "backdrop",
+  extras: "details",
+};
+
+/** Keys whose value differs between two trait sets. */
+function diffTraits(a: Traits, b: Traits): (keyof Traits)[] {
+  return (Object.keys(b) as (keyof Traits)[]).filter((k) => {
+    const av = a[k];
+    const bv = b[k];
+    return Array.isArray(av) && Array.isArray(bv)
+      ? av.join("|") !== bv.join("|")
+      : av !== bv;
+  });
+}
+
+/**
+ * Prompt for editing an existing render: the previous frame is sent as the
+ * reference image so the character's identity is preserved and only the
+ * traits the user just tapped change.
+ */
+function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
+  const describe = (k: keyof Traits) => {
+    const v = t[k];
+    const value = Array.isArray(v) ? (v.length ? v.join(", ") : "none") : v;
+    return `${TRAIT_LABEL[k] ?? k}: ${String(value).toLowerCase()}`;
+  };
+  return (
+    "Edit the character in the reference image. Keep the EXACT same person — identical face, " +
+    "bone structure, skin tone, eye colour and shape, nose, lips, ears, age and overall likeness, " +
+    "same pose, same camera angle, same lighting and same render style. " +
+    `Change only the following: ${changed.map(describe).join("; ")}. ` +
+    "Everything else must stay pixel-consistent with the reference. " +
+    "Glossy premium 3D animated feature-film portrait, no text, no watermark."
+  );
+}
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
