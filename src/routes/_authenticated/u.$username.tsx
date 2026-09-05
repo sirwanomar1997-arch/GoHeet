@@ -149,13 +149,12 @@ function ProfilePage() {
             </Link>
           ) : null}
 
-          {/* nickname — the real display name, right under the avatar button */}
-          <h2 className="mt-3 text-center font-display text-xl font-bold tracking-tight text-foreground">
+          {/* nickname + username — compact, tight under the avatar button */}
+          <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground">
             {p.displayName || p.username}
           </h2>
 
-          {/* username sits under the nickname */}
-          <p className="data-figure mt-1 text-center text-xs font-normal tracking-normal text-muted-foreground">
+          <p className="data-figure mt-0.5 text-center text-[11px] font-normal tracking-normal text-muted-foreground">
             @{p.username}
           </p>
 
