@@ -231,9 +231,12 @@ const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.lengt
 const some = (arr: readonly string[], chance: number, max: number) =>
   arr.filter(() => Math.random() < chance).slice(0, max);
 
-function randomTraits(): Traits {
+function randomTraits(forced?: string): Traits {
+  const gender = forced ?? pick(["Male", "Female"]);
+  const female = gender === "Female";
   return {
-    gender: pick(["Male", "Female"]),
+    gender,
+
     age: pick(AGE),
     skin: pick(SKIN),
     face: pick(FACE),
