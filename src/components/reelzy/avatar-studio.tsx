@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Sparkles, RefreshCw, Check, SwitchCamera } from "lucide-react";
+import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 
@@ -429,9 +429,18 @@ export function AvatarStudio({
       {mode === "build" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              You are
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                You are
+              </p>
+              <button
+                type="button"
+                onClick={() => setTraits((t) => ({ ...randomTraits(), gender: t.gender || "Male" }))}
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
+              >
+                <Dices className="size-3.5" /> Shuffle
+              </button>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {GENDER.map((o) => (
                 <button
