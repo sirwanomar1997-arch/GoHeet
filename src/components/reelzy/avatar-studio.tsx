@@ -648,70 +648,77 @@ export function AvatarStudio({
 
           {buildReady ? (
             <>
-              <div>
-                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Age
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {AGE.map((o) => (
-                    <button
-                      key={o}
-                      type="button"
-                      onClick={() => setTraits((t) => ({ ...t, age: o }))}
-                      className={chip(traits.age === o)}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                {SECTIONS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSection(s.id)}
+                    className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                      section === s.id
+                        ? "ember-fill text-primary-foreground"
+                        : "border border-border bg-surface text-muted-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
 
-              {GROUPS.map(([label, opts, key]) => (
-                <div key={key}>
-                  <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    {label}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {opts.map((o) => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setTraits((t) => ({ ...t, [key]: o }))}
-                        className={chip(traits[key] === o)}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
+              {SECTIONS.filter((s) => s.id === section).map((s) => (
+                <div key={s.id} className="space-y-4 rounded-[28px] border border-border bg-surface/60 p-4">
+                  <p className="text-xs text-muted-foreground">{s.blurb}</p>
+                  {s.groups.map((g) => (
+                    <div key={g.key}>
+                      <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        {g.label}
+                        {g.kind === "multi" ? " — pick as many as you like" : ""}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {g.opts.map((o) =>
+                          g.kind === "single" ? (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => setTraits((t) => ({ ...t, [g.key]: o }))}
+                              className={chip(traits[g.key] === o)}
+                            >
+                              {o}
+                            </button>
+                          ) : (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() =>
+                                setTraits((t) => {
+                                  const cur = t[g.key];
+                                  return {
+                                    ...t,
+                                    [g.key]: cur.includes(o)
+                                      ? cur.filter((e) => e !== o)
+                                      : [...cur, o],
+                                  };
+                                })
+                              }
+                              className={chip(traits[g.key].includes(o))}
+                            >
+                              {o}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {s.id === "wardrobe" || s.id === "accessories" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Everything here is free. Limited drops arrive later.
+                    </p>
+                  ) : null}
                 </div>
               ))}
-
-              <div>
-                <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Details — pick as many as you like
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {EXTRA.map((o) => (
-                    <button
-                      key={o}
-                      type="button"
-                      onClick={() =>
-                        setTraits((t) => ({
-                          ...t,
-                          extras: t.extras.includes(o)
-                            ? t.extras.filter((e) => e !== o)
-                            : [...t.extras, o],
-                        }))
-                      }
-                      className={chip(traits.extras.includes(o))}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </>
           ) : null}
+
         </div>
       ) : null}
 
