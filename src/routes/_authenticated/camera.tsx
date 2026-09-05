@@ -718,45 +718,87 @@ function CameraPage() {
           ))}
         </div>
         <div className="flex items-center justify-around px-8">
-          <button
-            type="button"
-            onClick={takePhoto}
-            disabled={!ready || recording}
-            className="tap-target rounded-full border border-white/25 px-4 text-xs font-semibold text-white"
-          >
-            Still
-          </button>
+          {recording ? (
+            <button
+              type="button"
+              onClick={togglePause}
+              aria-label={paused ? "Resume recording" : "Pause recording"}
+              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
+            >
+              {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={takePhoto}
+              disabled={!ready || countdown !== null}
+              className="tap-target rounded-full border border-white/25 px-4 text-xs font-semibold text-white"
+            >
+              Still
+            </button>
+          )}
 
           <button
             type="button"
-            aria-label={recording ? "Stop recording" : "Record a moment"}
-            disabled={!ready}
-            onClick={() => (recording ? recorderRef.current?.stop() : void startRecording())}
-            className="ember-ring grid size-20 place-items-center rounded-full border-[3px] border-white/80 transition-transform active:scale-95"
+            aria-label={
+              recording ? (paused ? "Resume recording" : "Pause recording") : "Record a moment"
+            }
+            disabled={!ready || countdown !== null}
+            onClick={() => (recording ? togglePause() : startCountdown())}
+            className={`grid size-20 place-items-center rounded-full border-[3px] border-white/80 transition-transform active:scale-95 ${
+              recording && !paused ? "rec-live" : "ember-ring"
+            }`}
           >
             <span
               className={
                 recording
-                  ? "size-7 rounded-md bg-[image:var(--gradient-ember)]"
+                  ? paused
+                    ? "size-8 rounded-full bg-[image:var(--gradient-ember)]"
+                    : "size-7 rounded-md bg-[image:var(--gradient-ember)]"
                   : "ember-fill size-16 rounded-full"
               }
             />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-            disabled={!ready}
-            aria-label="Flip camera"
-            className="tap-target grid place-items-center rounded-full border border-white/25 text-white"
-          >
-            <SwitchCamera className="size-5" />
-          </button>
+          {recording ? (
+            <button
+              type="button"
+              onClick={() => recorderRef.current?.stop()}
+              aria-label="Finish recording"
+              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
+            >
+              <Check className="size-5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+              disabled={!ready || countdown !== null}
+              aria-label="Flip camera"
+              className="tap-target grid place-items-center rounded-full border border-white/25 text-white"
+            >
+              <SwitchCamera className="size-5" />
+            </button>
+          )}
         </div>
         <p className="mt-4 text-center text-[11px] text-white/60">
-          Captured live, up to five minutes. Nothing can be uploaded from your camera roll.
+          {recording
+            ? "Pause any time, keep filming, then tap the check when you're done."
+            : "Captured live, up to five minutes. Nothing can be uploaded from your camera roll."}
         </p>
       </div>
+
+      {countdown !== null ? (
+        <div className="absolute inset-0 grid place-items-center bg-black/35 backdrop-blur-[2px]">
+          <span
+            key={countdown}
+            className="ember-text animate-shutter font-display text-[7rem] font-bold leading-none"
+          >
+            {countdown}
+          </span>
+        </div>
+      ) : null}
+
     </main>
   );
 }
