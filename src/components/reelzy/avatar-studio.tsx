@@ -6,6 +6,8 @@ import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
 import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
+import { AvatarPreview } from "@/components/reelzy/avatar-preview";
+
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
