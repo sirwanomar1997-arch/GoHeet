@@ -10,13 +10,26 @@ import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, warm friendly gaze straight into camera, " +
-  "slightly stylized proportions with large expressive photoreal eyes, crisp catchlights and detailed irises, " +
+  "exactly like a modern CGI movie hero render: head-and-shoulders close-up, three-quarter turn, " +
+  "warm friendly gaze straight into camera, soft genuine smile, " +
+  "slightly stylized proportions with big glossy photoreal eyes, crisp catchlights, detailed irises and eyelashes, " +
   "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on the cheeks and nose, " +
   "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
   "soft cinematic studio key light from the upper left with warm rim light, " +
-  "smooth vertical gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
+  "smooth warm orange-to-pink gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
+
+/** Age reads honestly in the render — keeps a 30s avatar from looking 50. */
+const AGE_LOOK: Record<string, string> = {
+  Teen: "16 to 18 years old, fresh youthful face, completely smooth skin, no wrinkles, no grey hair",
+  "20s": "about 25 years old, young adult, smooth taut skin, no wrinkles at all, no grey hair",
+  "30s":
+    "about 32 years old, clearly youthful adult, smooth firm skin, no wrinkles, no eye bags, no grey hair",
+  "40s": "about 44 years old, only very faint smile lines, still firm skin, barely any grey",
+  "50s": "about 55 years old, light natural wrinkles, a little grey at the temples",
+  "60+": "about 66 years old, silver hair and gentle natural wrinkles",
+};
+
 
 
 type Traits = {
