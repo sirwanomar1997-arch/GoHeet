@@ -301,7 +301,7 @@ function randomTraits(): Traits {
 
 function buildPrompt(t: Traits, pose: string, seed: number) {
   const bits = [
-    `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
+    `${t.gender.toLowerCase()} character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -371,6 +371,7 @@ function diffTraits(a: Traits, b: Traits): (keyof Traits)[] {
 function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
   const describe = (k: keyof Traits) => {
     const v = t[k];
+    if (k === "age") return `age: ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`;
     const value = Array.isArray(v) ? (v.length ? v.join(", ") : "none") : v;
     return `${TRAIT_LABEL[k] ?? k}: ${String(value).toLowerCase()}`;
   };
