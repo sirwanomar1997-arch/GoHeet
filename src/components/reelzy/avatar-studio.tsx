@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
+import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
@@ -553,7 +554,40 @@ export function AvatarStudio({
         : "border border-border bg-surface text-muted-foreground"
     }`;
 
+  const Tile = ({
+    group,
+    value,
+    active,
+    onClick,
+  }: {
+    group: IconKey;
+    value: string;
+    active: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={value}
+      aria-pressed={active}
+      title={value}
+      className={`w-[68px] shrink-0 rounded-2xl border p-1.5 transition-all ${
+        active
+          ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
+          : "border-border bg-surface text-foreground/70"
+      }`}
+    >
+      <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
+        <OptionVisual group={group} value={value} />
+      </div>
+      <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
+        {value}
+      </span>
+    </button>
+  );
+
   const buildReady = !!traits.gender;
+
 
   return (
     <div className="mx-auto w-full max-w-sm">
