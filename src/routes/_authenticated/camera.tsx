@@ -613,7 +613,7 @@ function CameraPage() {
           <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
             <SheetHeader className="px-0">
               <SheetTitle className="font-display">Add a track</SheetTitle>
-              <SheetDescription>Music cleared for use inside Reelzy.</SheetDescription>
+              <SheetDescription>Free instrumentals, cleared for use inside Reelzy.</SheetDescription>
             </SheetHeader>
             <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
