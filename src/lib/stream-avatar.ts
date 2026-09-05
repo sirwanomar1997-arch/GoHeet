@@ -23,11 +23,12 @@ export async function streamAvatar(
   prompt: string,
   selfie: string | null,
   onFrame: (dataUrl: string, isFinal: boolean) => void,
+  visualReference: string | null = null,
 ): Promise<void> {
   const res = await fetch("/api/generate-avatar", {
     method: "POST",
     headers: await avatarHeaders(),
-    body: JSON.stringify({ prompt, selfie }),
+    body: JSON.stringify({ prompt, selfie, visualReference }),
   });
   if (!res.ok || !res.body) {
     const message = await res.text().catch(() => "");
@@ -86,7 +87,7 @@ export async function streamAvatar(
     const replay = await fetch("/api/generate-avatar", {
       method: "POST",
       headers: await avatarHeaders(),
-      body: JSON.stringify({ prompt, selfie, stream: false }),
+      body: JSON.stringify({ prompt, selfie, visualReference, stream: false }),
     });
     if (!replay.ok) {
       throw new Error(`Avatar generation failed: ${replay.status}`);
