@@ -5,14 +5,18 @@ import { toast } from "sonner";
 import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
+import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 
 const STYLE_BASE =
   "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "head and shoulders, three-quarter view, looking at camera, " +
-  "large expressive photoreal eyes with crisp catchlights, soft subsurface-scattering skin with fine pores and peach fuzz, " +
-  "individually rendered hair strands, soft cinematic studio key light from the upper left with gentle rim light, " +
-  "smooth studio gradient background, shallow depth of field, octane-quality render, " +
+  "head and shoulders, three-quarter view, warm friendly gaze straight into camera, " +
+  "slightly stylized proportions with large expressive photoreal eyes, crisp catchlights and detailed irises, " +
+  "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on the cheeks and nose, " +
+  "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
+  "soft cinematic studio key light from the upper left with warm rim light, " +
+  "smooth vertical gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
   "vertical portrait composition, no text, no watermark, no logo.";
+
 
 type Traits = {
   gender: string;
@@ -553,7 +557,40 @@ export function AvatarStudio({
         : "border border-border bg-surface text-muted-foreground"
     }`;
 
+  const Tile = ({
+    group,
+    value,
+    active,
+    onClick,
+  }: {
+    group: IconKey;
+    value: string;
+    active: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={value}
+      aria-pressed={active}
+      title={value}
+      className={`w-[68px] shrink-0 rounded-2xl border p-1.5 transition-all ${
+        active
+          ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
+          : "border-border bg-surface text-foreground/70"
+      }`}
+    >
+      <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
+        <OptionVisual group={group} value={value} />
+      </div>
+      <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
+        {value}
+      </span>
+    </button>
+  );
+
   const buildReady = !!traits.gender;
+
 
   return (
     <div className="mx-auto w-full max-w-sm">
@@ -632,18 +669,18 @@ export function AvatarStudio({
                 <Dices className="size-3.5" /> Shuffle
               </button>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex gap-2">
               {GENDER.map((o) => (
-                <button
+                <Tile
                   key={o}
-                  type="button"
+                  group="gender"
+                  value={o}
+                  active={traits.gender === o}
                   onClick={() => setTraits((t) => ({ ...t, gender: o }))}
-                  className={chip(traits.gender === o)}
-                >
-                  {o}
-                </button>
+                />
               ))}
             </div>
+
           </div>
 
           {buildReady ? (
@@ -674,21 +711,22 @@ export function AvatarStudio({
                         {g.label}
                         {g.kind === "multi" ? " — pick as many as you like" : ""}
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
                         {g.opts.map((o) =>
                           g.kind === "single" ? (
-                            <button
+                            <Tile
                               key={o}
-                              type="button"
+                              group={g.key as IconKey}
+                              value={o}
+                              active={traits[g.key] === o}
                               onClick={() => setTraits((t) => ({ ...t, [g.key]: o }))}
-                              className={chip(traits[g.key] === o)}
-                            >
-                              {o}
-                            </button>
+                            />
                           ) : (
-                            <button
+                            <Tile
                               key={o}
-                              type="button"
+                              group={g.key as IconKey}
+                              value={o}
+                              active={traits[g.key].includes(o)}
                               onClick={() =>
                                 setTraits((t) => {
                                   const cur = t[g.key];
@@ -700,13 +738,11 @@ export function AvatarStudio({
                                   };
                                 })
                               }
-                              className={chip(traits[g.key].includes(o))}
-                            >
-                              {o}
-                            </button>
+                            />
                           ),
                         )}
                       </div>
+
                     </div>
                   ))}
                   {s.id === "wardrobe" || s.id === "accessories" ? (
