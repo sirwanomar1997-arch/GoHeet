@@ -112,12 +112,10 @@ function AuthPage() {
         </Link>
 
         <h1 className="mt-12 font-display text-3xl font-extrabold tracking-[-0.04em]">
-          {mode === "signup" ? "Real moments." : "Welcome back."}
+          Real moments.
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "signup"
-            ? "Capture your moment, right as it happens. Just life, pressed into a reality frame."
-            : "Your moments are waiting."}
+          Capture your moment, right as it happens. Just life, pressed into a reality frame.
         </p>
 
         <button
