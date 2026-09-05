@@ -87,11 +87,12 @@ export function ReelzyNav() {
         <Link
           to="/camera"
           aria-label="Open the Reelzy camera"
-          className="capture-orbit mx-1 -mt-11 grid size-[86px] shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
+          className="capture-orbit mx-0.5 -mt-14 grid size-24 shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
         >
-          <span className="capture-face grid size-[70px] place-items-center rounded-full">
-            <span className="grid size-11 place-items-center rounded-full border-[3px] border-primary-foreground/90">
-              <span className="size-4 rounded-full bg-primary-foreground/90" />
+          <span className="capture-face relative grid size-20 place-items-center overflow-hidden rounded-full">
+            <span className="capture-shine absolute inset-x-3 top-1.5 h-7 rounded-full" />
+            <span className="relative grid size-12 place-items-center rounded-full border-[3px] border-primary-foreground/90">
+              <span className="size-[18px] rounded-full bg-primary-foreground/90 shadow-sm" />
             </span>
           </span>
         </Link>
