@@ -148,6 +148,15 @@ function Onboarding() {
           </Button>
         </form>
 
+        <div className="mt-6 text-center">
+          <Link
+            to="/feed"
+            className="text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            Not now — take me to the app
+          </Link>
+        </div>
+
         <p className="mt-8 text-center text-xs text-muted-foreground">
           Creating a profile means you accept the{" "}
           <Link to="/legal/$doc" params={{ doc: "terms" }} className="underline">
