@@ -86,7 +86,7 @@ export function ReelzyNav() {
           className={item(pathname === "/activity", "text-nav-pulse", "nav-glow-pulse")}
           aria-label="Notifications and messages"
         >
-          <PaperPlaneIcon className="size-8" />
+          <Heart className="size-8" strokeWidth={2.25} />
           <span className={spark(pathname === "/activity")} />
         </Link>
         {username ? (
