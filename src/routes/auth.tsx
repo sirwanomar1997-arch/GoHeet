@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -122,7 +122,7 @@ function AuthPage() {
 
         <button
           type="button"
-          onClick={google}
+          onClick={() => oauth("google")}
           className="tap-target mt-8 flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-surface-raised text-sm font-medium"
         >
           <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
@@ -132,6 +132,17 @@ function AuthPage() {
             />
           </svg>
           Continue with Google
+        </button>
+
+        <button
+          type="button"
+          onClick={() => oauth("apple")}
+          className="tap-target mt-3 flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-surface-raised text-sm font-medium"
+        >
+          <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+            <path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.72 1.13-4.72 2.86-2.01 3.49-.51 8.66 1.45 11.5.96 1.39 2.1 2.95 3.6 2.89 1.45-.06 2-.93 3.75-.93s2.25.93 3.78.9c1.56-.03 2.55-1.41 3.5-2.8 1.1-1.61 1.56-3.17 1.58-3.25-.03-.02-3.04-1.17-3.09-4.61ZM14.15 4.06c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.55.77-3.38 1.73-.74.86-1.39 2.23-1.22 3.55 1.29.1 2.6-.65 3.41-1.62Z" />
+          </svg>
+          Continue with Apple
         </button>
 
         <div className="my-6 flex items-center gap-3">
