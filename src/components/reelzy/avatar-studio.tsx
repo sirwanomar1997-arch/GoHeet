@@ -41,8 +41,8 @@ const STYLE_BASE =
   "friendly approachable head-and-shoulders portrait facing the camera with a warm natural smile, " +
   "large expressive eyes with crisp catchlights, smooth soft-shaded skin, clean sculpted hair with " +
   "clear texture, believable everyday clothing with visible fabric detail, " +
-  "even soft studio lighting with a gentle contact shadow, " +
-  "PURE WHITE seamless background, high-quality clean render, " +
+  "even soft studio lighting with a warm cinematic rim light, " +
+  "smooth vibrant warm ORANGE-TO-CORAL-PINK gradient background, high-quality clean render, " +
   "vertical portrait with the WHOLE head, complete hairstyle and any headwear fully inside the frame " +
   "with generous margin above the hair, shoulders and upper chest visible, nothing cropped, " +
   "no text, no watermark, no logo.";
