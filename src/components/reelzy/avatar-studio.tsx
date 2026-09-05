@@ -287,7 +287,7 @@ function randomTraits(): Traits {
   };
 }
 
-function buildPrompt(t: Traits) {
+function buildPrompt(t: Traits, pose: string, seed: number) {
   const bits = [
     `${t.age.toLowerCase()} ${t.gender.toLowerCase()} character`,
     `${t.skin.toLowerCase()} skin tone`,
@@ -307,15 +307,14 @@ function buildPrompt(t: Traits) {
     t.jewelry.length ? `jewellery: ${t.jewelry.join(", ").toLowerCase()}` : "",
     ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
-  // A unique pose + variation seed keeps every single render one of a kind,
-  // even when two people pick identical options.
-  const pose = pick(POSES);
-  const seed = Math.floor(Math.random() * 1_000_000);
+  // The pose + variation seed stay fixed while the user is styling, so only the
+  // thing they just tapped changes. Shuffle / Try another rolls a new one.
   return (
     `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
     `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
   );
 }
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
