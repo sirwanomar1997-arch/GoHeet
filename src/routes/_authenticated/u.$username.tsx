@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart } from "lucide-react";
+import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
