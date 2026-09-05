@@ -65,20 +65,85 @@ export function filterCss(id?: string | null): string | undefined {
   return FILTERS.find((f) => f.id === id)?.css;
 }
 
-export type OverlayFont = "display" | "mono" | "serif" | "stamp";
+export type OverlayFont =
+  | "display"
+  | "mono"
+  | "serif"
+  | "stamp"
+  | "party"
+  | "arcade"
+  | "puffy"
+  | "marker"
+  | "script"
+  | "groove"
+  | "heavy"
+  | "hand"
+  | "candy"
+  | "chunk";
 
-export const OVERLAY_FONTS: Array<{ id: OverlayFont; label: string; className: string }> = [
-  { id: "display", label: "Bold", className: "font-display font-extrabold tracking-[-0.04em]" },
-  { id: "mono", label: "Data", className: "data-figure font-medium" },
-  { id: "serif", label: "Quiet", className: "font-serif italic tracking-tight" },
-  {
-    id: "stamp",
-    label: "Stamp",
-    className: "font-display font-black uppercase tracking-[0.18em]",
-  },
+type FontDef = {
+  id: OverlayFont;
+  label: string;
+  family: string;
+  weight: number;
+  spacing: string;
+  upper?: boolean;
+};
+
+/** Fat, playful type voices. Loaded in the root head. */
+export const OVERLAY_FONTS: FontDef[] = [
+  { id: "party", label: "Party", family: '"Luckiest Guy", cursive', weight: 400, spacing: "0.01em" },
+  { id: "arcade", label: "Arcade", family: '"Bungee", cursive', weight: 400, spacing: "0.02em" },
+  { id: "puffy", label: "Puffy", family: '"Fredoka", sans-serif', weight: 700, spacing: "-0.01em" },
+  { id: "marker", label: "Marker", family: '"Permanent Marker", cursive', weight: 400, spacing: "0em" },
+  { id: "script", label: "Breeze", family: '"Pacifico", cursive', weight: 400, spacing: "0em" },
+  { id: "groove", label: "Groove", family: '"Righteous", cursive', weight: 400, spacing: "0.01em" },
+  { id: "heavy", label: "Heavy", family: '"Archivo Black", sans-serif', weight: 400, spacing: "-0.02em" },
+  { id: "hand", label: "Hand", family: '"Caveat", cursive', weight: 700, spacing: "0em" },
+  { id: "candy", label: "Candy", family: '"Shrikhand", cursive', weight: 400, spacing: "0em" },
+  { id: "chunk", label: "Chunk", family: '"Rubik Mono One", monospace', weight: 400, spacing: "-0.01em" },
+  { id: "display", label: "Bold", family: 'var(--font-display)', weight: 800, spacing: "-0.04em" },
+  { id: "stamp", label: "Stamp", family: 'var(--font-display)', weight: 900, spacing: "0.18em", upper: true },
+  { id: "mono", label: "Data", family: 'var(--font-mono)', weight: 500, spacing: "0.02em" },
+  { id: "serif", label: "Quiet", family: "ui-serif, Georgia, serif", weight: 500, spacing: "-0.01em" },
 ];
 
-export type OverlayStyle = "plain" | "ember" | "block";
+export const OVERLAY_COLORS: Array<{ id: string; label: string; value: string }> = [
+  { id: "white", label: "White", value: "#ffffff" },
+  { id: "black", label: "Ink", value: "#0d0d0d" },
+  { id: "amber", label: "Amber", value: "#ffb547" },
+  { id: "crimson", label: "Crimson", value: "#e5484d" },
+  { id: "hot", label: "Hot pink", value: "#ff4fa3" },
+  { id: "sun", label: "Sun", value: "#ffe14d" },
+  { id: "lime", label: "Lime", value: "#a3f04d" },
+  { id: "mint", label: "Mint", value: "#3ee0b0" },
+  { id: "sky", label: "Sky", value: "#4fc3ff" },
+  { id: "violet", label: "Violet", value: "#a97bff" },
+  { id: "peach", label: "Peach", value: "#ff9b6a" },
+  { id: "cocoa", label: "Cocoa", value: "#8a5a3c" },
+];
+
+export type OverlayStyle =
+  | "plain"
+  | "ember"
+  | "block"
+  | "outline"
+  | "glow"
+  | "sticker"
+  | "shadow"
+  | "tape";
+
+export const OVERLAY_STYLES: Array<{ id: OverlayStyle; label: string }> = [
+  { id: "plain", label: "Clean" },
+  { id: "shadow", label: "Pop" },
+  { id: "outline", label: "Outline" },
+  { id: "glow", label: "Glow" },
+  { id: "sticker", label: "Sticker" },
+  { id: "block", label: "Ember bar" },
+  { id: "tape", label: "Tape" },
+  { id: "ember", label: "Fire" },
+];
+
 export type OverlayPlace = "top" | "middle" | "bottom";
 
 export type MomentOverlay = {
@@ -86,17 +151,101 @@ export type MomentOverlay = {
   font: OverlayFont;
   style: OverlayStyle;
   place: OverlayPlace;
+  color: string;
+  x: number; // 0-100, centre of the text block
+  y: number; // 0-100
+  size: number; // px at a 9:16 preview width
+  rotate: number; // degrees
 };
 
-export function overlayFontClass(font?: string | null): string {
-  return OVERLAY_FONTS.find((f) => f.id === font)?.className ?? OVERLAY_FONTS[0]!.className;
+export const DEFAULT_OVERLAY: Omit<MomentOverlay, "text"> = {
+  font: "party",
+  style: "shadow",
+  place: "middle",
+  color: "#ffffff",
+  x: 50,
+  y: 50,
+  size: 30,
+  rotate: 0,
+};
+
+function fontDef(font?: string | null): FontDef {
+  return OVERLAY_FONTS.find((f) => f.id === font) ?? OVERLAY_FONTS[0]!;
 }
 
-export function overlayStyleClass(style?: string | null): string {
-  if (style === "ember") return "ember-text drop-shadow-[0_2px_18px_oklch(0_0_0/70%)]";
-  if (style === "block")
-    return "bg-[image:var(--gradient-ember)] text-primary-foreground px-3 py-1.5 rounded-xl";
-  return "text-foreground drop-shadow-[0_2px_14px_oklch(0_0_0/85%)]";
+export function overlayFontStyle(font?: string | null): React.CSSProperties {
+  const f = fontDef(font);
+  return {
+    fontFamily: f.family,
+    fontWeight: f.weight,
+    letterSpacing: f.spacing,
+    textTransform: f.upper ? "uppercase" : undefined,
+  };
+}
+
+/** Legacy helper kept so older render paths keep working. */
+export function overlayFontClass(): string {
+  return "";
+}
+
+export function overlayStyleProps(
+  style: string | null | undefined,
+  color: string,
+): { className: string; style: React.CSSProperties } {
+  switch (style) {
+    case "ember":
+      return {
+        className: "ember-text",
+        style: { filter: "drop-shadow(0 2px 18px rgba(0,0,0,0.7))" },
+      };
+    case "block":
+      return {
+        className: "px-3 py-1.5 rounded-xl text-primary-foreground",
+        style: { backgroundImage: "var(--gradient-ember)" },
+      };
+    case "outline":
+      return {
+        className: "",
+        style: {
+          color,
+          WebkitTextStroke: "2px rgba(0,0,0,0.9)",
+          paintOrder: "stroke fill",
+          textShadow: "0 4px 16px rgba(0,0,0,0.45)",
+        } as React.CSSProperties,
+      };
+    case "glow":
+      return {
+        className: "",
+        style: { color, textShadow: `0 0 10px ${color}, 0 0 28px ${color}, 0 2px 10px rgba(0,0,0,0.6)` },
+      };
+    case "sticker":
+      return {
+        className: "px-3.5 py-1.5 rounded-2xl",
+        style: { background: "#fff", color: color === "#ffffff" ? "#0d0d0d" : color, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" },
+      };
+    case "tape":
+      return {
+        className: "px-3.5 py-1.5 rounded-md",
+        style: {
+          background: "rgba(0,0,0,0.55)",
+          color,
+          backdropFilter: "blur(6px)",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
+        },
+      };
+    case "shadow":
+      return {
+        className: "",
+        style: { color, textShadow: "0 3px 0 rgba(0,0,0,0.55), 0 10px 26px rgba(0,0,0,0.5)" },
+      };
+    default:
+      return { className: "", style: { color, textShadow: "0 2px 14px rgba(0,0,0,0.85)" } };
+  }
+}
+
+/** Legacy helper kept so older render paths keep working. */
+export function overlayStyleClass(): string {
+  return "";
 }
 
 export function overlayPlaceClass(place?: string | null): string {
@@ -105,14 +254,27 @@ export function overlayPlaceClass(place?: string | null): string {
   return "items-center";
 }
 
+function num(v: unknown, fallback: number, min: number, max: number): number {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
 export function parseOverlay(value: unknown): MomentOverlay | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Partial<MomentOverlay>;
   if (!v.text || typeof v.text !== "string") return null;
+  const place = (v.place ?? "middle") as OverlayPlace;
+  const fallbackY = place === "top" ? 18 : place === "bottom" ? 80 : 50;
   return {
     text: v.text.slice(0, 120),
-    font: (v.font ?? "display") as OverlayFont,
-    style: (v.style ?? "plain") as OverlayStyle,
-    place: (v.place ?? "middle") as OverlayPlace,
+    font: (v.font ?? DEFAULT_OVERLAY.font) as OverlayFont,
+    style: (v.style ?? DEFAULT_OVERLAY.style) as OverlayStyle,
+    place,
+    color: typeof v.color === "string" ? v.color.slice(0, 12) : DEFAULT_OVERLAY.color,
+    x: num(v.x, 50, 4, 96),
+    y: num(v.y, fallbackY, 4, 96),
+    size: num(v.size, DEFAULT_OVERLAY.size, 14, 64),
+    rotate: num(v.rotate, 0, -30, 30),
   };
 }
+
