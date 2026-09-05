@@ -878,7 +878,10 @@ export const getProfile = createServerFn({ method: "POST" })
         totalViews: Number(profile.total_views ?? 0),
         totalLikes: Number(profile.total_likes ?? 0),
         isPrivate: profile.is_private,
+        socialLinks: ((profile as unknown as { social_links?: Record<string, string> })
+          .social_links ?? {}) as Record<string, string>,
         createdAt: profile.created_at,
+
       },
       moments: await decorate((rows ?? []) as unknown as FeedRow[], context.userId),
       isFollowing: !!rel,
