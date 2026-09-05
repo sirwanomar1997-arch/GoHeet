@@ -1,228 +1,67 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Sparkles, RefreshCw, Check, SwitchCamera, Dices } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, Dices, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { streamAvatar } from "@/lib/stream-avatar";
-import { OptionVisual, type IconKey } from "@/components/reelzy/avatar-icons";
 import {
-  HAIR_MALE,
-  HAIR_FEMALE,
-  OUTFIT_MALE,
-  OUTFIT_FEMALE,
-  FACE_SHAPES,
-  EYE_SHAPES,
-  BROWS_MALE,
-  BROWS_FEMALE,
-  LIPS_MALE,
-  LIPS_FEMALE,
-  NOSES,
+  AvatarArt,
+  BACKDROPS,
+  BROWS,
   EARS,
-  FACIAL_HAIR,
+  EXPRESSIONS,
+  EYE_COLORS,
+  EYE_SHAPES,
   EYEWEAR,
-  HEADWEAR_MALE,
+  FACE_SHAPES,
+  FACIAL_HAIR,
+  HAIR_COLORS,
+  HAIR_FEMALE,
+  HAIR_MALE,
   HEADWEAR_FEMALE,
-  JEWELRY_MALE,
-  JEWELRY_FEMALE,
-  MAKEUP,
-  cellFor,
-  cellStyle,
-} from "@/components/reelzy/avatar-sheets";
+  HEADWEAR_MALE,
+  LIPS,
+  NOSES,
+  OUTFIT_COLORS,
+  OUTFITS_FEMALE,
+  OUTFITS_MALE,
+  SKINS,
+  type Traits,
+} from "@/components/reelzy/avatar-art";
 
+/* ------------------------------------------------------------------ */
+/* Prompt                                                              */
+/* ------------------------------------------------------------------ */
 
 const STYLE_BASE =
-  "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style, " +
-  "exactly like a modern CGI movie hero render: head-and-shoulders close-up, three-quarter turn, " +
-  "warm friendly gaze straight into camera, soft genuine smile, " +
-  "slightly stylized proportions with big glossy photoreal eyes, crisp catchlights, detailed irises and eyelashes, " +
-  "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on the cheeks and nose, " +
-  "individually rendered glossy hair strands with soft flyaways, realistic cloth weave on the clothing, " +
-  "soft cinematic studio key light from the upper left with warm rim light, " +
-  "smooth warm orange-to-pink gradient studio backdrop, shallow depth of field, octane-quality 8k render, " +
-  "vertical portrait composition with the WHOLE head, the complete hairstyle and any hat or headwear fully inside the frame, " +
-  "generous empty margin above the hair and on both sides, shoulders visible, nothing cropped or touching the edges, " +
+  "Ultra-detailed glossy 3D animated character portrait in premium Pixar/Disney feature-film style: " +
+  "head-and-shoulders close-up, slight three-quarter turn, warm friendly gaze into camera, " +
+  "big glossy photoreal eyes with crisp catchlights and detailed irises, " +
+  "soft subsurface-scattering skin with fine pores, peach fuzz and gentle blush on cheeks and nose, " +
+  "individually rendered glossy hair strands with soft flyaways, realistic cloth weave, " +
+  "soft cinematic studio key light from the upper left with a warm rim light, shallow depth of field, " +
+  "octane-quality 8k render, vertical portrait with the WHOLE head, complete hairstyle and any headwear " +
+  "fully inside the frame with generous margin above the hair, shoulders visible, nothing cropped, " +
   "no text, no watermark, no logo.";
 
-/** Age reads honestly in the render — keeps a 30s avatar from looking 50. */
+const AGES = ["Teen", "20s", "30s", "40s", "50s", "60+"] as const;
+
 const AGE_LOOK: Record<string, string> = {
   Teen: "16 to 18 years old, fresh youthful face, completely smooth skin, no wrinkles, no grey hair",
-  "20s": "about 25 years old, young adult, smooth taut skin, no wrinkles at all, no grey hair",
-  "30s":
-    "about 32 years old, clearly youthful adult, smooth firm skin, no wrinkles, no eye bags, no grey hair",
-  "40s": "about 44 years old, only very faint smile lines, still firm skin, barely any grey",
+  "20s": "about 25 years old, smooth taut skin, no wrinkles, no grey hair",
+  "30s": "about 32 years old, youthful adult, smooth firm skin, no wrinkles, no grey hair",
+  "40s": "about 44 years old, only very faint smile lines, barely any grey",
   "50s": "about 55 years old, light natural wrinkles, a little grey at the temples",
   "60+": "about 66 years old, silver hair and gentle natural wrinkles",
 };
 
-
-
-type Traits = {
-  gender: string;
-  age: string;
-  skin: string;
-  face: string;
-  eyeColor: string;
-  eyeShape: string;
-  brows: string;
-  nose: string;
-  lips: string;
-  ears: string;
-  hair: string;
-  hairColor: string;
-  facialHair: string;
-  expression: string;
-  outfit: string;
-  outfitColor: string;
-  fabric: string;
-  headwear: string;
-  eyewear: string;
-  makeup: string[];
-  jewelry: string[];
-  background: string;
-  extras: string[];
-};
-
-
-const GENDER = ["Male", "Female"];
-const AGE = ["Teen", "20s", "30s", "40s", "50s", "60+"];
-const SKIN = ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"];
-const EYE_COLOR = ["Dark brown", "Hazel", "Amber", "Green", "Blue", "Grey"];
-
-const HAIR_COLOR = [
-  "Jet black",
-  "Dark brown",
-  "Chestnut",
-  "Auburn",
-  "Blonde",
-  "Platinum",
-  "Salt & pepper",
-  "Ginger",
-  "Pastel pink",
-  "Teal",
-];
-
-const EXPRESSION = [
-  "Warm half-smile",
-  "Big joyful grin",
-  "Calm and confident",
-  "Playful smirk",
-  "Thoughtful",
-  "Surprised delight",
-];
-
-
-const FABRIC = [
-  "Matte cotton",
-  "Soft knit",
-  "Washed denim",
-  "Glossy leather",
-  "Liquid satin",
-  "Crushed velvet",
-  "Technical nylon",
-  "Airy linen",
-  "Metallic sheen",
-  "Chunky wool",
-];
-const OUTFIT_COLOR = [
-  "Black",
-  "White",
-  "Cream",
-  "Charcoal",
-  "Burnt orange",
-  "Crimson",
-  "Mustard",
-  "Forest green",
-  "Navy",
-  "Dusty pink",
-  "Lavender",
-  "Teal",
-  "Chocolate",
-  "Sage",
-  "Electric blue",
-  "Champagne gold",
-];
-const BACKGROUND = [
-  "Warm orange-pink glow",
-  "Deep amber",
-  "Crimson dusk",
-  "Peach sunrise",
-  "Soft sand",
-  "Midnight ember",
-  "Rose gold",
-  "Golden hour",
-  "Cool slate",
-  "Emerald haze",
-  "Violet twilight",
-  "Studio charcoal",
-];
-const EXTRA = [
-  "Freckles",
-  "Dimples",
-  "Beauty spot",
-  "Vitiligo",
-  "Face tattoo",
-  "Neck tattoo",
-  "Scar detail",
-  "Sun-kissed cheeks",
-  "Sharp jaw shadow",
-  "Blushed nose",
-];
-
-
-const POSES = [
-  "chin tilted slightly up",
-  "head turned a touch to the left",
-  "head turned a touch to the right",
-  "relaxed straight-on pose",
-  "slight lean toward camera",
-  "shoulders angled softly",
-];
-
-const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
-
-const some = (arr: readonly string[], chance: number, max: number) =>
-  arr.filter(() => Math.random() < chance).slice(0, max);
-
-function randomTraits(forced?: string): Traits {
-  const gender = forced ?? pick(["Male", "Female"]);
-  const female = gender === "Female";
-  return {
-    gender,
-
-    age: pick(AGE),
-    skin: pick(SKIN),
-    face: pick(FACE_SHAPES),
-    eyeColor: pick(EYE_COLOR),
-    eyeShape: pick(EYE_SHAPES),
-    brows: pick(female ? BROWS_FEMALE : BROWS_MALE),
-    nose: pick(NOSES),
-    lips: pick(female ? LIPS_FEMALE : LIPS_MALE),
-    ears: pick(EARS),
-    hair: pick(female ? HAIR_FEMALE : HAIR_MALE),
-    hairColor: pick(HAIR_COLOR),
-    facialHair: female ? "Clean shaven" : pick(FACIAL_HAIR),
-    expression: pick(EXPRESSION),
-    outfit: pick(female ? OUTFIT_FEMALE : OUTFIT_MALE),
-    outfitColor: pick(OUTFIT_COLOR),
-    fabric: pick(FABRIC),
-    headwear: pick(female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
-    eyewear: pick(EYEWEAR),
-    makeup: female ? some(MAKEUP, 0.35, 3) : [],
-    jewelry: some(female ? JEWELRY_FEMALE : JEWELRY_MALE, 0.25, 3),
-
-    background: pick(BACKGROUND),
-    extras: some(EXTRA, 0.15, 2),
-  };
-}
-
-function buildPrompt(t: Traits, pose: string, seed: number) {
+function buildPrompt(t: Traits, seed: number) {
   const female = t.gender === "Female";
   const bits = [
     female
-      ? `beautiful feminine young woman character with soft delicate feminine facial features, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`
-      : `masculine male character, ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`,
-
+      ? `beautiful feminine woman character with soft delicate features, ${AGE_LOOK[t.age] ?? ""}`
+      : `masculine man character, ${AGE_LOOK[t.age] ?? ""}`,
     `${t.skin.toLowerCase()} skin tone`,
     `${t.face.toLowerCase()} face shape`,
     `${t.eyeShape.toLowerCase()} ${t.eyeColor.toLowerCase()} eyes`,
@@ -230,247 +69,105 @@ function buildPrompt(t: Traits, pose: string, seed: number) {
     `${t.nose.toLowerCase()} nose`,
     `${t.lips.toLowerCase()} lips`,
     `${t.ears.toLowerCase()} ears`,
-    `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
+    t.hair === "Bald" ? "bald head" : `${t.hair.toLowerCase()} ${t.hairColor.toLowerCase()} hair`,
     female ? "" : t.facialHair === "Clean shaven" ? "clean shaven" : t.facialHair.toLowerCase(),
-
     `${t.expression.toLowerCase()} expression`,
-    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()} in ${t.fabric.toLowerCase()}`,
+    `wearing a ${t.outfitColor.toLowerCase()} ${t.outfit.toLowerCase()}`,
     t.headwear !== "None" ? `wearing a ${t.headwear.toLowerCase()}` : "",
     t.eyewear !== "None" ? `wearing ${t.eyewear.toLowerCase()}` : "",
-    t.makeup.length ? `makeup: ${t.makeup.join(", ").toLowerCase()}` : "",
-    t.jewelry.length ? `jewellery: ${t.jewelry.join(", ").toLowerCase()}` : "",
-    ...t.extras.map((e) => e.toLowerCase()),
   ].filter(Boolean);
-  // The pose + variation seed stay fixed while the user is styling, so only the
-  // thing they just tapped changes. Shuffle / Try another rolls a new one.
   return (
-    `${STYLE_BASE} Studio background: ${t.background.toLowerCase()}. ` +
-    `The character is a ${bits.join(", ")}, ${pose}. Unique variation #${seed}.`
+    `${STYLE_BASE} Smooth ${t.backdrop.toLowerCase()} gradient studio backdrop. ` +
+    `The character is a ${bits.join(", ")}. Variation #${seed}.`
   );
 }
-
-const TRAIT_LABEL: Record<string, string> = {
-  age: "age",
-  skin: "skin tone",
-  face: "face shape",
-  eyeColor: "eye colour",
-  eyeShape: "eye shape",
-  brows: "eyebrows",
-  nose: "nose",
-  lips: "lips",
-  ears: "ears",
-  hair: "hairstyle",
-  hairColor: "hair colour",
-  facialHair: "facial hair",
-  expression: "expression",
-  outfit: "outfit",
-  outfitColor: "outfit colour",
-  fabric: "fabric",
-  headwear: "headwear",
-  eyewear: "eyewear",
-  makeup: "make-up",
-  jewelry: "jewellery",
-  background: "backdrop",
-  extras: "details",
-};
-
-/** Keys whose value differs between two trait sets. */
-function diffTraits(a: Traits, b: Traits): (keyof Traits)[] {
-  return (Object.keys(b) as (keyof Traits)[]).filter((k) => {
-    const av = a[k];
-    const bv = b[k];
-    return Array.isArray(av) && Array.isArray(bv)
-      ? av.join("|") !== bv.join("|")
-      : av !== bv;
-  });
-}
-
-/**
- * Prompt for editing an existing render: the previous frame is sent as the
- * reference image so the character's identity is preserved and only the
- * traits the user just tapped change.
- */
-function buildEditPrompt(t: Traits, changed: (keyof Traits)[]) {
-  const describe = (k: keyof Traits) => {
-    const v = t[k];
-    if (k === "age") return `age: ${AGE_LOOK[t.age] ?? t.age.toLowerCase()}`;
-    const value = Array.isArray(v) ? (v.length ? v.join(", ") : "none") : v;
-    return `${TRAIT_LABEL[k] ?? k}: ${String(value).toLowerCase()}`;
-  };
-  return (
-    "Edit the character in the reference image. Keep the EXACT same person — identical face, " +
-    "bone structure, skin tone, eye colour and shape, nose, lips, ears, age and overall likeness, " +
-    "same pose, same camera angle, same lighting and same render style. " +
-    `Change only the following: ${changed.map(describe).join("; ")}. ` +
-    "Everything else must stay pixel-consistent with the reference. " +
-    "Glossy premium 3D animated feature-film portrait. Keep the whole head, full hairstyle and any headwear inside the frame with margin above the hair, nothing cropped. No text, no watermark."
-  );
-}
-
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
-  `keep their face shape, skin tone, eye colour and shape, nose, lips, ears, hairstyle, hair colour, ` +
-  `facial hair and glasses clearly recognizable — it must look unmistakably like the same person, ` +
-  `only rendered in the animated film style.`;
+  "keep their face shape, skin tone, eye colour and shape, nose, lips, hairstyle, hair colour, " +
+  "facial hair and glasses clearly recognisable — unmistakably the same person, only rendered in the animated film style. " +
+  "Smooth warm orange-to-pink gradient studio backdrop.";
 
-type SingleKey =
-  | "age"
-  | "skin"
-  | "face"
-  | "eyeColor"
-  | "eyeShape"
-  | "brows"
-  | "nose"
-  | "lips"
-  | "ears"
-  | "hair"
-  | "hairColor"
-  | "facialHair"
-  | "expression"
-  | "outfit"
-  | "outfitColor"
-  | "fabric"
-  | "headwear"
-  | "eyewear"
-  | "background";
-type MultiKey = "makeup" | "jewelry" | "extras";
+/* ------------------------------------------------------------------ */
+/* Steps                                                               */
+/* ------------------------------------------------------------------ */
 
-type Group =
-  | { kind: "single"; label: string; key: SingleKey; opts: readonly string[] }
-  | { kind: "multi"; label: string; key: MultiKey; opts: readonly string[] };
+type Key = keyof Traits;
 
-const single = (label: string, key: SingleKey, opts: readonly string[]): Group => ({
-  kind: "single",
+type Row = { label: string; key: Key; opts: readonly string[]; zoom: "head" | "face" | "bust" };
+
+const row = (label: string, key: Key, opts: readonly string[], zoom: Row["zoom"] = "head"): Row => ({
   label,
   key,
   opts,
-});
-const multi = (label: string, key: MultiKey, opts: readonly string[]): Group => ({
-  kind: "multi",
-  label,
-  key,
-  opts,
+  zoom,
 });
 
-
-function sectionsFor(gender: string) {
+function stepsFor(gender: string) {
   const female = gender === "Female";
-  const sections: { id: string; label: string; blurb: string; groups: Group[] }[] = [
+  return [
+    {
+      id: "you",
+      title: "The basics",
+      blurb: "Skin and age set the whole tone.",
+      rows: [
+        row("Skin tone", "skin", SKINS.map((s) => s.name)),
+        row("Age", "age", AGES),
+      ],
+    },
     {
       id: "face",
-      label: "Face",
-      blurb: "Shape the features that make you, you.",
-      groups: [
-        single("Age", "age", AGE),
-        single("Skin tone", "skin", SKIN),
-        single("Face shape", "face", FACE_SHAPES),
-        single("Eye colour", "eyeColor", EYE_COLOR),
-        single("Eye shape", "eyeShape", EYE_SHAPES),
-        single("Eyebrows", "brows", female ? BROWS_FEMALE : BROWS_MALE),
-        single("Nose", "nose", NOSES),
-        single("Lips", "lips", female ? LIPS_FEMALE : LIPS_MALE),
-        single("Ears", "ears", EARS),
-        single("Expression", "expression", EXPRESSION),
-        multi("Details", "extras", EXTRA),
+      title: "Your face",
+      blurb: "Every tile is your avatar with that one feature changed.",
+      rows: [
+        row("Face shape", "face", FACE_SHAPES),
+        row("Eye shape", "eyeShape", EYE_SHAPES, "face"),
+        row("Eye colour", "eyeColor", EYE_COLORS.map((c) => c.name), "face"),
+        row("Eyebrows", "brows", BROWS, "face"),
+        row("Nose", "nose", NOSES, "face"),
+        row("Lips", "lips", LIPS, "face"),
+        row("Ears", "ears", EARS),
       ],
     },
     {
       id: "hair",
-      label: "Hair",
-      blurb: female ? "Pick your style — tap a look to wear it." : "Cut, colour and beard.",
-      groups: [
-        single("Hairstyle", "hair", female ? HAIR_FEMALE : HAIR_MALE),
-        single("Hair colour", "hairColor", HAIR_COLOR),
-        ...(female ? [] : [single("Facial hair", "facialHair", FACIAL_HAIR)]),
+      title: "Hair",
+      blurb: female ? "Cut and colour." : "Cut, colour and beard.",
+      rows: [
+        row("Hairstyle", "hair", female ? HAIR_FEMALE : HAIR_MALE),
+        row("Hair colour", "hairColor", HAIR_COLORS.map((c) => c.name)),
+        ...(female ? [] : [row("Facial hair", "facialHair", FACIAL_HAIR)]),
       ],
     },
     {
-      id: "wardrobe",
-      label: "Wardrobe",
-      blurb: "Pick the fit. New drops land here.",
-      groups: [
-        single("Outfit", "outfit", female ? OUTFIT_FEMALE : OUTFIT_MALE),
-        single("Colour", "outfitColor", OUTFIT_COLOR),
-        single("Fabric", "fabric", FABRIC),
+      id: "wear",
+      title: "What you wear",
+      blurb: "Your everyday fit.",
+      rows: [
+        row("Outfit", "outfit", female ? OUTFITS_FEMALE : OUTFITS_MALE, "bust"),
+        row("Colour", "outfitColor", OUTFIT_COLORS.map((c) => c.name), "bust"),
       ],
     },
     {
-      id: "accessories",
-      label: "Accessories",
-      blurb: "Headwear, frames and hardware.",
-      groups: [
-        single("Headwear", "headwear", female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
-        single("Eyewear", "eyewear", EYEWEAR),
-        multi("Jewellery", "jewelry", female ? JEWELRY_FEMALE : JEWELRY_MALE),
+      id: "extras",
+      title: "Finishing touches",
+      blurb: "Accessories, mood and the light you stand in.",
+      rows: [
+        row("Eyewear", "eyewear", EYEWEAR, "face"),
+        row("Headwear", "headwear", female ? HEADWEAR_FEMALE : HEADWEAR_MALE),
+        row("Expression", "expression", EXPRESSIONS, "face"),
+        row("Backdrop", "backdrop", BACKDROPS.map((b) => b.name)),
       ],
-    },
-    ...(female
-      ? [
-          {
-            id: "makeup",
-            label: "Make-up",
-            blurb: "Stack as many looks as you like.",
-            groups: [multi("Make-up", "makeup", MAKEUP)],
-          },
-        ]
-      : []),
-    {
-      id: "scene",
-      label: "Scene",
-      blurb: "The light you stand in.",
-      groups: [single("Backdrop", "background", BACKGROUND)],
     },
   ];
-  return sections;
 }
 
-/** Defaults that suit the chosen gender, applied when you switch. */
-function genderDefaults(gender: string): Partial<Traits> {
-  return gender === "Female"
-    ? {
-        hair: "Long loose waves",
-        outfit: "Soft knit sweater",
-        outfitColor: "Dusty pink",
-        facialHair: "Clean shaven",
-        brows: "Soft arched",
-        lips: "Full pout",
-        headwear: "None",
-        makeup: ["Natural glow"],
-        jewelry: ["Stud earrings"],
-      }
-    : {
-        hair: "Short swept-back",
-        outfit: "Oversized hoodie",
-        outfitColor: "Black",
-        brows: "Soft arched",
-        lips: "Medium",
-        headwear: "None",
-        makeup: [],
-        jewelry: [],
-      };
-}
+const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
-
-
-export function AvatarStudio({
-  onDone,
-  onSkip,
-}: {
-  onDone: () => void;
-  onSkip?: () => void;
-}) {
-  const qc = useQueryClient();
-  const persist = useServerFn(saveAvatar);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const [mode, setMode] = useState<"selfie" | "build">("selfie");
-  const [facing, setFacing] = useState<"user" | "environment">("user");
-  const [selfie, setSelfie] = useState<string | null>(null);
-  const [camError, setCamError] = useState<string | null>(null);
-  const [traits, setTraits] = useState<Traits>({
-    gender: "",
+function defaults(gender: "Male" | "Female"): Traits {
+  const female = gender === "Female";
+  return {
+    gender,
     age: "20s",
     skin: "Light olive",
     face: "Oval",
@@ -478,146 +175,94 @@ export function AvatarStudio({
     eyeShape: "Almond",
     brows: "Soft arched",
     nose: "Straight",
-    lips: "Medium",
+    lips: female ? "Full" : "Medium",
     ears: "Medium",
-    hair: "Short swept-back",
+    hair: female ? "Long waves" : "Short crop",
     hairColor: "Dark brown",
-    facialHair: "Clean shaven",
+    facialHair: female ? "Clean shaven" : "Light stubble",
     expression: "Warm half-smile",
-    outfit: "Oversized hoodie",
-    outfitColor: "Black",
-    fabric: "Soft knit",
-    headwear: "None",
+    outfit: female ? "Knit sweater" : "Hoodie",
+    outfitColor: female ? "Dusty pink" : "Black",
     eyewear: "None",
-    makeup: [],
-    jewelry: [],
-    background: "Warm orange-pink glow",
-    extras: [],
-  });
-  const [section, setSection] = useState("face");
+    headwear: "None",
+    backdrop: "Warm orange-pink glow",
+  };
+}
+
+function randomTraits(gender: "Male" | "Female"): Traits {
+  const female = gender === "Female";
+  return {
+    ...defaults(gender),
+    age: pick(AGES),
+    skin: pick(SKINS).name,
+    face: pick(FACE_SHAPES),
+    eyeColor: pick(EYE_COLORS).name,
+    eyeShape: pick(EYE_SHAPES),
+    brows: pick(BROWS),
+    nose: pick(NOSES),
+    lips: pick(LIPS),
+    ears: pick(EARS),
+    hair: pick(female ? HAIR_FEMALE : HAIR_MALE),
+    hairColor: pick(HAIR_COLORS).name,
+    facialHair: female ? "Clean shaven" : pick(FACIAL_HAIR),
+    expression: pick(EXPRESSIONS),
+    outfit: pick(female ? OUTFITS_FEMALE : OUTFITS_MALE),
+    outfitColor: pick(OUTFIT_COLORS).name,
+    backdrop: pick(BACKDROPS).name,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Studio                                                              */
+/* ------------------------------------------------------------------ */
+
+export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: () => void }) {
+  const qc = useQueryClient();
+  const persist = useServerFn(saveAvatar);
+
+  const [traits, setTraits] = useState<Traits>({ ...defaults("Male"), gender: "" });
+  const [stage, setStage] = useState<"gender" | "build" | "render">("gender");
+  const [stepIndex, setStepIndex] = useState(0);
+
+  const [selfie, setSelfie] = useState<string | null>(null);
+  const [selfieOpen, setSelfieOpen] = useState(false);
 
   const [frame, setFrame] = useState<string | null>(null);
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
-  // The last finished render — reused as the reference image so edits keep the
-  // same character instead of generating a brand new person.
-  const [baseImage, setBaseImage] = useState<string | null>(null);
-  // The traits the current render actually shows.
-  const [appliedTraits, setAppliedTraits] = useState<Traits | null>(null);
-  // Fixed pose + seed keep the character consistent between edits.
-  const [look, setLook] = useState(() => ({ pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) }));
   const runRef = useRef(0);
 
+  const steps = useMemo(() => stepsFor(traits.gender), [traits.gender]);
+  const step = steps[Math.min(stepIndex, steps.length - 1)]!;
 
-  const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+  const set = (key: Key, value: string) => setTraits((t) => ({ ...t, [key]: value }));
+
+  const generate = useCallback(async (prompt: string, reference: string | null) => {
+    const run = ++runRef.current;
+    setBusy(true);
+    setIsFinal(false);
+    setFrame(null);
+    try {
+      await streamAvatar(prompt, reference, (url, final) => {
+        if (runRef.current !== run) return;
+        setFrame(url);
+        if (final) setIsFinal(true);
+      });
+    } catch (e) {
+      if (runRef.current === run) toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
+    } finally {
+      if (runRef.current === run) setBusy(false);
+    }
   }, []);
 
-  const startStream = useCallback(async () => {
-    stopStream();
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1080 } },
-        audio: false,
-      });
-      streamRef.current = s;
-      if (videoRef.current) {
-        videoRef.current.srcObject = s;
-        await videoRef.current.play().catch(() => undefined);
-      }
-      setCamError(null);
-    } catch {
-      setCamError("No camera access — build your avatar instead.");
-    }
-  }, [facing, stopStream]);
-
-  useEffect(() => {
-    if (mode !== "selfie" || selfie) {
-      stopStream();
-      return;
-    }
-    void startStream();
-    return stopStream;
-  }, [mode, selfie, startStream, stopStream]);
-
-  function snap() {
-    const v = videoRef.current;
-    if (!v || !v.videoWidth) return;
-    const size = Math.min(v.videoWidth, v.videoHeight);
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(v, (v.videoWidth - size) / 2, (v.videoHeight - size) / 2, size, size, 0, 0, size, size);
-    setSelfie(canvas.toDataURL("image/jpeg", 0.9));
-    stopStream();
+  function renderIt(fromSelfie: string | null) {
+    setStage("render");
+    void generate(
+      fromSelfie ? SELFIE_PROMPT : buildPrompt(traits, Math.floor(Math.random() * 1_000_000)),
+      fromSelfie,
+    );
   }
-
-  const generate = useCallback(
-    async (opts: {
-      prompt: string;
-      reference: string | null;
-      traits?: Traits;
-      isSelfie?: boolean;
-    }) => {
-      const run = ++runRef.current;
-      setBusy(true);
-      setIsFinal(false);
-      try {
-        await streamAvatar(opts.prompt, opts.reference, (url, final) => {
-          if (runRef.current !== run) return;
-          setFrame(url);
-          if (final) {
-            setIsFinal(true);
-            if (!opts.isSelfie) {
-              setBaseImage(url);
-              if (opts.traits) setAppliedTraits(opts.traits);
-            }
-          }
-        });
-      } catch (e) {
-        if (runRef.current === run) {
-          toast.error(e instanceof Error ? e.message : "Couldn't create your avatar.");
-        }
-      } finally {
-        if (runRef.current === run) setBusy(false);
-      }
-    },
-    [],
-  );
-
-
-  const renderLook = useCallback(
-    (t: Traits, l: { pose: string; seed: number }, base: string | null, changed: (keyof Traits)[]) => {
-      const fresh = !base || changed.length === 0 || changed.includes("gender");
-      void generate({
-        prompt: fresh ? buildPrompt(t, l.pose, l.seed) : buildEditPrompt(t, changed),
-        reference: fresh ? null : base,
-        traits: t,
-      });
-    },
-    [generate],
-  );
-
-  // The first render fires the moment you pick male or female, and every tap
-  // after that re-renders the same character automatically (short debounce so
-  // rapid taps collapse into one render).
-  useEffect(() => {
-    if (mode !== "build" || !traits.gender) return;
-    if (!appliedTraits) {
-      renderLook(traits, look, null, []);
-      return;
-    }
-    const changed = diffTraits(appliedTraits, traits);
-    if (changed.length === 0 || busy) return;
-    const t = setTimeout(() => renderLook(traits, look, baseImage, changed), 450);
-    return () => clearTimeout(t);
-  }, [mode, traits, look, appliedTraits, baseImage, busy, renderLook]);
-
-
 
   async function keep() {
     if (!frame) return;
@@ -634,320 +279,305 @@ export function AvatarStudio({
     }
   }
 
-  const chip = (active: boolean) =>
-    `rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${
-      active
-        ? "ember-fill text-primary-foreground"
-        : "border border-border bg-surface text-muted-foreground"
-    }`;
+  /* ---------------- gender ---------------- */
 
-  const Tile = ({
-    group,
-    value,
-    active,
-    onClick,
-  }: {
-    group: IconKey;
-    value: string;
-    active: boolean;
-    onClick: () => void;
-  }) => {
-    const cell = cellFor(group, value, traits.gender);
+  if (stage === "gender") {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={value}
-        aria-pressed={active}
-        title={value}
-        className={`${cell ? "w-[92px]" : "w-[68px]"} shrink-0 rounded-2xl border p-1.5 transition-all ${
-          active
-            ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
-            : "border-border bg-surface text-foreground/70"
-        }`}
-      >
-        <div className="aspect-square w-full overflow-hidden rounded-xl bg-background/40">
-          {cell ? (
-            <div className="size-full bg-cover" style={cellStyle(cell)} role="img" aria-label={value} />
-          ) : (
-            <OptionVisual group={group} value={value} />
-          )}
-        </div>
-        {cell ? null : (
-          <span className="mt-1 block truncate text-center text-[9px] font-medium text-muted-foreground">
-            {value}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  const buildReady = !!traits.gender;
-  const sections = sectionsFor(traits.gender);
-  const activeSection = sections.some((s) => s.id === section) ? section : "face";
-
-  const edit = (fn: (t: Traits) => Traits) => setTraits(fn);
-
-
-
-  return (
-    <div className="mx-auto w-full max-w-sm">
-      <div className="flex gap-2">
-        <button type="button" onClick={() => { setMode("selfie"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "selfie")}>
-          Snap a selfie
-        </button>
-        <button type="button" onClick={() => { setMode("build"); setFrame(null); setIsFinal(false); setBaseImage(null); setAppliedTraits(null); }} className={chip(mode === "build")}>
-          Build it instead
-        </button>
-      </div>
-
-      <div className="key-glow relative mt-6 aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-border bg-gradient-to-b from-primary/15 to-background">
-        {frame ? (
-          <img
-            src={frame}
-            alt="Your avatar"
-            className={`size-full object-contain transition-[filter] duration-500 ${
-              isFinal && !busy ? "blur-0" : "blur-xl"
-            }`}
-          />
-        ) : mode === "selfie" && selfie ? (
-          <img src={selfie} alt="Your selfie" className="size-full object-cover" />
-        ) : mode === "selfie" ? (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            className={`size-full object-cover ${facing === "user" ? "-scale-x-100" : ""}`}
-          />
-        ) : buildReady ? (
-          <div className="grid size-full animate-pulse place-items-center bg-gradient-to-b from-primary/25 to-background">
-            <Sparkles className="size-8 text-primary" />
-          </div>
-        ) : (
-          <div className="grid size-full place-items-center px-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Pick male or female below and your avatar appears here in full 3D. Style as much as you
-              like — every tap updates the same person instantly.
-            </p>
-          </div>
-        )}
-
-        {busy ? (
-          <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-background/70 px-4 py-3 text-xs backdrop-blur">
-            <Sparkles className="size-3.5 animate-pulse text-primary" />
-            {appliedTraits ? "Updating your avatar…" : "Rendering your avatar…"}
-          </div>
-        ) : null}
-
-        {mode === "selfie" && !selfie && !frame && !camError ? (
-          <button
-            type="button"
-            onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-            aria-label="Flip camera"
-            className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-background/60 backdrop-blur"
-          >
-            <SwitchCamera className="size-4" />
-          </button>
-        ) : null}
-      </div>
-
-      {camError && mode === "selfie" ? (
-        <p className="mt-3 text-xs text-destructive">{camError}</p>
-      ) : null}
-
-      {mode === "build" ? (
-        <div className="mt-5 space-y-4">
-          <div>
-            <div className="flex items-center justify-between">
-              <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                You are
-              </p>
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          {(["Male", "Female"] as const).map((g) => {
+            const preview = defaults(g);
+            return (
               <button
+                key={g}
                 type="button"
-                onClick={() =>
-                  edit((t) => {
-                    const g = t.gender || "Male";
-                    return { ...randomTraits(g), gender: g };
-                  })
-                }
-
-                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
+                onClick={() => {
+                  setTraits(defaults(g));
+                  setStepIndex(0);
+                  setStage("build");
+                }}
+                className="overflow-hidden rounded-3xl border border-border bg-surface text-left transition-transform active:scale-[0.98]"
               >
-                <Dices className="size-3.5" /> Shuffle
+                <AvatarArt traits={preview} className="aspect-[3/4] w-full" />
+                <span className="block px-4 py-3 font-display text-sm font-bold">{g}</span>
               </button>
-            </div>
-            <div className="mt-2 flex gap-2">
-              {GENDER.map((o) => (
-                <Tile
-                  key={o}
-                  group="gender"
-                  value={o}
-                  active={traits.gender === o}
-                  onClick={() =>
-                    edit((t) => ({ ...t, gender: o, ...genderDefaults(o) }))
-                  }
-
-                />
-              ))}
-            </div>
-
-          </div>
-
-          {buildReady ? (
-            <>
-              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                {sections.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSection(s.id)}
-                    className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
-                      activeSection === s.id
-                        ? "ember-fill text-primary-foreground"
-                        : "border border-border bg-surface text-muted-foreground"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              {sections.filter((s) => s.id === activeSection).map((s) => (
-                <div key={s.id} className="space-y-4 rounded-[28px] border border-border bg-surface/60 p-4">
-                  <p className="text-xs text-muted-foreground">{s.blurb}</p>
-                  {s.groups.map((g) => (
-                    <div key={g.key}>
-                      <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                        {g.label}
-                        {g.kind === "multi" ? " — pick as many as you like" : ""}
-                      </p>
-                      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
-                        {g.opts.map((o) =>
-                          g.kind === "single" ? (
-                            <Tile
-                              key={o}
-                              group={g.key as IconKey}
-                              value={o}
-                              active={traits[g.key] === o}
-                              onClick={() => edit((t) => ({ ...t, [g.key]: o }))}
-                            />
-                          ) : (
-                            <Tile
-                              key={o}
-                              group={g.key as IconKey}
-                              value={o}
-                              active={traits[g.key].includes(o)}
-                              onClick={() =>
-                                edit((t) => {
-                                  const cur = t[g.key];
-                                  return {
-                                    ...t,
-                                    [g.key]: cur.includes(o)
-                                      ? cur.filter((e) => e !== o)
-                                      : [...cur, o],
-                                  };
-                                })
-                              }
-                            />
-                          ),
-                        )}
-                      </div>
-
-                    </div>
-                  ))}
-                  {s.id === "wardrobe" || s.id === "accessories" ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      Everything here is free. Limited drops arrive later.
-                    </p>
-                  ) : null}
-                </div>
-              ))}
-            </>
-          ) : null}
-
+            );
+          })}
         </div>
-      ) : null}
-
-      <div className="mt-6 space-y-3">
-        {mode === "selfie" && !selfie ? (
-          <button
-            type="button"
-            onClick={snap}
-            disabled={!!camError}
-            className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-40"
-          >
-            <Camera className="size-4" /> Take the shot
-          </button>
-        ) : mode === "build" ? (
-          <button
-            type="button"
-            onClick={() => {
-              const l = { pose: pick(POSES), seed: Math.floor(Math.random() * 1_000_000) };
-              setLook(l);
-              void generate({
-                prompt: baseImage
-                  ? "Keep the EXACT same character from the reference image — identical face, hair, " +
-                    `outfit and colours — but re-pose them: ${l.pose}. Same glossy 3D animated ` +
-                    "feature-film render style and lighting. No text, no watermark."
-                  : buildPrompt(traits, l.pose, l.seed),
-                reference: baseImage,
-                traits,
-              });
-            }}
-            disabled={busy || !buildReady}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold disabled:opacity-50"
-          >
-            <RefreshCw className="size-4" />
-            {busy ? "Rendering…" : "Try another take"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() =>
-              void generate({ prompt: SELFIE_PROMPT, reference: selfie, isSelfie: true })
-            }
-            disabled={busy}
-            className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {frame ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
-            {busy ? "Creating…" : frame ? "Try another" : "Create my avatar"}
-          </button>
-        )}
-
-
-        {frame && isFinal ? (
-          <button
-            type="button"
-            onClick={() => void keep()}
-            disabled={saving}
-            className="ember-fill flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            <Check className="size-4" /> {saving ? "Saving…" : "This is me"}
-          </button>
-        ) : null}
-
-        {mode === "selfie" && selfie && !busy ? (
-          <button
-            type="button"
-            onClick={() => {
-              setSelfie(null);
-              setFrame(null);
-            }}
-            className="w-full text-center text-xs text-muted-foreground underline"
-          >
-            Retake the selfie
-          </button>
-        ) : null}
-
+        <button
+          type="button"
+          onClick={() => setSelfieOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-border bg-surface py-3 text-sm font-semibold"
+        >
+          <Camera className="size-4" /> Start from a selfie instead
+        </button>
         {onSkip ? (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="w-full text-center text-xs text-muted-foreground underline"
-          >
+          <button type="button" onClick={onSkip} className="w-full text-xs text-muted-foreground underline">
             Skip for now
           </button>
         ) : null}
+        {selfieOpen ? (
+          <SelfieSheet
+            onClose={() => setSelfieOpen(false)}
+            onShot={(url) => {
+              setSelfie(url);
+              setSelfieOpen(false);
+              renderIt(url);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  /* ---------------- render ---------------- */
+
+  if (stage === "render") {
+    return (
+      <div className="space-y-5">
+        <div className="relative overflow-hidden rounded-[2rem] border border-border bg-surface">
+          {frame ? (
+            <img
+              src={frame}
+              alt="Your Reelzy avatar"
+              className={`aspect-[3/4] w-full object-cover transition-[filter] duration-500 ${
+                isFinal ? "blur-0" : "blur-xl"
+              }`}
+            />
+          ) : (
+            <div className="grid aspect-[3/4] w-full place-items-center">
+              <AvatarArt traits={traits} className="h-full w-full opacity-40" />
+            </div>
+          )}
+          {busy ? (
+            <span className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-background/80 px-4 py-2 text-xs font-semibold backdrop-blur">
+              <Sparkles className="size-3.5 animate-pulse text-primary" /> Rendering the 3D you…
+            </span>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => renderIt(selfie)}
+            className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface py-3 text-sm font-semibold disabled:opacity-50"
+          >
+            <RefreshCw className="size-4" /> Try another
+          </button>
+          <button
+            type="button"
+            disabled={!isFinal || saving}
+            onClick={() => void keep()}
+            className="ember-fill flex items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
+          >
+            <Check className="size-4" /> This is me
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelfie(null);
+            setStage(traits.gender ? "build" : "gender");
+          }}
+          className="w-full text-xs text-muted-foreground underline"
+        >
+          Back to styling
+        </button>
+      </div>
+    );
+  }
+
+  /* ---------------- build ---------------- */
+
+  const last = stepIndex === steps.length - 1;
+
+  return (
+    <div className="space-y-5">
+      <div className="sticky top-0 z-10 -mx-1 rounded-[2rem] bg-background/85 px-1 pb-3 pt-1 backdrop-blur">
+        <div className="overflow-hidden rounded-[1.75rem] border border-border">
+          <AvatarArt traits={traits} className="aspect-[4/3] w-full" />
+        </div>
+        <div className="mt-3 flex items-center gap-1.5">
+          {steps.map((s, i) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setStepIndex(i)}
+              aria-label={s.title}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                i <= stepIndex ? "ember-fill" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display text-xl font-extrabold tracking-[-0.03em]">{step.title}</h2>
+        <p className="text-sm text-muted-foreground">{step.blurb}</p>
+      </div>
+
+      <div className="space-y-5">
+        {step.rows.map((r) => (
+          <div key={r.key}>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                {r.label}
+              </h3>
+              <span className="text-[11px] text-muted-foreground">{String(traits[r.key])}</span>
+            </div>
+            <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+              {r.opts.map((opt) => {
+                const active = traits[r.key] === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    title={opt}
+                    aria-label={opt}
+                    aria-pressed={active}
+                    onClick={() => set(r.key, opt)}
+                    className={`w-[78px] shrink-0 overflow-hidden rounded-2xl border-2 transition-transform active:scale-95 ${
+                      active ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_25%,transparent)]" : "border-border"
+                    }`}
+                  >
+                    <AvatarArt
+                      traits={{ ...traits, [r.key]: opt } as Traits}
+                      zoom={r.zoom}
+                      className="aspect-square w-full"
+                    />
+                    <span className="block truncate bg-surface px-1.5 py-1 text-[10px] font-semibold">
+                      {opt}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 pt-2">
+        <button
+          type="button"
+          onClick={() =>
+            stepIndex === 0 ? setStage("gender") : setStepIndex((i) => Math.max(0, i - 1))
+          }
+          className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-surface"
+          aria-label="Back"
+        >
+          <ArrowLeft className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setTraits(randomTraits(traits.gender === "Female" ? "Female" : "Male"))}
+          className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-surface"
+          aria-label="Surprise me"
+        >
+          <Dices className="size-5" />
+        </button>
+        {last ? (
+          <button
+            type="button"
+            onClick={() => renderIt(null)}
+            className="ember-fill flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold text-primary-foreground"
+          >
+            <Sparkles className="size-4" /> Create my avatar
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setStepIndex((i) => i + 1)}
+            className="ember-fill flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold text-primary-foreground"
+          >
+            Next <ArrowRight className="size-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Selfie                                                              */
+/* ------------------------------------------------------------------ */
+
+function SelfieSheet({ onClose, onShot }: { onClose: () => void; onShot: (dataUrl: string) => void }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [facing, setFacing] = useState<"user" | "environment">("user");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const start = async () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1080 } },
+          audio: false,
+        });
+        if (cancelled) {
+          s.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = s;
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+          await videoRef.current.play().catch(() => undefined);
+        }
+        setError(null);
+      } catch {
+        setError("No camera access — build your avatar instead.");
+      }
+    };
+    void start();
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, [facing]);
+
+  function snap() {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) return;
+    const size = Math.min(v.videoWidth, v.videoHeight);
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(v, (v.videoWidth - size) / 2, (v.videoHeight - size) / 2, size, size, 0, 0, size, size);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    onShot(canvas.toDataURL("image/jpeg", 0.9));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-background/95 p-5 backdrop-blur">
+      <button type="button" onClick={onClose} className="self-end rounded-full border border-border p-2" aria-label="Close">
+        <X className="size-5" />
+      </button>
+      <div className="mt-4 flex-1 overflow-hidden rounded-[2rem] border border-border bg-black">
+        <video ref={videoRef} playsInline muted className="size-full object-cover" />
+      </div>
+      {error ? <p className="mt-3 text-center text-sm text-muted-foreground">{error}</p> : null}
+      <div className="mt-5 flex items-center justify-center gap-6">
+        <button
+          type="button"
+          onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+          className="grid size-12 place-items-center rounded-full border border-border bg-surface"
+          aria-label="Flip camera"
+        >
+          <SwitchCamera className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={snap}
+          className="ember-fill size-20 rounded-full shadow-[0_10px_30px_-8px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+          aria-label="Take selfie"
+        />
       </div>
     </div>
   );
