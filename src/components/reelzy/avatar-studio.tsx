@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-// categories are picture-driven; labels live in aria attributes only
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -567,7 +566,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           ))}
         </div>
         <nav className="-mx-5 mb-5 flex gap-6 overflow-x-auto border-b border-border px-5" aria-label="Avatar features">
-          {CATEGORIES.map((item) => (
+          {CATEGORIES.filter((item) => item !== "Beard" || gender === "Male").map((item) => (
             <Button
               key={item}
               type="button"
@@ -600,6 +599,24 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               onPick={(name, index) => updateFromPicture({ hair: name }, hairSheet, index)}
             />
           </div>
+        ) : null}
+
+        {category === "Wrinkles" ? (
+          <PictureGrid
+            sheet={SHEETS.wrinkles}
+            opts={WRINKLES}
+            value={traits.wrinkles}
+            onPick={(name, index) => updateFromPicture({ wrinkles: name }, SHEETS.wrinkles, index)}
+          />
+        ) : null}
+
+        {category === "Beard" && gender === "Male" ? (
+          <PictureGrid
+            sheet={SHEETS.beards}
+            opts={BEARDS}
+            value={traits.beard}
+            onPick={(name, index) => updateFromPicture({ beard: name }, SHEETS.beards, index)}
+          />
         ) : null}
 
         {category === "Outfits" ? (
