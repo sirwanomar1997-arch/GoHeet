@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, ShieldAlert, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, type LucideIcon } from "lucide-react";
-import { getProfile, getFeed, toggleFollow, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, type LucideIcon } from "lucide-react";
+import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
@@ -77,6 +77,8 @@ function ProfilePage() {
   const [messageText, setMessageText] = useState("");
   const [composing, setComposing] = useState(false);
   const report = useServerFn(submitReport);
+  const blockUser = useServerFn(toggleBlock);
+  const [safetyOpen, setSafetyOpen] = useState(false);
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
@@ -325,19 +327,64 @@ function ProfilePage() {
               >
                 Message
               </button>
-              <button
-                type="button"
-                aria-label="Report this person"
-                onClick={async () => {
-                  await report({
-                    data: { targetType: "user", targetId: p.id, category: "harassment" },
-                  });
-                  toast.success("Reported to the safety team.");
-                }}
-                className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-              >
-                <ShieldAlert className="size-4" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Report or block this person"
+                  aria-expanded={safetyOpen}
+                  onClick={() => setSafetyOpen((v) => !v)}
+                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+                >
+                  <Ban className="size-4 text-destructive" />
+                </button>
+                {safetyOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      className="fixed inset-0 z-40 cursor-default"
+                      onClick={() => setSafetyOpen(false)}
+                    />
+                    <div className="absolute bottom-full right-0 z-50 mb-2 w-44 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSafetyOpen(false);
+                          await report({
+                            data: { targetType: "user", targetId: p.id, category: "harassment" },
+                          });
+                          toast.success("Reported to the safety team.");
+                        }}
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
+                      >
+                        <ShieldAlert className="size-4 text-amber-400" />
+                        Report @{p.username}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSafetyOpen(false);
+                          try {
+                            const res = await blockUser({ data: { userId: p.id } });
+                            toast.success(
+                              res.blocked
+                                ? `@${p.username} is blocked. They can't see or contact you.`
+                                : `@${p.username} is unblocked.`,
+                            );
+                            void refetch();
+                          } catch (err) {
+                            toast.error((err as Error).message);
+                          }
+                        }}
+                        className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-surface"
+                      >
+                        <Ban className="size-4" />
+                        Block @{p.username}
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
           )}
           {!data.isSelf && composing ? (
