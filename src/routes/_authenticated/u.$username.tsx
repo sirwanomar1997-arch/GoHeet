@@ -77,6 +77,8 @@ function ProfilePage() {
   const [messageText, setMessageText] = useState("");
   const [composing, setComposing] = useState(false);
   const report = useServerFn(submitReport);
+  const blockUser = useServerFn(toggleBlock);
+  const [safetyOpen, setSafetyOpen] = useState(false);
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
