@@ -348,7 +348,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
 
   // Returning users keep the avatar they already have and just tweak it.
   useEffect(() => {
-    const url = me.data?.avatarUrl;
+    const url = me.data?.profile?.avatar_url;
     if (!url || resumedRef.current) return;
     resumedRef.current = true;
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("reelzy:avatar-gender") : null;
@@ -374,7 +374,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
         /* fall back to a fresh render on the first change */
       }
     })();
-  }, [me.data?.avatarUrl]);
+  }, [me.data?.profile?.avatar_url]);
 
   function update(patch: Partial<Traits>) {
     setTraits((t) => {
