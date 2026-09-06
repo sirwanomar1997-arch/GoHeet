@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { ArrowLeft, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveAvatar } from "@/lib/reelzy.functions";
+import { useMe } from "@/lib/use-me";
 import { streamAvatar } from "@/lib/stream-avatar";
 import {
-  ACCESSORIES,
+  accessoriesFor,
+  accessorySheetFor,
   BASE_AVATARS,
   BEARDS,
   EYE_COLORS,
@@ -273,6 +275,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const [saving, setSaving] = useState(false);
   const [category, setCategory] = useState<StudioCategory>("Hair");
 
+  const me = useMe();
+  const resumedRef = useRef(false);
   const runRef = useRef(0);
   const baseRef = useRef<string | null>(null);
   const finalFrameRef = useRef<string | null>(null);
@@ -283,6 +287,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const hairSheet = useMemo(() => hairSheetFor(traits.gender), [traits.gender]);
   const outfits = useMemo(() => outfitsFor(traits.gender), [traits.gender]);
   const outfitSheet = useMemo(() => outfitSheetFor(traits.gender), [traits.gender]);
+  const accessories = useMemo(() => accessoriesFor(traits.gender), [traits.gender]);
+  const accessorySheet = useMemo(() => accessorySheetFor(traits.gender), [traits.gender]);
 
   const generate = useCallback(
     async (prompt: string, reference: string | null, visualReference: string | null = null) => {
@@ -340,6 +346,36 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
 
   useEffect(() => () => void (timerRef.current && clearTimeout(timerRef.current)), []);
 
+  // Returning users keep the avatar they already have and just tweak it.
+  useEffect(() => {
+    const url = me.data?.profile?.avatar_url;
+    if (!url || resumedRef.current) return;
+    resumedRef.current = true;
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("reelzy:avatar-gender") : null;
+    const g: "Male" | "Female" = saved === "Female" ? "Female" : "Male";
+    setGender(g);
+    setTraits(defaultTraits(g));
+    setFrame(url);
+    setIsFinal(true);
+    setCategory("Hair");
+    void (async () => {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const dataUrl: string = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error("read failed"));
+          reader.readAsDataURL(blob);
+        });
+        baseRef.current = dataUrl;
+        finalFrameRef.current = dataUrl;
+      } catch {
+        /* fall back to a fresh render on the first change */
+      }
+    })();
+  }, [me.data?.profile?.avatar_url]);
+
   function update(patch: Partial<Traits>) {
     setTraits((t) => {
       const next = { ...t, ...patch };
@@ -372,13 +408,14 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       const list = on ? t.accessories.filter((a) => a !== name) : [...t.accessories, name].slice(-3);
       const next = { ...t, accessories: list };
       if (on) queueRender(next);
-      else void cellDataUrl(SHEETS.accessory, index).then((picture) => queueRender(next, false, picture));
+      else void cellDataUrl(accessorySheetFor(t.gender), index).then((picture) => queueRender(next, false, picture));
       return next;
     });
   }
 
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
+    if (typeof window !== "undefined") window.localStorage.setItem("reelzy:avatar-gender", g);
     baseRef.current = null;
     renderedRef.current = null;
     runRef.current++;
@@ -630,8 +667,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
 
         {category === "Extras" ? (
           <PictureGrid
-            sheet={SHEETS.accessory}
-            opts={ACCESSORIES}
+            sheet={accessorySheet}
+            opts={accessories}
             value={traits.accessories.length ? traits.accessories : ["no accessories"]}
             onPick={(name, index) => toggleAccessory(name, index)}
           />
