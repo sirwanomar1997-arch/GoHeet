@@ -242,37 +242,9 @@
     drop-shadow(0 0 15px color-mix(in oklab, var(--nav-profile) 38%, transparent));
 }
 
-@utility capture-orbit {
-  background: color-mix(in oklab, var(--background) 82%, var(--ember) 18%);
-  border: 2px solid color-mix(in oklab, var(--ember) 72%, var(--foreground) 28%);
-  box-shadow:
-    0 0 0 6px color-mix(in oklab, var(--ember-deep) 16%, transparent),
-    0 0 22px color-mix(in oklab, var(--ember) 58%, transparent),
-    0 0 48px color-mix(in oklab, var(--ember-deep) 38%, transparent),
-    0 20px 42px -14px color-mix(in oklab, var(--ember-deep) 88%, transparent),
-    inset 0 1px 0 color-mix(in oklab, var(--foreground) 20%, transparent);
-}
-
-@utility capture-face {
-  background:
-    radial-gradient(circle at 35% 24%, color-mix(in oklab, var(--ember) 70%, var(--foreground) 30%) 0%, transparent 26%),
-    var(--gradient-ember);
-  box-shadow:
-    inset 0 3px 3px color-mix(in oklab, var(--foreground) 38%, transparent),
-    inset 0 -12px 22px color-mix(in oklab, var(--ember-deep) 46%, transparent),
-    0 0 18px color-mix(in oklab, var(--ember) 42%, transparent);
-  animation: capture-breathe 2.8s ease-in-out infinite;
-}
-
-@utility capture-shine {
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--foreground) 44%, transparent),
-    color-mix(in oklab, var(--foreground) 4%, transparent)
-  );
-  filter: blur(1px);
-  opacity: 0.72;
-  transform: scaleX(0.82);
+/* Calm ember capture key — a quiet pilot light, not a signal flare. */
+@utility capture-key {
+  box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--ember-deep) 80%, transparent);
 }
 
 @utility hairline-top {
@@ -334,21 +306,6 @@
   }
 }
 
-@keyframes capture-breathe {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 3px 3px color-mix(in oklab, var(--foreground) 38%, transparent),
-      inset 0 -12px 22px color-mix(in oklab, var(--ember-deep) 46%, transparent),
-      0 0 16px color-mix(in oklab, var(--ember) 38%, transparent);
-  }
-  50% {
-    box-shadow:
-      inset 0 3px 3px color-mix(in oklab, var(--foreground) 44%, transparent),
-      inset 0 -12px 22px color-mix(in oklab, var(--ember-deep) 38%, transparent),
-      0 0 32px color-mix(in oklab, var(--ember) 68%, transparent);
-  }
-}
 
 @utility animate-shutter {
   animation: shutter 0.5s var(--ease-shutter) both;
