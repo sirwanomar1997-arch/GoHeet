@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2 } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles } from "lucide-react";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -91,6 +91,8 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [stage, setStage] = useState<"edit" | "details">("edit");
   const stageRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -371,6 +373,8 @@ function CameraPage() {
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
     setCaptured(null);
+    setStage("edit");
+    setFilterOpen(false);
     setCaption("");
     setPlace("");
     setOverlay(null);
@@ -426,6 +430,71 @@ function CameraPage() {
       setPublishing(false);
     }
   }
+
+  const musicSheet = (
+    <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
+      <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
+        <SheetHeader className="px-0">
+          <SheetTitle className="font-display">Add a track</SheetTitle>
+          <SheetDescription>Free instrumentals, cleared for use inside Reelzy.</SheetDescription>
+        </SheetHeader>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={musicSearch} onChange={(event) => setMusicSearch(event.target.value)} placeholder="Search tracks, artists or moods" className="h-11 bg-surface-raised pl-10" />
+        </div>
+        <div className="flex-1 space-y-2 overflow-y-auto pb-6">
+          {musicLoading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
+          ) : (music?.tracks.length ?? 0) === 0 ? (
+            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+              No tracks available right now. Try again in a moment.
+            </p>
+          ) : (
+            visibleTracks.map((t) => (
+              <div key={t.id} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3">
+                <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(t)} aria-label={`Preview ${t.title}`} className="shrink-0 overflow-hidden rounded-xl">
+                  {t.artworkUrl ? <img src={t.artworkUrl} alt="" className="size-full object-cover" /> : previewingTrackId === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}
+                </Button>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">{t.title}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {t.artist}
+                    {t.mood ? ` · ${t.mood}` : ""}
+                  </span>
+                </span>
+                <Button
+                  variant={track?.id === t.id ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => {
+                    previewAudioRef.current?.pause();
+                    setPreviewingTrackId(null);
+                    setTrack({ id: t.id, title: t.title, artist: t.artist, url: t.url, durationMs: t.durationMs });
+                    setMusicOffsetMs(0);
+                    setMusicOpen(false);
+                  }}
+                  aria-label={`Use ${t.title}`}
+                >
+                  <Check className="size-4" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+        {track ? (
+          <Button
+            variant="ghost"
+            className="h-12 rounded-2xl border border-border"
+            onClick={() => {
+              setTrack(null);
+              setMusicOpen(false);
+            }}
+          >
+            Remove music
+          </Button>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
 
   if (captured) {
     const media =
