@@ -3,6 +3,8 @@ import hairFemaleSheet from "@/assets/av2/hair-female.png";
 import outfitMaleSheet from "@/assets/av2/outfit-male.png";
 import outfitFemaleSheet from "@/assets/av2/outfit-female.png";
 import accessorySheet from "@/assets/av2/accessory.png";
+import wrinklesSheet from "@/assets/av2/wrinkles.png";
+import beardsSheet from "@/assets/av2/beards.png";
 import baseMale from "@/assets/av2/base-male.jpg";
 import baseFemale from "@/assets/av2/base-female.jpg";
 import styleReference from "@/assets/av2/style-reference.jpg";
@@ -20,6 +22,8 @@ export const SHEETS = {
   outfitMale: { src: outfitMaleSheet, cols: 5, rows: 4 },
   outfitFemale: { src: outfitFemaleSheet, cols: 5, rows: 4 },
   accessory: { src: accessorySheet, cols: 5, rows: 4 },
+  wrinkles: { src: wrinklesSheet, cols: 5, rows: 4 },
+  beards: { src: beardsSheet, cols: 5, rows: 4 },
 } satisfies Record<string, Sheet>;
 
 const cells = (names: readonly string[]): Cell[] => names.map((name, index) => ({ name, index }));
