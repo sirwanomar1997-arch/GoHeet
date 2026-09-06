@@ -9,9 +9,11 @@ import { streamAvatar } from "@/lib/stream-avatar";
 import {
   ACCESSORIES,
   BASE_AVATARS,
+  BEARDS,
   EYE_COLORS,
   HAIR_COLORS,
   SHEETS,
+  WRINKLES,
   SKINS,
   STYLE_REFERENCE,
   defaultTraits,
@@ -44,6 +46,10 @@ function describe(t: Traits) {
     `${t.skin.toLowerCase()} skin tone`,
     `${t.eyeColor.toLowerCase()} eyes`,
     t.hair.includes("bald") ? "bald head" : `${t.hair} hairstyle in ${t.hairColor.toLowerCase()}`,
+    t.wrinkles.startsWith("smooth skin")
+      ? "smooth youthful skin with no wrinkles"
+      : `visibly aged skin with ${t.wrinkles}`,
+    t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
     `wearing a ${t.outfit}`,
     t.accessories.length ? `wearing ${t.accessories.join(" and ")}` : "no accessories at all",
   ];
@@ -61,6 +67,18 @@ function changeLabels(prev: Traits, next: Traits): string[] {
   if (prev.hair !== next.hair)
     out.push(next.hair.includes("bald") ? "completely bald, no hair at all" : `hairstyle is now ${next.hair}`);
   if (prev.hairColor !== next.hairColor) out.push(`hair colour is now ${next.hairColor.toLowerCase()}`);
+  if (prev.wrinkles !== next.wrinkles)
+    out.push(
+      next.wrinkles.startsWith("smooth skin")
+        ? "skin is now smooth and youthful, all wrinkles removed"
+        : `skin is now visibly aged with ${next.wrinkles}, clearly visible`,
+    );
+  if (prev.beard !== next.beard)
+    out.push(
+      next.beard === "clean shaven"
+        ? "face is now clean shaven, all facial hair removed"
+        : `facial hair is now a ${next.beard}, clearly visible`,
+    );
   if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit}`);
   if (prev.accessories.join("|") !== next.accessories.join("|")) {
     out.push(
@@ -233,8 +251,8 @@ function SwatchGrid({
   );
 }
 
-type StudioCategory = "Skin" | "Eyes" | "Hair" | "Outfits" | "Extras";
-const CATEGORIES: StudioCategory[] = ["Skin", "Eyes", "Hair", "Outfits", "Extras"];
+type StudioCategory = "Skin" | "Eyes" | "Hair" | "Wrinkles" | "Beard" | "Outfits" | "Extras";
+const CATEGORIES: StudioCategory[] = ["Skin", "Eyes", "Hair", "Wrinkles", "Beard", "Outfits", "Extras"];
 
 /* ------------------------------------------------------------------ */
 /* Studio                                                              */
@@ -548,7 +566,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           ))}
         </div>
         <nav className="-mx-5 mb-5 flex gap-6 overflow-x-auto border-b border-border px-5" aria-label="Avatar features">
-          {CATEGORIES.map((item) => (
+          {CATEGORIES.filter((item) => item !== "Beard" || gender === "Male").map((item) => (
             <Button
               key={item}
               type="button"
@@ -581,6 +599,24 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               onPick={(name, index) => updateFromPicture({ hair: name }, hairSheet, index)}
             />
           </div>
+        ) : null}
+
+        {category === "Wrinkles" ? (
+          <PictureGrid
+            sheet={SHEETS.wrinkles}
+            opts={WRINKLES}
+            value={traits.wrinkles}
+            onPick={(name, index) => updateFromPicture({ wrinkles: name }, SHEETS.wrinkles, index)}
+          />
+        ) : null}
+
+        {category === "Beard" && gender === "Male" ? (
+          <PictureGrid
+            sheet={SHEETS.beards}
+            opts={BEARDS}
+            value={traits.beard}
+            onPick={(name, index) => updateFromPicture({ beard: name }, SHEETS.beards, index)}
+          />
         ) : null}
 
         {category === "Outfits" ? (
