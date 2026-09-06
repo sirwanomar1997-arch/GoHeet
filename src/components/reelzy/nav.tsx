@@ -75,10 +75,14 @@ export function ReelzyNav() {
         <Link
           to="/camera"
           aria-label="Open the Reelzy camera"
-          className="capture-orbit mx-0.5 -mt-14 grid size-24 shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
+          className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
         >
-          <span className="capture-face relative grid size-20 place-items-center overflow-hidden rounded-full">
-            <span className="capture-shine absolute inset-x-3 top-1.5 h-7 rounded-full" />
+          <span className="absolute inset-0 rounded-2xl bg-orange-600 opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
+          <span className="capture-disc relative grid size-full place-items-center overflow-hidden rounded-2xl">
+            <svg className="size-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 4v16M4 12h16" />
+            </svg>
+            <span className="capture-bevel pointer-events-none absolute inset-0.5 rounded-[14px] border border-white/20" />
           </span>
         </Link>
 
