@@ -3,6 +3,7 @@ import hairFemaleSheet from "@/assets/av2/hair-female.png";
 import outfitMaleSheet from "@/assets/av2/outfit-male.png";
 import outfitFemaleSheet from "@/assets/av2/outfit-female.png";
 import accessorySheet from "@/assets/av2/accessory.png";
+import accessoryMaleSheet from "@/assets/av2/accessory-male.png";
 import wrinklesSheet from "@/assets/av2/wrinkles.png";
 import beardsSheet from "@/assets/av2/beards.png";
 import baseMale from "@/assets/av2/base-male.jpg";
@@ -22,6 +23,7 @@ export const SHEETS = {
   outfitMale: { src: outfitMaleSheet, cols: 5, rows: 4 },
   outfitFemale: { src: outfitFemaleSheet, cols: 5, rows: 4 },
   accessory: { src: accessorySheet, cols: 5, rows: 4 },
+  accessoryMale: { src: accessoryMaleSheet, cols: 5, rows: 4 },
   wrinkles: { src: wrinklesSheet, cols: 5, rows: 4 },
   beards: { src: beardsSheet, cols: 5, rows: 4 },
 } satisfies Record<string, Sheet>;
@@ -176,7 +178,7 @@ export const OUTFITS_FEMALE = cells([
   "black abaya",
 ]);
 
-export const ACCESSORIES = cells([
+export const ACCESSORIES_FEMALE = cells([
   "no accessories",
   "black sunglasses",
   "aviator sunglasses",
@@ -197,6 +199,29 @@ export const ACCESSORIES = cells([
   "cream wool scarf",
   "silver over-ear headphones",
   "wireless earbuds",
+]);
+
+export const ACCESSORIES_MALE = cells([
+  "no accessories",
+  "black sunglasses",
+  "gold aviator sunglasses",
+  "round metal eyeglasses",
+  "clear frame eyeglasses",
+  "black baseball cap",
+  "grey knitted beanie",
+  "wide brim straw hat",
+  "brown fedora hat",
+  "black bucket hat",
+  "white muslim kufi prayer cap",
+  "black turban",
+  "red and white keffiyeh headscarf",
+  "silver over-ear headphones",
+  "white wireless earbuds",
+  "chunky grey wool scarf",
+  "gold chain necklace",
+  "silver stud earring",
+  "black sport headband",
+  "backwards snapback cap",
 ]);
 
 export const WRINKLES = cells([
@@ -250,6 +275,12 @@ export function hairFor(gender: "Male" | "Female") {
 }
 export function hairSheetFor(gender: "Male" | "Female") {
   return gender === "Female" ? SHEETS.hairFemale : SHEETS.hairMale;
+}
+export function accessoriesFor(gender: "Male" | "Female") {
+  return gender === "Female" ? ACCESSORIES_FEMALE : ACCESSORIES_MALE;
+}
+export function accessorySheetFor(gender: "Male" | "Female") {
+  return gender === "Female" ? SHEETS.accessory : SHEETS.accessoryMale;
 }
 export function outfitsFor(gender: "Male" | "Female") {
   return gender === "Female" ? OUTFITS_FEMALE : OUTFITS_MALE;
