@@ -327,19 +327,64 @@ function ProfilePage() {
               >
                 Message
               </button>
-              <button
-                type="button"
-                aria-label="Report this person"
-                onClick={async () => {
-                  await report({
-                    data: { targetType: "user", targetId: p.id, category: "harassment" },
-                  });
-                  toast.success("Reported to the safety team.");
-                }}
-                className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-              >
-                <ShieldAlert className="size-4" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Report or block this person"
+                  aria-expanded={safetyOpen}
+                  onClick={() => setSafetyOpen((v) => !v)}
+                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
+                >
+                  <Ban className="size-4 text-destructive" />
+                </button>
+                {safetyOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      className="fixed inset-0 z-40 cursor-default"
+                      onClick={() => setSafetyOpen(false)}
+                    />
+                    <div className="absolute bottom-full right-0 z-50 mb-2 w-44 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSafetyOpen(false);
+                          await report({
+                            data: { targetType: "user", targetId: p.id, category: "harassment" },
+                          });
+                          toast.success("Reported to the safety team.");
+                        }}
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
+                      >
+                        <ShieldAlert className="size-4 text-amber-400" />
+                        Report @{p.username}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSafetyOpen(false);
+                          try {
+                            const res = await blockUser({ data: { userId: p.id } });
+                            toast.success(
+                              res.blocked
+                                ? `@${p.username} is blocked. They can't see or contact you.`
+                                : `@${p.username} is unblocked.`,
+                            );
+                            void refetch();
+                          } catch (err) {
+                            toast.error((err as Error).message);
+                          }
+                        }}
+                        className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-surface"
+                      >
+                        <Ban className="size-4" />
+                        Block @{p.username}
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
           )}
           {!data.isSelf && composing ? (
