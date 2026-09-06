@@ -199,6 +199,52 @@ export const ACCESSORIES = cells([
   "wireless earbuds",
 ]);
 
+export const WRINKLES = cells([
+  "smooth skin, no wrinkles",
+  "subtle forehead lines",
+  "deep forehead furrows",
+  "frown lines between the brows",
+  "crow's feet around the eyes",
+  "under-eye lines",
+  "smile lines",
+  "marionette lines around the mouth",
+  "laugh lines on the cheeks",
+  "chin crease",
+  "fine lines all over the face",
+  "forehead lines and crow's feet",
+  "full mature wrinkles with grey streaks",
+  "deep elderly wrinkles over the whole face",
+  "forehead lines and frown lines",
+  "crow's feet and smile lines",
+  "weathered sun-aged fine lines",
+  "under-eye circles with lines",
+  "light expression lines",
+  "full senior ageing with jowls",
+]);
+
+export const BEARDS = cells([
+  "clean shaven",
+  "light stubble",
+  "heavy stubble",
+  "short boxed beard",
+  "full short beard",
+  "full long beard",
+  "goatee",
+  "circle beard",
+  "van dyke beard",
+  "soul patch",
+  "chin strap beard",
+  "anchor beard",
+  "balbo beard",
+  "mutton chop sideburns",
+  "horseshoe mustache",
+  "handlebar mustache",
+  "chevron mustache",
+  "pencil mustache",
+  "walrus mustache",
+  "full beard with handlebar mustache",
+]);
+
 export function hairFor(gender: "Male" | "Female") {
   return gender === "Female" ? HAIR_FEMALE : HAIR_MALE;
 }
@@ -220,6 +266,8 @@ export type Traits = {
   eyeColor: string;
   hairColor: string;
   hair: string;
+  wrinkles: string;
+  beard: string;
   outfit: string;
   accessories: string[];
 };
@@ -232,6 +280,8 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     eyeColor: female ? "Warm brown" : "Dark brown",
     hairColor: female ? "Chestnut brown" : "Dark brown",
     hair: female ? "long waves" : "short crop",
+    wrinkles: "smooth skin, no wrinkles",
+    beard: "clean shaven",
     outfit: female ? "pink knit sweater" : "white t-shirt",
     accessories: [],
   };
