@@ -149,11 +149,13 @@ function AuthPage() {
           <ReelzyWordmark />
         </Link>
 
-        <h1 className="mt-12 font-display text-3xl font-extrabold tracking-[-0.04em]">
-          Real moments.
+        <h1 className="mt-12 font-brand text-[2.6rem] leading-[1.02] tracking-tight">
+          <span className="ember-text">Reelz</span> your moment
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Capture your moment, right as it happens. Just life, pressed into a reality frame.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Capture your moment, right as it happens.
+          <br />
+          Just life, pressed into a reality frame.
         </p>
 
         <button
