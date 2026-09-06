@@ -501,7 +501,7 @@ function CameraPage() {
       captured.kind === "video" ? (
         <video
           src={captured.url}
-          className="size-full object-contain"
+          className="size-full object-cover"
           style={filterCss(look) ? { filter: filterCss(look) } : undefined}
           playsInline
           autoPlay
@@ -512,7 +512,7 @@ function CameraPage() {
         <img
           src={captured.url}
           alt="Your capture"
-          className="size-full object-contain"
+          className="size-full object-cover"
           style={filterCss(look) ? { filter: filterCss(look) } : undefined}
         />
       );
