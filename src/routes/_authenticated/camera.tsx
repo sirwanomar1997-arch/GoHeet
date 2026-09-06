@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2 } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles } from "lucide-react";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -91,6 +91,8 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [stage, setStage] = useState<"edit" | "details">("edit");
   const stageRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -371,6 +373,8 @@ function CameraPage() {
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
     setCaptured(null);
+    setStage("edit");
+    setFilterOpen(false);
     setCaption("");
     setPlace("");
     setOverlay(null);
@@ -427,194 +431,340 @@ function CameraPage() {
     }
   }
 
-  if (captured) {
-    return (
-      <main className="min-h-svh bg-background">
-        <div className="mx-auto max-w-lg px-4 pb-10 pt-4">
-          <div className="flex items-center justify-between">
-            <button type="button" onClick={retake} className="tap-target text-sm underline">
-              Retake
-            </button>
-            <p className="data-figure text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-              Captured just now
+  const musicSheet = (
+    <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
+      <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
+        <SheetHeader className="px-0">
+          <SheetTitle className="font-display">Add a track</SheetTitle>
+          <SheetDescription>Free instrumentals, cleared for use inside Reelzy.</SheetDescription>
+        </SheetHeader>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={musicSearch} onChange={(event) => setMusicSearch(event.target.value)} placeholder="Search tracks, artists or moods" className="h-11 bg-surface-raised pl-10" />
+        </div>
+        <div className="flex-1 space-y-2 overflow-y-auto pb-6">
+          {musicLoading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
+          ) : (music?.tracks.length ?? 0) === 0 ? (
+            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+              No tracks available right now. Try again in a moment.
             </p>
+          ) : (
+            visibleTracks.map((t) => (
+              <div key={t.id} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3">
+                <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(t)} aria-label={`Preview ${t.title}`} className="shrink-0 overflow-hidden rounded-xl">
+                  {t.artworkUrl ? <img src={t.artworkUrl} alt="" className="size-full object-cover" /> : previewingTrackId === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}
+                </Button>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">{t.title}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {t.artist}
+                    {t.mood ? ` · ${t.mood}` : ""}
+                  </span>
+                </span>
+                <Button
+                  variant={track?.id === t.id ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => {
+                    previewAudioRef.current?.pause();
+                    setPreviewingTrackId(null);
+                    setTrack({ id: t.id, title: t.title, artist: t.artist, url: t.url, durationMs: t.durationMs });
+                    setMusicOffsetMs(0);
+                    setMusicOpen(false);
+                  }}
+                  aria-label={`Use ${t.title}`}
+                >
+                  <Check className="size-4" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+        {track ? (
+          <Button
+            variant="ghost"
+            className="h-12 rounded-2xl border border-border"
+            onClick={() => {
+              setTrack(null);
+              setMusicOpen(false);
+            }}
+          >
+            Remove music
+          </Button>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+
+  if (captured) {
+    const media =
+      captured.kind === "video" ? (
+        <video
+          src={captured.url}
+          className="size-full object-contain"
+          style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+          playsInline
+          autoPlay
+          loop
+          controls={false}
+        />
+      ) : (
+        <img
+          src={captured.url}
+          alt="Your capture"
+          className="size-full object-contain"
+          style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+        />
+      );
+
+    if (stage === "details") {
+      return (
+        <main className="min-h-svh bg-background">
+          <div className="mx-auto max-w-lg px-4 pb-12 pt-4">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStage("edit")}
+                className="tap-target text-sm underline"
+              >
+                Back to editing
+              </button>
+              <p className="data-figure text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+                Almost live
+              </p>
+            </div>
+
+            <div className="mt-4 flex gap-4">
+              <div className="relative aspect-[9/16] w-28 shrink-0 overflow-hidden rounded-2xl bg-black">
+                {media}
+              </div>
+              <div className="flex-1 space-y-3">
+                <Textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value.slice(0, 300))}
+                  placeholder="Title or description…"
+                  className="min-h-28 bg-surface-raised"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={place}
+                  onChange={(e) => setPlace(e.target.value.slice(0, 60))}
+                  placeholder="Add a place (optional)"
+                  className="h-12 bg-surface-raised pl-10"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMusicOpen(true)}
+                className="flex h-12 w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised px-4 text-left text-sm"
+              >
+                <Music2 className="size-4 text-muted-foreground" />
+                <span className="truncate">{track ? `${track.title} · ${track.artist}` : "Add music (optional)"}</span>
+              </button>
+
+              {track ? (
+                <div className="space-y-4 rounded-2xl border border-border bg-surface-raised p-4">
+                  <label className="block space-y-2 text-xs text-muted-foreground">
+                    <span className="flex justify-between"><span>Start point</span><span>{Math.floor(musicOffsetMs / 1000)}s</span></span>
+                    <Slider value={[musicOffsetMs]} min={0} max={Math.max(0, (track.durationMs ?? 30000) - 1000)} step={1000} onValueChange={([value]) => setMusicOffsetMs(value ?? 0)} />
+                  </label>
+                  <label className="block space-y-2 text-xs text-muted-foreground">
+                    <span>Music volume</span>
+                    <Slider value={[musicVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setMusicVolume(value ?? 0.75)} />
+                  </label>
+                  <label className="block space-y-2 text-xs text-muted-foreground">
+                    <span>Original sound</span>
+                    <Slider value={[originalAudioVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setOriginalAudioVolume(value ?? 1)} />
+                  </label>
+                </div>
+              ) : null}
+
+              <Button
+                onClick={doPublish}
+                disabled={publishing || !session}
+                className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
+              >
+                {publishing ? "Publishing…" : "Publish"}
+              </Button>
+            </div>
           </div>
 
-          <div className="relative mt-3 overflow-hidden rounded-[28px] bg-surface">
-            {captured.kind === "video" ? (
-              <video
-                src={captured.url}
-                className="aspect-[9/16] w-full object-cover"
-                style={filterCss(look) ? { filter: filterCss(look) } : undefined}
-                controls
-                playsInline
-              />
-            ) : (
-              <img
-                src={captured.url}
-                alt="Your capture"
-                className="aspect-[9/16] w-full object-cover"
-                style={filterCss(look) ? { filter: filterCss(look) } : undefined}
-              />
-            )}
-            {overlay?.text ? (
-              <div
-                ref={stageRef}
-                className="absolute inset-0 touch-none"
-                onPointerMove={onDragMove}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
-              >
-                <p
-                  onPointerDown={startDrag}
-                  onClick={onTextTap}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") setTextOpen(true);
-                  }}
-                  aria-label="Tap to edit, drag to move your text"
-                  className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
-                    overlayStyleProps(overlay.style, overlay.color).className
+          {musicSheet}
+        </main>
+      );
+    }
+
+    // Full-screen editor: the frame owns the screen, tools sit on top of it.
+    return (
+      <main className="fixed inset-0 z-30 bg-black">
+        <div className="absolute inset-0">{media}</div>
+
+        {overlay?.text ? (
+          <div
+            ref={stageRef}
+            className="absolute inset-0 touch-none"
+            onPointerMove={onDragMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
+            <p
+              onPointerDown={startDrag}
+              onClick={onTextTap}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setTextOpen(true);
+              }}
+              aria-label="Tap to edit, drag to move your text"
+              className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
+                overlayStyleProps(overlay.style, overlay.color).className
+              }`}
+              style={{
+                left: `${overlay.x}%`,
+                top: `${overlay.y}%`,
+                transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
+                fontSize: `${overlay.size}px`,
+                ...overlayFontStyle(overlay.font),
+                ...overlayStyleProps(overlay.style, overlay.color).style,
+              }}
+            >
+              {overlay.text}
+            </p>
+            {draggingText ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-8">
+                <div
+                  className={`flex size-14 items-center justify-center rounded-full border-2 transition-all duration-150 ${
+                    trashHot
+                      ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
+                      : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
                   }`}
-                  style={{
-                    left: `${overlay.x}%`,
-                    top: `${overlay.y}%`,
-                    transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
-                    fontSize: `${overlay.size}px`,
-                    ...overlayFontStyle(overlay.font),
-                    ...overlayStyleProps(overlay.style, overlay.color).style,
-                  }}
+                  aria-hidden
                 >
-                  {overlay.text}
-                </p>
-                {draggingText ? (
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-4">
-                    <div
-                      className={`flex size-14 items-center justify-center rounded-full border-2 transition-all duration-150 ${
-                        trashHot
-                          ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
-                          : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
-                      }`}
-                      aria-hidden
-                    >
-                      <Trash2 className="size-6" />
-                    </div>
-                  </div>
-                ) : null}
+                  <Trash2 className="size-6" />
+                </div>
               </div>
             ) : null}
           </div>
-          {overlay?.text ? (
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Tap the text to style it — drag to move it.
-            </p>
-          ) : null}
+        ) : null}
 
+        {/* Top bar: leave, or move on to the details step. */}
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+          <button
+            type="button"
+            onClick={retake}
+            aria-label="Retake"
+            className="tap-target grid place-items-center rounded-full bg-black/55 text-white backdrop-blur"
+          >
+            <X className="size-5" />
+          </button>
+          <Button
+            onClick={() => {
+              setTextOpen(false);
+              setFilterOpen(false);
+              setStage("details");
+            }}
+            className="ember-fill h-10 rounded-full px-6 text-sm font-semibold text-primary-foreground"
+          >
+            Done
+          </Button>
+        </div>
 
-          {/* Creative tools — a look, a line of type, a track. Nothing heavier. */}
-          <div className="mt-4 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setTextOpen(true)}
-              className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised text-sm font-medium"
-            >
-              <TypeIcon className="size-4" /> {overlay?.text ? "Edit text" : "Add text"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMusicOpen(true)}
-              className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised px-3 text-sm font-medium"
-            >
-              <Music2 className="size-4" />
-              <span className="truncate">{track ? track.title : "Add music"}</span>
-            </button>
-          </div>
-
-          <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
-            {FILTERS.map((f) => (
+        {/* Side rail of tools, so nothing covers the frame. */}
+        {!textOpen ? (
+          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-3">
+            {[
+              {
+                key: "filter",
+                icon: <Sparkles className="size-5" />,
+                label: "Filters",
+                active: filterOpen || look !== "none",
+                onClick: () => setFilterOpen((v) => !v),
+              },
+              {
+                key: "text",
+                icon: <TypeIcon className="size-5" />,
+                label: overlay?.text ? "Edit text" : "Add text",
+                active: !!overlay?.text,
+                onClick: () => {
+                  setFilterOpen(false);
+                  if (!overlay) setOverlay({ ...DEFAULT_OVERLAY, text: "" });
+                  setTextOpen(true);
+                },
+              },
+              {
+                key: "music",
+                icon: <Music2 className="size-5" />,
+                label: track ? "Change music" : "Add music",
+                active: !!track,
+                onClick: () => {
+                  setFilterOpen(false);
+                  setMusicOpen(true);
+                },
+              },
+            ].map((tool) => (
               <button
-                key={f.id}
+                key={tool.key}
                 type="button"
-                onClick={() => setLook(f.id)}
-                aria-pressed={look === f.id}
-                className="shrink-0 text-center"
+                aria-label={tool.label}
+                onClick={tool.onClick}
+                className={`grid size-12 place-items-center rounded-full backdrop-blur transition-colors ${
+                  tool.active
+                    ? "bg-[image:var(--gradient-ember)] text-primary-foreground"
+                    : "bg-black/55 text-white"
+                }`}
               >
-                <span
-                  className={`block size-14 rounded-2xl border-2 transition-all ${
-                    look === f.id ? "border-primary scale-105" : "border-border"
-                  }`}
-                  style={{ backgroundImage: f.swatch }}
-                  aria-hidden
-                />
-                <span
-                  className={`data-figure mt-1.5 block text-[10px] uppercase tracking-[0.12em] ${
-                    look === f.id ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  {f.label}
-                </span>
+                {tool.icon}
               </button>
             ))}
           </div>
+        ) : null}
 
-          {track ? (
-            <div className="mt-4 space-y-4 rounded-2xl border border-border bg-surface-raised p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{track.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">{track.artist}</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(track)} aria-label="Preview selected track">
-                  {previewingTrackId === track.id ? <Pause className="size-4" /> : <Play className="size-4" />}
-                </Button>
-              </div>
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span className="flex justify-between"><span>Start point</span><span>{Math.floor(musicOffsetMs / 1000)}s</span></span>
-                <Slider value={[musicOffsetMs]} min={0} max={Math.max(0, (track.durationMs ?? 30000) - 1000)} step={1000} onValueChange={([value]) => setMusicOffsetMs(value ?? 0)} />
-              </label>
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span>Music volume</span>
-                <Slider value={[musicVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setMusicVolume(value ?? 0.75)} />
-              </label>
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span>Original sound</span>
-                <Slider value={[originalAudioVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setOriginalAudioVolume(value ?? 1)} />
-              </label>
+        {/* Filter tray, right on the frame. */}
+        {filterOpen && !textOpen ? (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-8 pt-10">
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setLook(f.id)}
+                  aria-pressed={look === f.id}
+                  className="shrink-0 text-center"
+                >
+                  <span
+                    className={`block size-14 rounded-2xl border-2 transition-all ${
+                      look === f.id ? "border-primary scale-105" : "border-white/30"
+                    }`}
+                    style={{ backgroundImage: f.swatch }}
+                    aria-hidden
+                  />
+                  <span
+                    className={`data-figure mt-1.5 block text-[10px] uppercase tracking-[0.12em] ${
+                      look === f.id ? "text-primary" : "text-white/70"
+                    }`}
+                  >
+                    {f.label}
+                  </span>
+                </button>
+              ))}
             </div>
-          ) : null}
-
-          <div className="mt-5 space-y-4">
-            <Textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value.slice(0, 300))}
-              placeholder="What's happening? (optional)"
-              className="min-h-20 bg-surface-raised"
-            />
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={place}
-                onChange={(e) => setPlace(e.target.value.slice(0, 60))}
-                placeholder="Add a place (optional)"
-                className="h-12 bg-surface-raised pl-10"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Reelzy keeps editing light on purpose. Caption it, place it, post it.
-            </p>
-            <Button
-              onClick={doPublish}
-              disabled={publishing || !session}
-              className="ember-fill h-13 h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
-            >
-              {publishing ? "Publishing…" : "Publish this moment"}
-            </Button>
           </div>
-        </div>
+        ) : null}
+
+        {!filterOpen && !textOpen && !overlay?.text ? (
+          <p className="absolute inset-x-0 bottom-8 text-center text-[11px] text-white/60">
+            Style it here, then tap Done to caption and publish.
+          </p>
+        ) : null}
 
         {textOpen ? (
-          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg rounded-t-[28px] border border-border bg-surface p-5 shadow-[0_-18px_60px_rgba(0,0,0,0.55)]">
+          <div className="absolute inset-x-0 bottom-0 z-40 rounded-t-[28px] border border-border bg-surface p-5 shadow-[0_-18px_60px_rgba(0,0,0,0.55)]">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="font-display text-lg">Say it loud</p>
@@ -631,7 +781,7 @@ function CameraPage() {
                 <X className="size-5" />
               </button>
             </div>
-            <div className="max-h-[46svh] space-y-5 overflow-y-auto pb-6">
+            <div className="max-h-[42svh] space-y-5 overflow-y-auto pb-6">
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
@@ -760,72 +910,11 @@ function CameraPage() {
           </div>
         ) : null}
 
-        <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
-          <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
-            <SheetHeader className="px-0">
-              <SheetTitle className="font-display">Add a track</SheetTitle>
-              <SheetDescription>Free instrumentals, cleared for use inside Reelzy.</SheetDescription>
-            </SheetHeader>
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={musicSearch} onChange={(event) => setMusicSearch(event.target.value)} placeholder="Search tracks, artists or moods" className="h-11 bg-surface-raised pl-10" />
-            </div>
-            <div className="flex-1 space-y-2 overflow-y-auto pb-6">
-              {musicLoading ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
-              ) : (music?.tracks.length ?? 0) === 0 ? (
-                <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                  No tracks available right now. Try again in a moment.
-                </p>
-              ) : (
-                visibleTracks.map((t) => (
-                  <div key={t.id} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3">
-                    <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(t)} aria-label={`Preview ${t.title}`} className="shrink-0 overflow-hidden rounded-xl">
-                      {t.artworkUrl ? <img src={t.artworkUrl} alt="" className="size-full object-cover" /> : previewingTrackId === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}
-                    </Button>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{t.title}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {t.artist}
-                        {t.mood ? ` · ${t.mood}` : ""}
-                        {t.durationMs ? ` · ${Math.floor(t.durationMs / 60000)}:${String(Math.round((t.durationMs % 60000) / 1000)).padStart(2, "0")}` : ""}
-                      </span>
-                    </span>
-                    <Button
-                      variant={track?.id === t.id ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => {
-                        previewAudioRef.current?.pause();
-                        setPreviewingTrackId(null);
-                        setTrack({ id: t.id, title: t.title, artist: t.artist, url: t.url, durationMs: t.durationMs });
-                        setMusicOffsetMs(0);
-                        setMusicOpen(false);
-                      }}
-                      aria-label={`Use ${t.title}`}
-                    >
-                      <Check className="size-4" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-            {track ? (
-              <Button
-                variant="ghost"
-                className="h-12 rounded-2xl border border-border"
-                onClick={() => {
-                  setTrack(null);
-                  setMusicOpen(false);
-                }}
-              >
-                Remove music
-              </Button>
-            ) : null}
-          </SheetContent>
-        </Sheet>
+        {musicSheet}
       </main>
     );
   }
+
 
   return (
     <main className="relative h-svh overflow-hidden bg-black">
