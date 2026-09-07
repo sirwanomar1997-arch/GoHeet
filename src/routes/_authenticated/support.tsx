@@ -22,6 +22,9 @@ import {
 
 export const Route = createFileRoute("/_authenticated/support")({
   component: SupportPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    topic: typeof search["topic"] === "string" ? (search["topic"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Help & support · GoHeet" },
