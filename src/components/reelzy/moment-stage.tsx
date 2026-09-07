@@ -14,9 +14,7 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Share2,
   Music2,
-  Repeat2,
 } from "lucide-react";
 import {
   Sheet,
