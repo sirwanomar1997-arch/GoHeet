@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Trash2, Send, Camera } from "lucide-react";
+import { Trash2, Send, Camera, Pencil } from "lucide-react";
 import { AppShell } from "@/components/reelzy/nav";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/reelzy/empty-state";
@@ -162,6 +162,14 @@ function ShareLaterPage() {
                     <Send className="mr-2 size-4" />
                     {busy === clip.id ? "Sharing…" : "Share now"}
                   </Button>
+                  <Link
+                    to="/camera"
+                    search={{ edit: clip.id }}
+                    aria-label="Edit this moment before sharing"
+                    className="tap-target grid h-12 place-items-center rounded-2xl border border-border px-5 text-sm"
+                  >
+                    <Pencil className="size-4" />
+                  </Link>
                   <Button
                     variant="ghost"
                     onClick={() => void remove(clip.id)}
@@ -172,6 +180,7 @@ function ShareLaterPage() {
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
+
               </div>
             </article>
           ))}
