@@ -226,8 +226,9 @@ function AdminPage() {
                       Dismiss
                     </button>
                   </div>
-                </li>
-              ))}
+                 </li>
+                );
+              })}
             </ul>
           )
         ) : null}
