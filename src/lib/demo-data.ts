@@ -222,7 +222,7 @@ export const demoComments: Record<string, Array<{
   ],
 };
 
-export const demoNotifications: DemoNotification[] = [
+const rawNotifications: Array<Omit<DemoNotification, "momentThumbUrl" | "momentCaption">> = [
   { id: "n1", type: "like", createdAt: hoursAgo(1), read: false, momentId: "demo-1", actor: { username: "lena", displayName: "Lena", avatarUrl: avatar3 } },
   { id: "n2", type: "follow", createdAt: hoursAgo(2), read: false, momentId: null, actor: { username: "david", displayName: "David", avatarUrl: avatar2 } },
   { id: "n3", type: "comment", createdAt: hoursAgo(3), read: false, momentId: "demo-1", actor: { username: "lena", displayName: "Lena", avatarUrl: avatar3 } },
@@ -232,6 +232,16 @@ export const demoNotifications: DemoNotification[] = [
   { id: "n7", type: "comment", createdAt: daysAgo(1), read: true, momentId: "demo-2", actor: { username: "maya", displayName: "Maya", avatarUrl: avatar1 } },
   { id: "n8", type: "follow", createdAt: daysAgo(2), read: true, momentId: null, actor: { username: "maya", displayName: "Maya", avatarUrl: avatar1 } },
 ];
+
+export const demoNotifications: DemoNotification[] = rawNotifications.map((n) => {
+  const m = n.momentId ? demoMoments.find((x) => x.id === n.momentId) : undefined;
+  return {
+    ...n,
+    momentThumbUrl: m?.posterUrl ?? m?.mediaUrl ?? null,
+    momentCaption: m?.caption ?? null,
+  };
+});
+
 
 export const demoPeople = [
   { id: "d1", username: "maya", displayName: "Maya", avatarUrl: avatar1, followerCount: 12847, momentCount: 87 },
