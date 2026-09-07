@@ -7,7 +7,6 @@ import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
 import { MomentStage } from "@/components/reelzy/moment-stage";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
-import { ReelzyMark } from "@/components/reelzy/logo";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: FeedPage,
@@ -29,7 +28,6 @@ function FeedPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-background via-background/90 to-transparent px-4 py-3 backdrop-blur-xl">
-        <ReelzyMark className="size-7" />
         <div className="flex flex-1 items-center gap-5">
           {(["discover", "following"] as const).map((s) => (
             <button

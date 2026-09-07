@@ -235,12 +235,15 @@ export const getMe = createServerFn({ method: "POST" })
       .select("birth_date")
       .eq("user_id", context.userId)
       .maybeSingle();
-    const avatars = await signAvatars([data.avatar_url]);
+    const avatars = await signAvatars([data.avatar_url, data.personal_photo_url]);
     return {
       profile: {
         ...data,
         birth_date: priv?.birth_date ?? null,
         avatar_url: data.avatar_url ? (avatars[data.avatar_url] ?? null) : null,
+        personal_photo_url: data.personal_photo_url
+          ? (avatars[data.personal_photo_url] ?? null)
+          : null,
       },
       roles: (roles ?? []).map((r) => r.role),
       isStaff: (roles ?? []).some((r) => r.role === "admin" || r.role === "moderator"),
@@ -295,6 +298,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     showLikes?: boolean;
     showSaves?: boolean;
     showReposts?: boolean;
+    profileImageType?: "avatar" | "photo";
     socialLinks?: Record<string, string>;
   }) => ({
     displayName: z.string().trim().max(40).optional().parse(d.displayName),
@@ -312,6 +316,9 @@ export const updateProfile = createServerFn({ method: "POST" })
     showLikes: d.showLikes,
     showSaves: d.showSaves,
     showReposts: d.showReposts,
+    profileImageType: d.profileImageType
+      ? z.enum(["avatar", "photo"]).parse(d.profileImageType)
+      : undefined,
     socialLinks: d.socialLinks ? socialSchema.parse(d.socialLinks) : undefined,
   }))
   .handler(async ({ data, context }) => {
@@ -328,8 +335,8 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.showLikes !== undefined) patch["show_likes"] = data.showLikes;
     if (data.showSaves !== undefined) patch["show_saves"] = data.showSaves;
     if (data.showReposts !== undefined) patch["show_reposts"] = data.showReposts;
+    if (data.profileImageType !== undefined) patch["profile_image_type"] = data.profileImageType;
     if (data.socialLinks !== undefined) patch["social_links"] = data.socialLinks;
-    // Profile pictures are avatars only — avatar_url is set exclusively by saveAvatar.
 
     if (data.username) {
       const { data: current } = await sb
@@ -729,12 +736,18 @@ type FeedRow = {
     artwork_url: string | null;
     attribution_text: string | null;
   } | null;
-  profiles?: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
+  profiles?: { id: string; username: string; display_name: string | null; avatar_url: string | null; personal_photo_url: string | null; profile_image_type: string } | null;
 };
 
 async function decorate(rows: FeedRow[], viewerId: string | null): Promise<MomentCard[]> {
   const media = await signMedia(rows.flatMap((r) => [r.media_path, r.thumbnail_path]));
-  const avatars = await signAvatars(rows.map((r) => r.profiles?.avatar_url ?? null));
+  const avatars = await signAvatars(
+    rows.map((r) =>
+      r.profiles?.profile_image_type === "photo" && r.profiles.personal_photo_url
+        ? r.profiles.personal_photo_url
+        : (r.profiles?.avatar_url ?? null),
+    ),
+  );
 
   const musicUrls = await signMusic(rows.map((r) => r.music_tracks?.audio_path ?? null));
 
@@ -789,13 +802,18 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
       id: r.profiles?.id ?? r.author_id,
       username: r.profiles?.username ?? "someone",
       displayName: r.profiles?.display_name ?? null,
-      avatarUrl: r.profiles?.avatar_url ? (avatars[r.profiles.avatar_url] ?? null) : null,
+      avatarUrl: (() => {
+        const path = r.profiles?.profile_image_type === "photo" && r.profiles.personal_photo_url
+          ? r.profiles.personal_photo_url
+          : r.profiles?.avatar_url;
+        return path ? (avatars[path] ?? null) : null;
+      })(),
     },
   }));
 }
 
 const MOMENT_SELECT =
-  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, music_offset_ms, music_volume, original_audio_volume, music_tracks(id, title, artist, audio_path, artwork_url, attribution_text), profiles!moments_author_profile_fkey(id, username, display_name, avatar_url)";
+  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, music_offset_ms, music_volume, original_audio_volume, music_tracks(id, title, artist, audio_path, artwork_url, attribution_text), profiles!moments_author_profile_fkey(id, username, display_name, avatar_url, personal_photo_url, profile_image_type)";
 
 /** Music lives in a private bucket; playback uses short-lived signed URLs. */
 async function signMusic(paths: Array<string | null>): Promise<Record<string, string>> {
@@ -1215,14 +1233,20 @@ export const getProfile = createServerFn({ method: "POST" })
       (a, b) => (repostOrder.get(a.id) ?? 0) - (repostOrder.get(b.id) ?? 0),
     );
 
-    const avatars = await signAvatars([profile.avatar_url]);
+    const displayImagePath = profile.profile_image_type === "photo" && profile.personal_photo_url
+      ? profile.personal_photo_url
+      : profile.avatar_url;
+    const avatars = await signAvatars([displayImagePath]);
     return {
       profile: {
         id: profile.id,
         username: profile.username,
         displayName: profile.display_name,
         bio: profile.bio,
-        avatarUrl: profile.avatar_url ? (avatars[profile.avatar_url] ?? null) : null,
+        avatarUrl: displayImagePath ? (avatars[displayImagePath] ?? null) : null,
+        hasAvatar: !!profile.avatar_url,
+        hasPersonalPhoto: !!profile.personal_photo_url,
+        profileImageType: profile.profile_image_type,
         followerCount: profile.follower_count,
         followingCount: profile.following_count,
         momentCount: profile.moment_count,
@@ -1533,6 +1557,41 @@ export const saveAvatar = createServerFn({ method: "POST" })
 
     const signed = await signAvatars([path]);
     await track(context.userId, "avatar_created");
+    return { path, url: signed[path] ?? null };
+  });
+
+export const saveProfilePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { dataUrl: string }) => ({
+    dataUrl: z.string().min(32).max(12_000_000).regex(/^data:image\/(jpeg|png|webp);base64,/).parse(d.dataUrl),
+  }))
+  .handler(async ({ data, context }) => {
+    const header = data.dataUrl.slice(0, data.dataUrl.indexOf(","));
+    const contentType = header.includes("image/png")
+      ? "image/png"
+      : header.includes("image/webp")
+        ? "image/webp"
+        : "image/jpeg";
+    const extension = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    const base64 = data.dataUrl.slice(data.dataUrl.indexOf(",") + 1);
+    const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    if (binary.byteLength > 8 * 1024 * 1024) throw new Error("Profile photo is too large.");
+
+    const sb = await admin();
+    const path = `${context.userId}/photo-${Date.now()}.${extension}`;
+    const { error: uploadError } = await sb.storage
+      .from("avatars")
+      .upload(path, binary, { contentType, upsert: false });
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { error } = await sb
+      .from("profiles")
+      .update({ personal_photo_url: path, profile_image_type: "photo" })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+
+    const signed = await signAvatars([path]);
+    await track(context.userId, "profile_photo_updated");
     return { path, url: signed[path] ?? null };
   });
 

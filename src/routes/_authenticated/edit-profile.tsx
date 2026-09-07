@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import { updateProfile } from "@/lib/reelzy.functions";
+import { ArrowLeft, Camera, Check, Sparkles } from "lucide-react";
+import { saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
 import { Input } from "@/components/ui/input";
@@ -31,11 +31,15 @@ function EditProfilePage() {
   const navigate = useNavigate();
   const { data: me } = useMe();
   const save = useServerFn(updateProfile);
+  const uploadPhoto = useServerFn(saveProfilePhoto);
+  const photoInput = useRef<HTMLInputElement>(null);
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [links, setLinks] = useState<Record<string, string>>({});
+  const [imageType, setImageType] = useState<"avatar" | "photo">("avatar");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const p = me?.profile as
@@ -47,6 +51,8 @@ function EditProfilePage() {
     setDisplayName(p.display_name ?? "");
     setBio(p.bio ?? "");
     setLinks(p.social_links ?? {});
+    setImageType(p.profile_image_type === "photo" ? "photo" : "avatar");
+    setPhotoPreview(p.personal_photo_url ?? null);
   }, [me]);
 
   const mutation = useMutation({
@@ -59,6 +65,49 @@ function EditProfilePage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const photoMutation = useMutation({
+    mutationFn: (dataUrl: string) => uploadPhoto({ data: { dataUrl } }),
+    onSuccess: async (result) => {
+      setPhotoPreview(result.url);
+      setImageType("photo");
+      await qc.invalidateQueries({ queryKey: ["me"] });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Profile photo updated.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function chooseImageType(next: "avatar" | "photo") {
+    if (next === "photo" && !photoPreview) {
+      photoInput.current?.click();
+      return;
+    }
+    setImageType(next);
+    try {
+      await save({ data: { profileImageType: next } });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not switch profile image.");
+    }
+  }
+
+  function onPhoto(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Choose a photo smaller than 8 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => photoMutation.mutate(String(reader.result));
+    reader.onerror = () => toast.error("Could not read that photo.");
+    reader.readAsDataURL(file);
+  }
 
   const card = "rounded-2xl border border-border bg-surface p-4";
 
@@ -81,16 +130,48 @@ function EditProfilePage() {
 
       <div className="space-y-4 px-5 pb-12">
         <section className={card}>
-          <h2 className="font-display text-base font-semibold">Your avatar</h2>
+          <h2 className="font-display text-base font-semibold">Profile picture</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Your picture on Reelzy is always your avatar — no personal photos.
+            Use your personal photo or switch back to your avatar anytime.
           </p>
-          <Link
-            to="/avatar"
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised px-3.5 py-1.5 text-[11px] font-semibold"
-          >
-            <Sparkles className="size-3" /> Open the avatar studio
-          </Link>
+          <input
+            ref={photoInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(event) => onPhoto(event.target.files?.[0])}
+          />
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => void chooseImageType("photo")}
+              className={`relative aspect-square overflow-hidden rounded-2xl border-2 bg-surface-raised ${imageType === "photo" ? "border-primary" : "border-border"}`}
+            >
+              {photoPreview ? (
+                <img src={photoPreview} alt="Your personal profile" className="size-full object-cover" />
+              ) : (
+                <span className="grid size-full place-items-center"><Camera className="size-8 text-muted-foreground" /></span>
+              )}
+              {imageType === "photo" ? <Check className="absolute right-2 top-2 size-5 rounded-full bg-primary p-1 text-primary-foreground" /> : null}
+            </button>
+            <button
+              type="button"
+              onClick={() => void chooseImageType("avatar")}
+              disabled={!me?.profile?.avatar_url}
+              className={`relative aspect-square overflow-hidden rounded-2xl border-2 bg-surface-raised disabled:opacity-40 ${imageType === "avatar" ? "border-primary" : "border-border"}`}
+            >
+              {me?.profile?.avatar_url ? <img src={me.profile.avatar_url} alt="Your avatar" className="size-full object-cover" /> : <span className="grid size-full place-items-center"><Sparkles className="size-8 text-muted-foreground" /></span>}
+              {imageType === "avatar" ? <Check className="absolute right-2 top-2 size-5 rounded-full bg-primary p-1 text-primary-foreground" /> : null}
+            </button>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => photoInput.current?.click()} disabled={photoMutation.isPending} className="flex-1">
+              <Camera className="size-4" /> {photoMutation.isPending ? "Uploading…" : photoPreview ? "Change photo" : "Add photo"}
+            </Button>
+            <Button asChild type="button" variant="outline" className="flex-1">
+              <Link to="/avatar"><Sparkles className="size-4" /> Edit avatar</Link>
+            </Button>
+          </div>
         </section>
 
         <section className={card}>
