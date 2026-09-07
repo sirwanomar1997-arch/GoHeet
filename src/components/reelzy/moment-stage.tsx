@@ -641,7 +641,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — sits low, just above the bottom bar */}
-      <div className="absolute bottom-[74px] right-2 z-20 flex flex-col items-center gap-2.5">
+      <div className="absolute bottom-[26px] right-2 z-20 flex flex-col items-center gap-2.5">
         <div className="flex flex-col items-center">
           <button
             type="button"
