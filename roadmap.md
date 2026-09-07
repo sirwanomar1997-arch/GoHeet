@@ -16,3 +16,8 @@
 
 - [x] Match the login page to the supplied GoHeet reference
 - [x] Use the same reference-matched flame everywhere in the app
+
+- [x] Native app packaging config (Capacitor)
+- [x] App icons, maskable icon, launch screen
+- [x] Store release guide with listing text and form answers
+- [ ] Apple/Google accounts, screenshots, push keys, device testing (needs your accounts)
