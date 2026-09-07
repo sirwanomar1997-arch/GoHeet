@@ -147,7 +147,7 @@ function ActivityPage() {
                   (n.actor?.username ?? "R").slice(0, 1)
                 )}
               </span>
-              <p className="flex-1 text-sm">
+              <p className="min-w-0 flex-1 text-sm">
                 {n.actor ? (
                   <Link
                     to="/u/$username"
@@ -160,13 +160,35 @@ function ActivityPage() {
                   <span className="font-semibold">GoHeet</span>
                 )}{" "}
                 <span className="text-muted-foreground">{COPY[n.type] ?? n.type}</span>
+                {n.momentCaption ? (
+                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                    {n.momentCaption}
+                  </span>
+                ) : null}
               </p>
               <span className="data-figure shrink-0 text-[11px] text-muted-foreground">
                 {timeAgo(n.createdAt)}
               </span>
+              {n.momentId ? (
+                <Link
+                  to="/feed"
+                  search={{ moment: n.momentId }}
+                  className="block size-11 shrink-0 overflow-hidden rounded-xl bg-surface-raised"
+                >
+                  {n.momentThumbUrl ? (
+                    <img
+                      src={n.momentThumbUrl}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                  ) : null}
+                </Link>
+              ) : null}
             </li>
           ))}
         </ul>
+
       )}
     </AppShell>
   );
