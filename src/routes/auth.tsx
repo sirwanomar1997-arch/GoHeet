@@ -318,7 +318,8 @@ function AuthPage() {
           <Link to="/legal/$doc" params={{ doc: "guidelines" }} className="underline">
             Community Guidelines
           </Link>
-          .
+          . GoHeet has zero tolerance for objectionable content or abusive
+          people — reports are actioned within 24 hours.
         </p>
       </div>
     </main>

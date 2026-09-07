@@ -524,7 +524,7 @@ function SettingsPage() {
             Download everything we hold about you
           </button>
           <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {["terms", "privacy", "guidelines", "safety", "cookies", "copyright"].map((d) => (
+            {["terms", "privacy", "guidelines", "safety", "support", "cookies", "copyright"].map((d) => (
               <Link key={d} to="/legal/$doc" params={{ doc: d }} className="underline capitalize">
                 {d}
               </Link>
