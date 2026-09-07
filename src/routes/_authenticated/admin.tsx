@@ -136,10 +136,28 @@ function AdminPage() {
             <EmptyState title="Queue is clear." line="No open reports right now." />
           ) : (
             <ul className="space-y-3">
-              {queue.data?.reports.map((r) => (
-                <li key={r.id} className="rounded-2xl border border-border bg-surface p-4">
+              {queue.data?.reports.map((r) => {
+                const ageH = (Date.now() - new Date(r.created_at).getTime()) / 3_600_000;
+                const overdue = ageH >= 24;
+                const urgent = !overdue && ageH >= 18;
+                return (
+                <li
+                  key={r.id}
+                  className={`rounded-2xl border bg-surface p-4 ${
+                    overdue ? "border-destructive/70" : "border-border"
+                  }`}
+                >
                   <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     {r.target_type} · {r.category} · {timeAgo(r.created_at)}
+                  </p>
+                  <p
+                    className={`data-figure mt-1 text-[10px] uppercase tracking-[0.2em] ${
+                      overdue ? "text-destructive" : urgent ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {overdue
+                      ? `SLA breached · ${Math.floor(ageH - 24)}h over`
+                      : `${Math.max(0, Math.ceil(24 - ageH))}h left in 24h SLA`}
                   </p>
                   <p className="mt-1.5 text-sm">{r.label}</p>
                   {r.details ? (
