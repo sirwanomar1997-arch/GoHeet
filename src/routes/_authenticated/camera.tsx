@@ -316,7 +316,12 @@ function CameraPage() {
   useEffect(() => {
     if (captured) return;
     void startStream();
-    return stopStream;
+    return () => {
+      // Never tear the camera down while a take is running — flipping the lens
+      // changes this effect's inputs, and stopping here would end the recording.
+      if (recordingRef.current) return;
+      stopStream();
+    };
   }, [startStream, stopStream, captured]);
 
   useEffect(() => {
