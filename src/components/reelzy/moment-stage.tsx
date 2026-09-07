@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import {
   Eye,
   MessageCircle,
+  MessageSquareMore,
+  Repeat,
   Bookmark,
   MoreHorizontal,
   Send,
