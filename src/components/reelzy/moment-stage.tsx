@@ -96,6 +96,7 @@ export function MomentStage({
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [heetPop, setHeetPop] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const look = filterCss(moment.styleFilter);
