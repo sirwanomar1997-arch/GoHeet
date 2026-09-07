@@ -251,7 +251,13 @@ export const getMe = createServerFn({ method: "POST" })
     };
   });
 
-const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp"] as const;
+const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp", "website"] as const;
+/** Domains that always require an age confirmation before opening. */
+const ADULT_DOMAINS = [
+  "onlyfans.com", "fansly.com", "fanvue.com", "manyvids.com", "chaturbate.com",
+  "pornhub.com", "xvideos.com", "xhamster.com", "stripchat.com", "adultwork.com",
+  "justfor.fans", "loyalfans.com", "myfreecams.com", "cam4.com", "brazzers.com",
+];
 const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => string> = {
   instagram: (h) => `https://instagram.com/${h}`,
   tiktok: (h) => `https://tiktok.com/@${h}`,
@@ -260,11 +266,14 @@ const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => str
   facebook: (h) => `https://facebook.com/${h}`,
   snapchat: (h) => `https://snapchat.com/add/${h}`,
   whatsapp: (h) => `https://wa.me/${h.replace(/[^\d]/g, "")}`,
+  website: (h) => `https://${h}`,
 };
 const socialSchema = z
   .record(z.string(), z.string().trim().max(300))
   .transform((v) => {
     const out: Record<string, string> = {};
+    // "website_adult" is a flag, not a link: it forces the age warning.
+    if (String(v["website_adult"] ?? "").trim() === "1") out["website_adult"] = "1";
     for (const [k, val] of Object.entries(v)) {
       if (!(SOCIAL_KEYS as readonly string[]).includes(k)) continue;
       const key = k as (typeof SOCIAL_KEYS)[number];
@@ -283,6 +292,10 @@ const socialSchema = z
       }
       url.protocol = "https:";
       out[key] = url.toString();
+      if (key === "website") {
+        const host = url.hostname.replace(/^www\./, "").toLowerCase();
+        if (ADULT_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))) out["website_adult"] = "1";
+      }
     }
     return out;
   });

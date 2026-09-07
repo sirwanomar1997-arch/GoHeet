@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -82,6 +82,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [adultLink, setAdultLink] = useState<string | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
   const { data, isLoading, refetch } = useQuery({
@@ -272,9 +273,28 @@ function ProfilePage() {
                   facebook: { Icon: Facebook, label: "Facebook", color: "oklch(0.6 0.18 255)" },
                   snapchat: { Icon: Ghost, label: "Snapchat", color: "oklch(0.88 0.16 100)" },
                   whatsapp: { Icon: MessageCircle, label: "WhatsApp", color: "oklch(0.72 0.17 150)" },
+                  website: { Icon: Globe, label: "Website", color: "oklch(0.68 0.18 250)" },
                 };
                 const meta = icons[key];
                 if (!meta) return null;
+                if (key === "website" && (p.socialLinks ?? {})["website_adult"] === "1") {
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setAdultLink(url)}
+                      aria-label="Website (18+)"
+                      title="Website (18+)"
+                      className="relative grid size-11 place-items-center rounded-2xl border border-border bg-surface transition-transform hover:scale-105 active:scale-95"
+                      style={{ color: meta.color }}
+                    >
+                      <Globe className="size-5" />
+                      <span className="absolute -right-1 -top-1 rounded-full bg-[oklch(0.6_0.22_25)] px-1.5 py-px text-[9px] font-bold text-white">
+                        18+
+                      </span>
+                    </button>
+                  );
+                }
                 return (
                   <a
                     key={key}
@@ -543,6 +563,18 @@ function ProfilePage() {
                           />
                         ) : null}
                         <span className="stage-vignette absolute inset-0" aria-hidden />
+                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
+                          <Eye
+                            className="size-3.5"
+                            style={{
+                              color: "oklch(0.78 0.16 235)",
+                              filter: "drop-shadow(0 0 5px oklch(0.7 0.2 235 / 75%))",
+                            }}
+                          />
+                          <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
+                            {formatCount(m.viewCount)}
+                          </span>
+                        </span>
                         {m.kind !== "photo" ? (
                           <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
                             <Play className="size-3 fill-current" />
@@ -555,8 +587,7 @@ function ProfilePage() {
                             </span>
                           ) : null}
                           <span className="data-figure mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <span>{formatCount(m.viewCount)} seen</span>
-                            <span className="text-primary">{formatCount(m.likeCount)} felt</span>
+                            <span className="text-primary">{formatCount(m.likeCount)} heets</span>
                           </span>
                         </span>
                       </button>
@@ -581,6 +612,40 @@ function ProfilePage() {
           );
         })()}
       </section>
+
+      {adultLink ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-surface p-5 text-center">
+            <span className="mx-auto grid size-12 place-items-center rounded-full bg-[oklch(0.6_0.22_25/15%)] text-[oklch(0.7_0.2_25)]">
+              <ShieldAlert className="size-6" />
+            </span>
+            <h3 className="mt-3 font-display text-lg font-bold">Adult content ahead</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This link leaves GoHeet and may contain content for adults only. Continue only if you
+              are 18 or older.
+            </p>
+            <p className="mt-2 break-all text-[11px] text-muted-foreground/80">{adultLink}</p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdultLink(null)}
+                className="h-11 flex-1 rounded-2xl border border-border text-sm font-semibold"
+              >
+                Go back
+              </button>
+              <a
+                href={adultLink}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={() => setAdultLink(null)}
+                className="ember-fill grid h-11 flex-1 place-items-center rounded-2xl text-sm font-semibold text-primary-foreground"
+              >
+                I'm 18+, continue
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }
