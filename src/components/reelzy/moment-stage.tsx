@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Flame,
+  
   MessageCircle,
   Bookmark,
   MoreHorizontal,
@@ -45,6 +45,7 @@ import {
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { formatCount, timeAgo } from "./format";
+import { HeetFlame } from "./heet-flame";
 import { ShareSheet } from "./share-sheet";
 import {
   filterCss,
@@ -92,6 +93,7 @@ export function MomentStage({
   const [shareOpen, setShareOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const look = filterCss(moment.styleFilter);
@@ -227,6 +229,8 @@ export function MomentStage({
     if (pointersRef.current.size < 2) pinchRef.current = null;
   };
 
+  const heetRef = useRef<(x: number, y: number) => void>(() => undefined);
+
   const onMediaTap = (e: React.PointerEvent) => {
     endPointer(e);
     if (movedRef.current) return;
@@ -239,9 +243,10 @@ export function MomentStage({
       if (zoomStateRef.current.zoom > 1) {
         setZoom(1);
         setOffset({ x: 0, y: 0 });
-      } else {
-        zoomAtRef.current(2.5, e.clientX - rect.left, e.clientY - rect.top);
+        return;
       }
+      // Double tap anywhere on the frame = heet it, with the flame popping up.
+      heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
       return;
     }
     lastTapRef.current = now;
@@ -369,6 +374,15 @@ export function MomentStage({
     },
   });
 
+  heetRef.current = (x: number, y: number) => {
+    const id = Date.now() + Math.random();
+    setBursts((b) => [...b, { id, x, y }]);
+    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 900);
+    if (!liked) likeMutation.mutate();
+  };
+
+
+
   const saveMutation = useMutation({
     mutationFn: () => save({ data: { momentId: moment.id } }),
     onSuccess: (res) => {
@@ -468,6 +482,18 @@ export function MomentStage({
 
 
       {/* Film treatment: vignette + grain so real footage reads cinematic. */}
+      {/* Flames that pop where the frame was double-tapped */}
+      {bursts.map((b) => (
+        <span
+          key={b.id}
+          aria-hidden
+          className="animate-heet-burst pointer-events-none absolute z-20"
+          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+        >
+          <HeetFlame className="size-28" glow />
+        </span>
+      ))}
+
       <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
       <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
 
@@ -526,7 +552,7 @@ export function MomentStage({
         {fullscreen ? (
           <>
             <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-              <Flame className="size-3" strokeWidth={2} />
+              <HeetFlame className="size-3.5" />
               {formatCount(likeCount)}
             </span>
             <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
@@ -641,15 +667,24 @@ export function MomentStage({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={() => likeMutation.mutate()}
+            onClick={(e) => {
+              const host = containerRef.current?.getBoundingClientRect();
+              if (!liked && host) {
+                heetRef.current(host.width / 2, host.height / 2);
+              } else {
+                likeMutation.mutate();
+              }
+              e.currentTarget.blur();
+            }}
             aria-pressed={liked}
+            aria-label={liked ? "Remove your heet" : "Heet this moment"}
             className={`tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition-all active:scale-[0.97] ${
               liked
-                ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                ? "border-[#FF6B24]/60 bg-[#FF6B24]/12 text-foreground"
                 : "border-border bg-surface-raised text-foreground"
             }`}
           >
-            <Flame className="size-4" strokeWidth={liked ? 2.6 : 1.8} />
+            <HeetFlame className={`size-6 ${liked ? "animate-heet-flicker" : ""}`} filled={liked} />
             <span className="data-figure text-xs">{formatCount(likeCount)}</span>
           </button>
           <button

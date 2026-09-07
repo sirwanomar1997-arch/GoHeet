@@ -1,7 +1,11 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Search, Heart } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useMe } from "@/lib/use-me";
+import { listNotifications } from "@/lib/reelzy.functions";
+import { HeetFlame } from "./heet-flame";
 
 function ReelzIcon({ className }: { className?: string }) {
   return (
@@ -37,6 +41,15 @@ export function ReelzyNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data } = useMe();
   const username = data?.profile?.username;
+
+  const fetchNotifications = useServerFn(listNotifications);
+  const { data: notif } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetchNotifications({ data: undefined as never }),
+    refetchInterval: 45_000,
+    staleTime: 20_000,
+  });
+  const hasUnread = !!notif?.notifications.some((n) => !n.read);
 
   const item = (active: boolean, color: string, glow: string) =>
     `group relative grid size-14 place-items-center rounded-2xl transition-all duration-300 active:scale-90 ${color} ${
@@ -88,11 +101,19 @@ export function ReelzyNav() {
 
         <Link
           to="/activity"
-          className={item(pathname === "/activity", "text-nav-pulse", "nav-glow-pulse")}
-          aria-label="Notifications and messages"
+          className={`group relative grid size-14 place-items-center rounded-2xl transition-all duration-300 active:scale-90 ${
+            pathname === "/activity" ? "scale-105 opacity-100" : "opacity-75"
+          }`}
+          aria-label={hasUnread ? "New activity" : "Notifications and messages"}
         >
-          <Heart className="size-8" strokeWidth={2.25} />
-          <span className={spark(pathname === "/activity")} />
+          <HeetFlame
+            className={`size-8 ${hasUnread ? "animate-heet-flicker" : ""}`}
+            glow={pathname === "/activity"}
+          />
+          {hasUnread ? (
+            <span className="absolute right-3 top-2.5 size-2 rounded-full bg-[#FF2D8A] shadow-[0_0_8px_#FF2D8A]" />
+          ) : null}
+          <span className={`${spark(pathname === "/activity")} text-nav-pulse`} />
         </Link>
         {username ? (
           <Link

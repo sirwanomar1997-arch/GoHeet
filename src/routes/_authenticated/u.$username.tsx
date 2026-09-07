@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Heart, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, type LucideIcon } from "lucide-react";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
 import { formatCount, dayLabel } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
+import { HeetFlame } from "@/components/reelzy/heet-flame";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
@@ -243,14 +244,21 @@ function ProfilePage() {
             </div>
           ) : null}
 
+          {/* the heet total — one big flame, one big number */}
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <HeetFlame className="size-16" glow />
+            <span className="font-display text-[46px] font-extrabold leading-none tracking-[-0.04em] text-foreground">
+              {formatCount(p.totalLikes)}
+            </span>
+          </div>
+
           {/* stat band — a premium segmented strip */}
-          <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="mt-5 grid w-full grid-cols-4 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
               ["Reelz", formatCount(p.momentCount)],
               ["Followers", formatCount(p.followerCount)],
               ["Following", formatCount(p.followingCount)],
               ["Views", formatCount(p.totalViews)],
-              ["Likes", formatCount(p.totalLikes)],
             ].map(([k, v]) => (
               <div
                 key={k as string}
@@ -270,7 +278,7 @@ function ProfilePage() {
             <div className="mt-5 grid w-full grid-cols-3 gap-2">
               {([
                 { id: "reelz", label: "Your Reelz", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
-                { id: "liked", label: "Liked", Icon: Heart, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
+                { id: "liked", label: "Heeted", Icon: null, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
                 { id: "saved", label: "Saved", Icon: Bookmark, color: "oklch(0.74 0.15 150)", glow: "oklch(0.74 0.15 150 / 60%)" },
               ] as const).map(({ id, label, Icon, color, glow }) => {
                 const activeTab = tab === id;
@@ -282,15 +290,22 @@ function ProfilePage() {
                     aria-label={label}
                     className="relative flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-surface py-3 transition-colors"
                   >
-                    <Icon
-                      className="size-5"
-                      strokeWidth={activeTab ? 2.4 : 1.7}
-                      style={{
-                        color,
-                        opacity: activeTab ? 1 : 0.45,
-                        filter: activeTab ? `drop-shadow(0 0 7px ${glow})` : "none",
-                      }}
-                    />
+                    {Icon ? (
+                      <Icon
+                        className="size-5"
+                        strokeWidth={activeTab ? 2.4 : 1.7}
+                        style={{
+                          color,
+                          opacity: activeTab ? 1 : 0.45,
+                          filter: activeTab ? `drop-shadow(0 0 7px ${glow})` : "none",
+                        }}
+                      />
+                    ) : (
+                      <HeetFlame
+                        className="size-5"
+                        glow={activeTab}
+                      />
+                    )}
                     <span className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
                       {label}
                     </span>
