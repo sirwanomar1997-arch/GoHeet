@@ -234,14 +234,23 @@ export const demoPeople = [
   { id: "d4", username: "goheet", displayName: "GoHeet", avatarUrl: avatar2, followerCount: 54200, momentCount: 24 },
 ];
 
-export function getDemoFeed(scope: "following" | "discover"): { moments: MomentCard[]; nextCursor: null } {
+export async function getDemoFeed(scope: "following" | "discover"): Promise<{ moments: MomentCard[]; nextCursor: null }> {
   if (scope === "following") {
     return { moments: demoMoments.slice(0, 3), nextCursor: null };
   }
   return { moments: demoMoments, nextCursor: null };
 }
 
-export function getDemoProfile(username: string, sort: "new" | "views" | "old") {
+export async function getDemoProfile(
+  username: string,
+  sort: "new" | "views" | "old",
+): Promise<{
+  profile: DemoProfile | null;
+  moments: MomentCard[];
+  reposts: MomentCard[];
+  isFollowing: boolean;
+  isSelf: boolean;
+}> {
   const profile = demoProfiles[username.toLowerCase()];
   if (!profile) return { profile: null, moments: [], reposts: [], isFollowing: false, isSelf: false };
 
@@ -261,7 +270,10 @@ export function getDemoProfile(username: string, sort: "new" | "views" | "old") 
   };
 }
 
-export function getDemoSearch(q: string) {
+export async function getDemoSearch(q: string): Promise<{
+  people: typeof demoPeople;
+  moments: MomentCard[];
+}> {
   const term = q.trim().toLowerCase();
   if (!term) {
     return { people: demoPeople, moments: demoMoments.slice(0, 6) };
