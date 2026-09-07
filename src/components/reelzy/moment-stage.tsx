@@ -672,7 +672,7 @@ export function MomentStage({
           color={NEON_BLUE}
           onClick={() => setCommentsOpen(true)}
         >
-          <MessageSquareMore className="size-[24px]" strokeWidth={2} />
+          <NeonComment />
         </RailAction>
 
         <RailAction
