@@ -179,7 +179,7 @@ function ProfilePage() {
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
             {p.avatarUrl ? (
-              <img src={p.avatarUrl} alt={`${p.username}'s avatar`} className="size-full object-cover" />
+              <img src={p.avatarUrl} alt={`${p.username}'s profile`} className="size-full object-cover" />
             ) : (
               <span className="grid size-full place-items-center font-display text-6xl font-extrabold uppercase text-muted-foreground">
                 {p.username.slice(0, 1)}
@@ -189,7 +189,7 @@ function ProfilePage() {
 
           {data.isSelf ? (
             <Link
-              to="/avatar"
+              to="/edit-profile"
               className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               <Sparkles className="size-3" /> Manage profile picture
