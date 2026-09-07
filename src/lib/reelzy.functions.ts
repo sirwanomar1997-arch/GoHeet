@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+import { assertSafeText } from "@/lib/text-safety";
 
 /**
  * Reelzy core server API.
@@ -432,12 +433,12 @@ export const publishMoment = createServerFn({ method: "POST" })
     thumbnailPath: z.string().max(300).optional().parse(d.thumbnailPath),
     kind: z.enum(["video", "photo"]).parse(d.kind),
     durationMs: z.number().int().min(0).max(300_000).optional().parse(d.durationMs),
-    caption: z.string().trim().max(300).optional().parse(d.caption),
+    caption: assertSafeText(z.string().trim().max(300).optional().parse(d.caption)),
     locationLabel: z.string().trim().max(60).optional().parse(d.locationLabel),
     styleFilter: z.string().max(24).optional().parse(d.styleFilter),
     overlay: z
       .object({
-        text: z.string().trim().min(1).max(120),
+        text: z.string().trim().min(1).max(120).refine((t) => (assertSafeText(t), true)),
         font: z.string().max(16),
         style: z.string().max(16),
         place: z.string().max(16),
@@ -1124,7 +1125,7 @@ export const addComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string; body: string; parentId?: string | null }) => ({
     momentId: z.string().uuid().parse(d.momentId),
-    body: z.string().trim().min(1).max(500).parse(d.body),
+    body: assertSafeText(z.string().trim().min(1).max(500).parse(d.body)),
     parentId: d.parentId ? z.string().uuid().parse(d.parentId) : null,
   }))
   .handler(async ({ data, context }) => {
