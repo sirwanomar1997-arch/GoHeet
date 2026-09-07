@@ -251,7 +251,13 @@ export const getMe = createServerFn({ method: "POST" })
     };
   });
 
-const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp"] as const;
+const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp", "website"] as const;
+/** Domains that always require an age confirmation before opening. */
+const ADULT_DOMAINS = [
+  "onlyfans.com", "fansly.com", "fanvue.com", "manyvids.com", "chaturbate.com",
+  "pornhub.com", "xvideos.com", "xhamster.com", "stripchat.com", "adultwork.com",
+  "justfor.fans", "loyalfans.com", "myfreecams.com", "cam4.com", "brazzers.com",
+];
 const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => string> = {
   instagram: (h) => `https://instagram.com/${h}`,
   tiktok: (h) => `https://tiktok.com/@${h}`,
