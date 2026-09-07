@@ -188,7 +188,7 @@ export const completeSignup = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     if (ageFrom(data.birthDate) < 13) {
-      throw new Error("Reelzy is for people aged 13 and over.");
+      throw new Error("GoHeet is for people aged 13 and over.");
     }
     const sb = await admin();
     const { data: taken } = await sb.rpc("username_taken", { _username: data.username });
@@ -380,7 +380,7 @@ export const updateBirthDate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const age = ageFrom(data.birthDate);
     if (Number.isNaN(age) || age < 13) {
-      throw new Error("Reelzy is for people aged 13 and over.");
+      throw new Error("GoHeet is for people aged 13 and over.");
     }
     if (age > 120) throw new Error("Pick a valid date of birth.");
     const sb = await admin();
@@ -478,7 +478,7 @@ export const publishMoment = createServerFn({ method: "POST" })
       .eq("id", data.sessionId)
       .maybeSingle();
     if (!session || session.user_id !== context.userId) {
-      throw new Error("This moment was not captured with the Reelzy camera.");
+      throw new Error("This moment was not captured with the GoHeet camera.");
     }
     if (session.status !== "open") throw new Error("This capture session has already been used.");
     if (Date.now() - new Date(session.started_at).getTime() > 2 * 60 * 60 * 1000) {
@@ -500,7 +500,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     const fileName = data.mediaPath.slice(data.mediaPath.lastIndexOf("/") + 1);
     const { data: listed } = await sb.storage.from("moments").list(folder, { limit: 100 });
     const found = (listed ?? []).find((o) => o.name === fileName);
-    if (!found) throw new Error("Captured media was not found in Reelzy storage.");
+    if (!found) throw new Error("Captured media was not found in GoHeet storage.");
 
     // 4. Basic abuse control: max 20 published moments per hour.
     const { count } = await sb
