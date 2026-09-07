@@ -215,6 +215,50 @@ function EditProfilePage() {
         </section>
 
         <section className={card}>
+          <h2 className="font-display text-base font-semibold">Your link</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            One link of your own — a website, a shop, anything you want people to see. It shows as a
+            blue globe on your profile.
+          </p>
+          <div className="mt-4">
+            <Label htmlFor="website" className="flex items-center gap-2 text-xs">
+              <span
+                className="grid size-7 place-items-center rounded-xl border border-border bg-surface-raised"
+                style={{ color: "oklch(0.7 0.17 250)" }}
+              >
+                <Globe className="size-4" />
+              </span>
+              Website
+            </Label>
+            <Input
+              id="website"
+              value={links["website"] ?? ""}
+              maxLength={300}
+              inputMode="url"
+              autoCapitalize="off"
+              autoCorrect="off"
+              placeholder="https://yoursite.com"
+              onChange={(e) => setLinks((l) => ({ ...l, website: e.target.value.trim() }))}
+              className="mt-1.5 h-11 bg-surface-raised"
+            />
+            <label className="mt-3 flex items-start gap-2.5 rounded-xl border border-border bg-surface-raised p-3 text-xs">
+              <input
+                type="checkbox"
+                checked={links["website_adult"] === "1"}
+                onChange={(e) =>
+                  setLinks((l) => ({ ...l, website_adult: e.target.checked ? "1" : "" }))
+                }
+                className="mt-0.5 size-4 accent-[oklch(0.65_0.2_30)]"
+              />
+              <span className="text-muted-foreground">
+                This link leads to adult content (18+). Visitors must confirm their age before it
+                opens. Adult sites we recognise are flagged automatically.
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section className={card}>
           <h2 className="font-display text-base font-semibold">Your other platforms</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Paste the full link to your profile on each platform. It becomes a tappable icon on
