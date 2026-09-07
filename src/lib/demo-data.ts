@@ -146,7 +146,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
 };
 
 const captions = [
-  "Rolling down to the beach at golden hour 🛹🌅",
+  "Rolling down to the beach at golden hour",
   "Golden hour at the harbour 🌅 Stockholm never disappoints",
   "City lights hit different at midnight ✨",
   "Morning ritual ☕ What's yours?",
