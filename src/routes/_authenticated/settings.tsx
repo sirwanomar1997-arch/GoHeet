@@ -534,6 +534,24 @@ function SettingsPage() {
           </div>
         </section>
 
+        <section className="rounded-2xl border border-border p-4">
+          <h2 className="font-display text-base font-semibold">Screenshot mode</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Fills the feed, profiles, discover, and activity with sample content so you can capture App Store screenshots. Turn it off to see your real content.
+          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-sm font-medium">Screenshot mode</span>
+            <Switch
+              checked={demoMode}
+              onCheckedChange={(v) => {
+                setDemoMode(v);
+                toast.success(v ? "Screenshot mode on — showing demo content" : "Screenshot mode off — showing real content");
+              }}
+              aria-label="Toggle screenshot mode"
+            />
+          </div>
+        </section>
+
         <button
           type="button"
           onClick={() => signOut("/auth")}
