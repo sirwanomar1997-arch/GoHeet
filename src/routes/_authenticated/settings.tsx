@@ -24,6 +24,7 @@ import {
   updateProfile,
 } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
+import { useDemoMode, setDemoMode } from "@/lib/use-demo-mode";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/reelzy/nav";
 import { Input } from "@/components/ui/input";
