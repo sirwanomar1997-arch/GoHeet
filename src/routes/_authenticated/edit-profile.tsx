@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Camera, Check, Facebook, Ghost, Instagram, MessageCircle, Music2, Sparkles, Twitter, Youtube } from "lucide-react";
 import { saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
@@ -17,13 +17,13 @@ export const Route = createFileRoute("/_authenticated/edit-profile")({
 });
 
 const PLATFORMS = [
-  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/you" },
-  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@you" },
-  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@you" },
-  { key: "twitter", label: "X (Twitter)", placeholder: "https://x.com/you" },
-  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/you" },
-  { key: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/you" },
-  { key: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/46701234567" },
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/you", Icon: Instagram, color: "oklch(0.65 0.24 350)" },
+  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@you", Icon: Music2, color: "oklch(0.72 0.15 195)" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@you", Icon: Youtube, color: "oklch(0.6 0.22 25)" },
+  { key: "twitter", label: "X (Twitter)", placeholder: "https://x.com/you", Icon: Twitter, color: "oklch(0.75 0.02 250)" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/you", Icon: Facebook, color: "oklch(0.6 0.18 255)" },
+  { key: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/you", Icon: Ghost, color: "oklch(0.88 0.16 100)" },
+  { key: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/46701234567", Icon: MessageCircle, color: "oklch(0.72 0.17 150)" },
 ] as const;
 
 function EditProfilePage() {
@@ -124,7 +124,7 @@ function EditProfilePage() {
         </Link>
         <div>
           <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Edit profile</h1>
-          <p className="text-sm text-muted-foreground">How people see you on Reelzy.</p>
+          <p className="text-sm text-muted-foreground">How people see you on GoHeet.</p>
         </div>
       </header>
 
@@ -218,12 +218,18 @@ function EditProfilePage() {
           <h2 className="font-display text-base font-semibold">Your other platforms</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Paste the full link to your profile on each platform. It becomes a tappable icon on
-            your Reelzy profile.
+            your GoHeet profile.
           </p>
           <div className="mt-4 space-y-3">
             {PLATFORMS.map((pl) => (
               <div key={pl.key}>
-                <Label htmlFor={pl.key} className="text-xs">
+                <Label htmlFor={pl.key} className="flex items-center gap-2 text-xs">
+                  <span
+                    className="grid size-7 place-items-center rounded-xl border border-border bg-surface-raised"
+                    style={{ color: pl.color }}
+                  >
+                    <pl.Icon className="size-4" />
+                  </span>
                   {pl.label}
                 </Label>
                 <Input
