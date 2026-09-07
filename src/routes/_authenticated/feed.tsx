@@ -12,13 +12,15 @@ const DEMO_FEED = new URLSearchParams(
   typeof window === "undefined" ? "" : window.location.search,
 ).has("demo");
 
+import demoPhoto from "@/assets/av2/style-reference.jpg";
+
 const demoMoment: MomentCard = {
   id: "demo",
   caption: "Golden hour at the harbour 🌅",
-  kind: "video",
-  mediaUrl: null,
+  kind: "photo",
+  mediaUrl: demoPhoto,
   posterUrl: null,
-  durationMs: 12_000,
+  durationMs: null,
   locationLabel: "Stockholm",
   createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   viewCount: 1284,
