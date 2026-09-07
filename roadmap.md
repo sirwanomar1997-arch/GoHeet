@@ -8,4 +8,4 @@
 - [x] Add personal profile photos alongside avatars
 - [x] Add avatar/photo display switch
 - [x] Remove the orange symbol beside Out there
-- [ ] Verify profile and homepage changes
+- [x] Verify profile and homepage changes
