@@ -2,12 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { listNotifications, markNotificationsRead } from "@/lib/reelzy.functions";
+import { ChevronRight, MessageCircle } from "lucide-react";
+import {
+  listConversations,
+  listNotifications,
+  markNotificationsRead,
+} from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoNotifications } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { timeAgo } from "@/components/reelzy/format";
+
 
 export const Route = createFileRoute("/_authenticated/activity")({
   component: ActivityPage,
