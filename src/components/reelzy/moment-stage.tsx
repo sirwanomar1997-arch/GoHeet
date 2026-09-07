@@ -550,20 +550,6 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      {/* Views — blue neon eye, white count + label, top-left */}
-      <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
-        <Eye
-          className="size-4"
-          strokeWidth={2.4}
-          style={{ color: NEON_BLUE, filter: neonFilter(NEON_BLUE) }}
-        />
-        <span
-          className="data-figure text-[12px] font-bold text-white"
-          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-        >
-          {formatCount(moment.viewCount)} views
-        </span>
-      </div>
 
 
       {moment.kind === "video" ? (
