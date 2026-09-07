@@ -52,7 +52,7 @@ const now = Date.now();
 const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
 const daysAgo = (d: number) => new Date(now - d * 86400_000).toISOString();
 
-const PHOTOS = [sunset, city, coffee, mountain, styleRef, sunset, city, coffee];
+const PHOTOS = [skate, sunset, city, coffee, mountain, styleRef, sunset, city];
 
 export const demoAuthors: Array<{
   id: string;
