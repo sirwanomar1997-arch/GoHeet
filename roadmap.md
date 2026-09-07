@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Add repost storage and privacy controls
-- [ ] Add repost/unrepost interaction
-- [ ] Show public reposts from the profile button
+- [x] Add repost storage and privacy controls
+- [x] Add repost/unrepost interaction
+- [x] Show public reposts from the profile button
 - [ ] Verify profile and settings behavior

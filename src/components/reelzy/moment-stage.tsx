@@ -81,6 +81,7 @@ export function MomentStage({
   fullscreen?: boolean;
 }) {
   const qc = useQueryClient();
+  const repost = useServerFn(toggleRepost);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const watchedRef = useRef(0);
@@ -397,7 +398,7 @@ export function MomentStage({
   });
 
   const repostMutation = useMutation({
-    mutationFn: () => toggleRepost({ data: { momentId: moment.id } }),
+    mutationFn: () => repost({ data: { momentId: moment.id } }),
     onSuccess: (res) => {
       setReposted(res.reposted);
       toast.success(res.reposted ? "Reposted to your profile." : "Removed from your reposts.");
