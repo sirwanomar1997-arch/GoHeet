@@ -660,6 +660,15 @@ export function MomentStage({
       <div className="absolute bottom-[26px] right-0.5 z-20 flex flex-col items-center gap-2">
 
         <RailAction
+          label="Views"
+          count={formatCount(moment.viewCount)}
+          color={NEON_AMBER}
+          onClick={() => undefined}
+        >
+          <Eye className="size-5" strokeWidth={2.2} />
+        </RailAction>
+
+        <RailAction
           label="Comments"
           count={formatCount(moment.commentCount)}
           color={NEON_BLUE}
