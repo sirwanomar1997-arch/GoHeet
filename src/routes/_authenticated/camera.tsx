@@ -138,6 +138,8 @@ function CameraPage() {
   const accumulatedRef = useRef(0);
   const elapsedRef = useRef(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingRef = useRef(false);
+
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [withAudio, setWithAudio] = useState(true);
@@ -1201,7 +1203,9 @@ function CameraPage() {
           ) : null}
           <span className="data-figure text-[13px] font-medium tabular-nums tracking-[0.16em] text-white">
             {recording ? formatClock(elapsed) : "00:00"}
+            <span className="text-white/45"> | {formatClock(MAX_MS)}</span>
           </span>
+
           {paused ? (
             <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Paused</span>
           ) : null}
