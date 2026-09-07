@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, type LucideIcon } from "lucide-react";
-import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, type MomentCard } from "@/lib/reelzy.functions";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
@@ -75,6 +75,11 @@ function ProfilePage() {
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageBody, setMessageBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const postMessage = useServerFn(sendMessage);
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
@@ -161,7 +166,65 @@ function ProfilePage() {
               <Settings className="size-4" />
             </Link>
           </div>
-        ) : null}
+        ) : (
+          <div className="absolute right-5 top-5 z-50">
+            <button
+              type="button"
+              aria-label="More options"
+              aria-expanded={safetyOpen}
+              onClick={() => setSafetyOpen((v) => !v)}
+              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <MoreHorizontal className="size-5" />
+            </button>
+            {safetyOpen ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setSafetyOpen(false)}
+                />
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSafetyOpen(false);
+                      await report({ data: { targetType: "user", targetId: p.id, category: "harassment" } });
+                      toast.success("Reported to the safety team.");
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
+                  >
+                    <ShieldAlert className="size-4 text-amber-400" />
+                    Report @{p.username}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSafetyOpen(false);
+                      try {
+                        const res = await blockUser({ data: { userId: p.id } });
+                        toast.success(
+                          res.blocked
+                            ? `@${p.username} is blocked. They can't see or contact you.`
+                            : `@${p.username} is unblocked.`,
+                        );
+                        void refetch();
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                    className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-surface"
+                  >
+                    <Ban className="size-4" />
+                    Block @{p.username}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
+
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
             {p.avatarUrl ? (
@@ -311,11 +374,11 @@ function ProfilePage() {
               })}
             </div>
           ) : (
-            <div className="mt-4 flex w-full gap-2">
+            <div className="mt-4 flex w-full items-center gap-2">
               <button
                 type="button"
                 onClick={() => followMutation.mutate()}
-                className={`tap-target flex-1 rounded-2xl text-sm font-semibold ${
+                className={`tap-target flex-1 rounded-full text-sm font-semibold ${
                   data.isFollowing
                     ? "border border-border text-foreground"
                     : "ember-fill text-primary-foreground"
@@ -325,77 +388,72 @@ function ProfilePage() {
               </button>
               <button
                 type="button"
+                onClick={() => setMessageOpen(true)}
+                className="tap-target flex-1 rounded-full border border-border text-sm font-semibold text-foreground"
+              >
+                Message
+              </button>
+              <button
+                type="button"
                 aria-label={`View @${p.username}'s reposts`}
                 aria-pressed={tab === "reposted"}
                 onClick={() => setTab((current) => (current === "reposted" ? "reelz" : "reposted"))}
-                className={`tap-target grid w-14 place-items-center rounded-2xl border transition-colors ${
+                className={`tap-target grid w-14 place-items-center rounded-full border transition-colors ${
                   tab === "reposted" ? "border-primary bg-primary/10 text-primary" : "border-border"
                 }`}
               >
                 <Repeat2 className="size-5" />
               </button>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label="Report or block this person"
-                  aria-expanded={safetyOpen}
-                  onClick={() => setSafetyOpen((v) => !v)}
-                  className="tap-target grid w-14 place-items-center rounded-2xl border border-border"
-                >
-                  <Ban className="size-4 text-destructive" />
-                </button>
-                {safetyOpen ? (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Close"
-                      className="fixed inset-0 z-40 cursor-default"
-                      onClick={() => setSafetyOpen(false)}
-                    />
-                    <div className="absolute bottom-full right-0 z-50 mb-2 w-44 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setSafetyOpen(false);
-                          await report({
-                            data: { targetType: "user", targetId: p.id, category: "harassment" },
-                          });
-                          toast.success("Reported to the safety team.");
-                        }}
-                        className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
-                      >
-                        <ShieldAlert className="size-4 text-amber-400" />
-                        Report @{p.username}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setSafetyOpen(false);
-                          try {
-                            const res = await blockUser({ data: { userId: p.id } });
-                            toast.success(
-                              res.blocked
-                                ? `@${p.username} is blocked. They can't see or contact you.`
-                                : `@${p.username} is unblocked.`,
-                            );
-                            void refetch();
-                          } catch (err) {
-                            toast.error((err as Error).message);
-                          }
-                        }}
-                        className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-surface"
-                      >
-                        <Ban className="size-4" />
-                        Block @{p.username}
-                      </button>
-                    </div>
-                  </>
-                ) : null}
-              </div>
             </div>
           )}
+
         </div>
       </section>
+
+      {messageOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-end bg-background/70 backdrop-blur-sm">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setMessageOpen(false)}
+          />
+          <div className="relative w-full rounded-t-3xl border-t border-border bg-surface-raised p-5">
+            <p className="font-display text-sm font-semibold">Message @{p.username}</p>
+            <textarea
+              value={messageBody}
+              onChange={(e) => setMessageBody(e.target.value)}
+              rows={3}
+              placeholder="Say something…"
+              className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface p-3 text-sm outline-none"
+            />
+            <button
+              type="button"
+              disabled={sending || !messageBody.trim()}
+              onClick={async () => {
+                setSending(true);
+                try {
+                  const res = await postMessage({ data: { toUserId: p.id, body: messageBody.trim() } });
+                  setMessageOpen(false);
+                  setMessageBody("");
+                  void navigate({
+                    to: "/messages/$conversationId",
+                    params: { conversationId: res.conversationId },
+                  });
+                } catch (err) {
+                  toast.error((err as Error).message);
+                } finally {
+                  setSending(false);
+                }
+              }}
+              className="ember-fill tap-target mt-3 w-full rounded-full text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {sending ? "Sending…" : "Send"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
 
       {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
       <section className="pb-12 pt-8">
