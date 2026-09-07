@@ -639,8 +639,8 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — sits low, just above the bottom bar */}
-      <div className="absolute bottom-[26px] right-2 z-20 flex flex-col items-center gap-2.5">
-        <div className="flex flex-col items-center">
+      <div className="absolute bottom-[26px] right-0.5 z-20 flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1.5">
           <button
             type="button"
             onClick={(e) => {
@@ -663,6 +663,12 @@ export function MomentStage({
               glow={liked}
             />
           </button>
+          <span
+            className="data-figure text-[12px] font-bold leading-none text-white"
+            style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
+          >
+            {formatCount(moment.likeCount)}
+          </span>
         </div>
 
         <RailAction
@@ -680,7 +686,7 @@ export function MomentStage({
           color={NEON_GREEN}
           onClick={() => saveMutation.mutate()}
         >
-          <Bookmark className="size-[23px]" strokeWidth={2} fill={saved ? "currentColor" : "none"} />
+          <Bookmark className="size-5" strokeWidth={1.8} fill={saved ? "currentColor" : "none"} />
         </RailAction>
 
         <RailAction
@@ -689,7 +695,7 @@ export function MomentStage({
           color={NEON_VIOLET}
           onClick={() => repostMutation.mutate()}
         >
-          <Repeat className="size-[23px]" strokeWidth={2.2} />
+          <Repeat className="size-5" strokeWidth={1.9} />
         </RailAction>
 
         <RailAction
@@ -697,19 +703,19 @@ export function MomentStage({
           color={NEON_CYAN}
           onClick={() => setShareOpen(true)}
         >
-          <Send className="size-[23px] -rotate-12" strokeWidth={2} />
+          <Send className="size-5 -rotate-12" strokeWidth={1.8} />
         </RailAction>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More options"
-            className="grid size-9 place-items-center rounded-full"
+            className="grid size-8 place-items-center rounded-full"
             style={{
               color: NEON_RED,
-              filter: neonFilter(NEON_RED),
+              filter: softNeonFilter(NEON_RED),
             }}
           >
-            <MoreHorizontal className="size-[23px]" strokeWidth={2.4} />
+            <MoreHorizontal className="size-5" strokeWidth={2.1} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top">
@@ -997,22 +1003,29 @@ const NEON_GLOW = NEON_BLUE;
 const neonFilter = (glow: string) =>
   `drop-shadow(0 0 6px ${glow.replace(")", " / 85%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 65%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
 
-/* Comment: round blue neon circle, white neon dots inside. */
+const softNeonFilter = (glow: string) =>
+  `drop-shadow(0 0 3px ${glow.replace(")", " / 55%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
+
+/* Comment: familiar speech bubble silhouette with restrained neon and white dots. */
 function NeonComment() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="size-[24px]"
+      className="size-5"
       fill="none"
       stroke={NEON_BLUE}
-      style={{ color: NEON_BLUE, filter: neonFilter(NEON_BLUE) }}
-      strokeWidth={2}
+      style={{ color: NEON_BLUE, filter: softNeonFilter(NEON_BLUE) }}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="12" cy="12" r="9.2" />
-      <circle cx="8.4" cy="12" r="1" fill="#fff" stroke="#fff" strokeWidth="0.6" />
-      <circle cx="12" cy="12" r="1" fill="#fff" stroke="#fff" strokeWidth="0.6" />
-      <circle cx="15.6" cy="12" r="1" fill="#fff" stroke="#fff" strokeWidth="0.6" />
+      <path d="M20.5 11.3c0 4.1-3.7 7.3-8.4 7.3-1.1 0-2.2-.2-3.2-.5L4.2 20l1.5-4a6.7 6.7 0 0 1-2-4.7C3.7 7.2 7.4 4 12.1 4s8.4 3.2 8.4 7.3Z" />
+      <g fill="var(--foreground)" stroke="var(--foreground)" strokeWidth="0.4">
+        <circle cx="8.6" cy="11.4" r="0.85" />
+        <circle cx="12.1" cy="11.4" r="0.85" />
+        <circle cx="15.6" cy="11.4" r="0.85" />
+      </g>
     </svg>
   );
 }
@@ -1042,8 +1055,8 @@ function RailAction({
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
-        style={{ color: core, filter: neonFilter(core) }}
+        className="grid size-8 place-items-center rounded-full transition-transform active:scale-90"
+        style={{ color: core, filter: softNeonFilter(core) }}
       >
         {children}
       </button>
