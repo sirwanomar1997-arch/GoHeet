@@ -1359,15 +1359,31 @@ export const listNotifications = createServerFn({ method: "POST" })
       : { data: [] };
     const avatars = await signAvatars((actors ?? []).map((a) => a.avatar_url));
     const byId = new Map((actors ?? []).map((a) => [a.id, a]));
+    const momentIds = [...new Set(list.map((n) => n.moment_id).filter(Boolean))] as string[];
+    const { data: moms } = momentIds.length
+      ? await context.supabase
+          .from("moments")
+          .select("id, caption, media_path, thumbnail_path")
+          .in("id", momentIds)
+      : { data: [] };
+    const momMedia = await signMedia(
+      (moms ?? []).flatMap((m) => [m.thumbnail_path, m.media_path]),
+    );
+    const momById = new Map((moms ?? []).map((m) => [m.id, m]));
     return {
       notifications: list.map((n) => {
         const actor = n.actor_id ? byId.get(n.actor_id) : undefined;
+        const mom = n.moment_id ? momById.get(n.moment_id) : undefined;
         return {
           id: n.id,
           type: n.type,
           createdAt: n.created_at,
           read: !!n.read_at,
           momentId: n.moment_id,
+          momentThumbUrl: mom
+            ? (momMedia[mom.thumbnail_path ?? ""] ?? momMedia[mom.media_path] ?? null)
+            : null,
+          momentCaption: mom?.caption ?? null,
           actor: actor
             ? {
                 username: actor.username,
@@ -1378,6 +1394,7 @@ export const listNotifications = createServerFn({ method: "POST" })
         };
       }),
     };
+
   });
 
 export const markNotificationsRead = createServerFn({ method: "POST" })

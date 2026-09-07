@@ -16,6 +16,7 @@ import mountain from "@/assets/demo/mountain.jpg";
 import avatar1 from "@/assets/demo/avatar-1.jpg";
 import avatar2 from "@/assets/demo/avatar-2.jpg";
 import avatar3 from "@/assets/demo/avatar-3.jpg";
+import avatar4 from "@/assets/demo/avatar-4.jpg";
 import styleRef from "@/assets/av2/style-reference.jpg";
 import type { MomentCard } from "@/lib/reelzy.functions";
 
@@ -45,6 +46,8 @@ export type DemoNotification = {
   createdAt: string;
   read: boolean;
   momentId: string | null;
+  momentThumbUrl: string | null;
+  momentCaption: string | null;
   actor: { username: string; displayName: string; avatarUrl: string } | null;
 };
 
@@ -63,7 +66,7 @@ export const demoAuthors: Array<{
   { id: "d1", username: "maya", displayName: "Maya", avatarUrl: avatar1 },
   { id: "d2", username: "david", displayName: "David", avatarUrl: avatar2 },
   { id: "d3", username: "lena", displayName: "Lena", avatarUrl: avatar3 },
-  { id: "d4", username: "goheet", displayName: "GoHeet", avatarUrl: avatar2 },
+  { id: "d4", username: "yasmin", displayName: "Yasmin", avatarUrl: avatar4 },
 ];
 
 export const demoProfiles: Record<string, DemoProfile> = {
@@ -71,7 +74,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
     id: "d1",
     username: "maya",
     displayName: "Maya",
-    bio: "Golden hour chaser 🌅 | Stockholm → everywhere\n📷 Capturing real life, one Heet at a time",
+    bio: "Golden hour chaser, Stockholm to everywhere.\nCapturing real life, one Heet at a time.",
     avatarUrl: avatar1,
     hasAvatar: true,
     hasPersonalPhoto: true,
@@ -90,7 +93,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
     id: "d2",
     username: "david",
     displayName: "David",
-    bio: "City lights & late nights 🌃\nMusic producer · coffee addict ☕",
+    bio: "City lights and late nights.\nMusic producer, coffee addict.",
     avatarUrl: avatar2,
     hasAvatar: true,
     hasPersonalPhoto: false,
@@ -109,7 +112,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
     id: "d3",
     username: "lena",
     displayName: "Lena",
-    bio: "Adventure is calling and I must go ⛰️\nTravel · hiking · real moments only",
+    bio: "Adventure is calling and I must go.\nTravel, hiking, real moments only.",
     avatarUrl: avatar3,
     hasAvatar: true,
     hasPersonalPhoto: true,
@@ -124,12 +127,12 @@ export const demoProfiles: Record<string, DemoProfile> = {
     socialLinks: { instagram: "lenatravels", tiktok: "lena", website: "lenatravels.blog" },
     createdAt: daysAgo(300),
   },
-  goheet: {
+  yasmin: {
     id: "d4",
-    username: "goheet",
-    displayName: "GoHeet",
-    bio: "REAL LIFE. REAL PEOPLE. REAL MOMENTS. 🔥\nThe home of real moments.",
-    avatarUrl: avatar2,
+    username: "yasmin",
+    displayName: "Yasmin",
+    bio: "Real life, real moments.\nSun, music and long walks home.",
+    avatarUrl: avatar4,
     hasAvatar: true,
     hasPersonalPhoto: false,
     profileImageType: "avatar",
@@ -140,19 +143,19 @@ export const demoProfiles: Record<string, DemoProfile> = {
     totalLikes: 234000,
     isPrivate: false,
     showReposts: true,
-    socialLinks: { website: "goheet.com", instagram: "goheet", tiktok: "goheet" },
+    socialLinks: { website: "yasmin.co", instagram: "yasmin", tiktok: "yasmin" },
     createdAt: daysAgo(365),
   },
 };
 
 const captions = [
-  "Rolling down to the beach at golden hour 🛹🌅",
-  "Golden hour at the harbour 🌅 Stockholm never disappoints",
-  "City lights hit different at midnight ✨",
-  "Morning ritual ☕ What's yours?",
-  "Found this view on today's hike — no filter needed ⛰️",
-  "Real moments only. This is what GoHeet is about 🔥",
-  "Sunset chase never stops 🌇",
+  "Rolling down to the beach at golden hour",
+  "Golden hour at the harbour. Stockholm never disappoints",
+  "City lights hit different at midnight",
+  "Morning ritual. What's yours?",
+  "Found this view on today's hike, no filter needed",
+  "Real moments only. This is what GoHeet is about",
+  "The sunset chase never stops",
   "Late night walks > everything",
 ];
 
@@ -206,35 +209,45 @@ export const demoComments: Record<string, Array<{
   replies: Array<{ id: string; author: string; authorAvatar: string; body: string; createdAt: string }>;
 }>> = {
   "demo-1": [
-    { id: "c1", author: "lena", authorAvatar: avatar3, body: "This is unreal 😍 Stockholm golden hour hits different", createdAt: hoursAgo(2), likes: 24, liked: false, replies: [] },
-    { id: "c2", author: "david", authorAvatar: avatar2, body: "Need to visit again 🔥", createdAt: hoursAgo(1), likes: 8, liked: true, replies: [] },
-    { id: "c3", author: "goheet", authorAvatar: avatar2, body: "This is what GoHeet is all about — real moments ❤️", createdAt: hoursAgo(1), likes: 42, liked: false, replies: [{ id: "r1", author: "maya", authorAvatar: avatar1, body: "Thank you! 🙏", createdAt: hoursAgo(1) }] },
+    { id: "c1", author: "lena", authorAvatar: avatar3, body: "This is unreal, Stockholm golden hour hits different", createdAt: hoursAgo(2), likes: 24, liked: false, replies: [] },
+    { id: "c2", author: "david", authorAvatar: avatar2, body: "Need to visit again", createdAt: hoursAgo(1), likes: 8, liked: true, replies: [] },
+    { id: "c3", author: "yasmin", authorAvatar: avatar4, body: "This is what GoHeet is all about, real moments", createdAt: hoursAgo(1), likes: 42, liked: false, replies: [{ id: "r1", author: "maya", authorAvatar: avatar1, body: "Thank you! 🙏", createdAt: hoursAgo(1) }] },
   ],
   "demo-2": [
-    { id: "c4", author: "maya", authorAvatar: avatar1, body: "The vibe is immaculate ✨", createdAt: hoursAgo(3), likes: 15, liked: false, replies: [] },
-    { id: "c5", author: "lena", authorAvatar: avatar3, body: "City lights forever 🌃", createdAt: hoursAgo(2), likes: 9, liked: true, replies: [] },
+    { id: "c4", author: "maya", authorAvatar: avatar1, body: "The vibe is immaculate", createdAt: hoursAgo(3), likes: 15, liked: false, replies: [] },
+    { id: "c5", author: "lena", authorAvatar: avatar3, body: "City lights forever", createdAt: hoursAgo(2), likes: 9, liked: true, replies: [] },
   ],
   "demo-3": [
-    { id: "c6", author: "goheet", authorAvatar: avatar2, body: "Coffee gang ☕🔥", createdAt: hoursAgo(4), likes: 31, liked: false, replies: [] },
+    { id: "c6", author: "yasmin", authorAvatar: avatar4, body: "Coffee gang", createdAt: hoursAgo(4), likes: 31, liked: false, replies: [] },
   ],
 };
 
-export const demoNotifications: DemoNotification[] = [
+const rawNotifications: Array<Omit<DemoNotification, "momentThumbUrl" | "momentCaption">> = [
   { id: "n1", type: "like", createdAt: hoursAgo(1), read: false, momentId: "demo-1", actor: { username: "lena", displayName: "Lena", avatarUrl: avatar3 } },
   { id: "n2", type: "follow", createdAt: hoursAgo(2), read: false, momentId: null, actor: { username: "david", displayName: "David", avatarUrl: avatar2 } },
   { id: "n3", type: "comment", createdAt: hoursAgo(3), read: false, momentId: "demo-1", actor: { username: "lena", displayName: "Lena", avatarUrl: avatar3 } },
   { id: "n4", type: "like", createdAt: hoursAgo(5), read: true, momentId: "demo-3", actor: { username: "david", displayName: "David", avatarUrl: avatar2 } },
   { id: "n5", type: "follow", createdAt: hoursAgo(8), read: true, momentId: null, actor: { username: "lena", displayName: "Lena", avatarUrl: avatar3 } },
-  { id: "n6", type: "like", createdAt: daysAgo(1), read: true, momentId: "demo-2", actor: { username: "goheet", displayName: "GoHeet", avatarUrl: avatar2 } },
+  { id: "n6", type: "like", createdAt: daysAgo(1), read: true, momentId: "demo-2", actor: { username: "yasmin", displayName: "Yasmin", avatarUrl: avatar4 } },
   { id: "n7", type: "comment", createdAt: daysAgo(1), read: true, momentId: "demo-2", actor: { username: "maya", displayName: "Maya", avatarUrl: avatar1 } },
   { id: "n8", type: "follow", createdAt: daysAgo(2), read: true, momentId: null, actor: { username: "maya", displayName: "Maya", avatarUrl: avatar1 } },
 ];
+
+export const demoNotifications: DemoNotification[] = rawNotifications.map((n) => {
+  const m = n.momentId ? demoMoments.find((x) => x.id === n.momentId) : undefined;
+  return {
+    ...n,
+    momentThumbUrl: m?.posterUrl ?? m?.mediaUrl ?? null,
+    momentCaption: m?.caption ?? null,
+  };
+});
+
 
 export const demoPeople = [
   { id: "d1", username: "maya", displayName: "Maya", avatarUrl: avatar1, followerCount: 12847, momentCount: 87 },
   { id: "d2", username: "david", displayName: "David", avatarUrl: avatar2, followerCount: 8421, momentCount: 54 },
   { id: "d3", username: "lena", displayName: "Lena", avatarUrl: avatar3, followerCount: 21043, momentCount: 132 },
-  { id: "d4", username: "goheet", displayName: "GoHeet", avatarUrl: avatar2, followerCount: 54200, momentCount: 24 },
+  { id: "d4", username: "yasmin", displayName: "Yasmin", avatarUrl: avatar4, followerCount: 54200, momentCount: 24 },
 ];
 
 export async function getDemoFeed(scope: "following" | "discover"): Promise<{ moments: MomentCard[]; nextCursor: null }> {
@@ -268,7 +281,7 @@ export async function getDemoProfile(
     profile,
     moments,
     reposts: sort === "new" ? demoMoments.slice(2, 4) : [],
-    isFollowing: username.toLowerCase() !== "goheet",
+    isFollowing: username.toLowerCase() !== "yasmin",
     isSelf: false,
   };
 }
@@ -304,7 +317,7 @@ export function getDemoConversations() {
       unread: 2,
       lastMessageAt: hoursAgo(1),
       person: { username: "lena", displayName: "Lena", avatarUrl: avatar3 },
-      lastMessage: { body: "That skate clip was insane 🔥 where was it?" },
+      lastMessage: { body: "That skate clip was insane, where was it?" },
     },
     {
       id: "dm2",
@@ -321,7 +334,7 @@ export function getDemoConversations() {
       status: "pending" as const,
       unread: 1,
       lastMessageAt: hoursAgo(3),
-      person: { username: "goheet", displayName: "GoHeet", avatarUrl: avatar2 },
+      person: { username: "yasmin", displayName: "Yasmin", avatarUrl: avatar4 },
       lastMessage: { body: "Your moment is trending this week!" },
     },
   ];
