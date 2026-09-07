@@ -1,11 +1,10 @@
-import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, type LucideIcon } from "lucide-react";
-import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
@@ -73,10 +72,6 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const fetchProfile = useServerFn(getProfile);
   const follow = useServerFn(toggleFollow);
-  const navigate = useNavigate();
-  const startChat = useServerFn(sendMessage);
-  const [messageText, setMessageText] = useState("");
-  const [composing, setComposing] = useState(false);
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
@@ -150,31 +145,22 @@ function ProfilePage() {
           className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
         />
         {data.isSelf ? (
-          <>
+          <div className="absolute right-5 top-5 flex gap-2">
             <Link
               to="/edit-profile"
               aria-label="Edit profile"
-              className="absolute left-5 top-5 grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
             >
               <Pencil className="size-4" />
             </Link>
-            <div className="absolute right-5 top-5 flex gap-2">
-              <Link
-                to="/messages"
-                aria-label="Messages"
-                className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <MessageCircle className="size-4" />
-              </Link>
-              <Link
-                to="/settings"
-                aria-label="Settings"
-                className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Settings className="size-4" />
-              </Link>
-            </div>
-          </>
+            <Link
+              to="/settings"
+              aria-label="Settings"
+              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Settings className="size-4" />
+            </Link>
+          </div>
         ) : null}
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
@@ -252,22 +238,20 @@ function ProfilePage() {
             </span>
           </div>
 
-          {/* stat band — a premium segmented strip */}
-          <div className="mt-5 grid w-full grid-cols-4 overflow-hidden rounded-2xl border border-border bg-surface">
+          {/* follower band — two clean segments, matching the profile hierarchy */}
+          <div className="mt-5 grid w-full max-w-sm grid-cols-2 overflow-hidden rounded-[2rem] border border-border bg-surface/70">
             {[
-              ["Reelz", formatCount(p.momentCount)],
               ["Followers", formatCount(p.followerCount)],
               ["Following", formatCount(p.followingCount)],
-              ["Views", formatCount(p.totalViews)],
             ].map(([k, v]) => (
               <div
                 key={k as string}
-                className="relative flex flex-col items-center gap-1 px-1 py-3.5 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
+                className="relative flex flex-col items-center gap-1.5 px-3 py-4 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
               >
-                <p className="data-figure text-lg leading-none tabular-nums text-foreground">
+                <p className="data-figure text-2xl font-semibold leading-none tabular-nums text-foreground">
                   {v}
                 </p>
-                <p className="data-figure text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
                   {k}
                 </p>
               </div>
@@ -335,13 +319,6 @@ function ProfilePage() {
                 }`}
               >
                 {data.isFollowing ? "Following" : "Follow"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setComposing((v) => !v)}
-                className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
-              >
-                Message
               </button>
               <button
                 type="button"
@@ -414,50 +391,6 @@ function ProfilePage() {
               </div>
             </div>
           )}
-          {!data.isSelf && composing ? (
-            <form
-              className="mt-3 w-full rounded-2xl border border-border bg-surface p-3"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const text = messageText.trim();
-                if (!text) return;
-                try {
-                  const res = await startChat({ data: { toUserId: p.id, body: text } });
-                  setMessageText("");
-                  setComposing(false);
-                  toast.success(
-                    res.status === "pending"
-                      ? "Message request sent. They have to accept it first."
-                      : "Message sent.",
-                  );
-                  void navigate({
-                    to: "/messages/$conversationId",
-                    params: { conversationId: res.conversationId },
-                  });
-                } catch (err) {
-                  toast.error((err as Error).message);
-                }
-              }}
-            >
-              <textarea
-                value={messageText}
-                rows={2}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder={`Say something to @${p.username}`}
-                className="w-full resize-none rounded-xl border border-border bg-surface-raised px-3 py-2 text-sm outline-none"
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                If you don&apos;t follow each other, this goes as a request first.
-              </p>
-              <button
-                type="submit"
-                disabled={!messageText.trim()}
-                className="ember-fill tap-target mt-2 w-full rounded-2xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-              >
-                Send
-              </button>
-            </form>
-          ) : null}
         </div>
       </section>
 
