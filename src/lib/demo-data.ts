@@ -20,9 +20,9 @@ import type { MomentCard } from "@/lib/reelzy.functions";
 export type DemoProfile = {
   id: string;
   username: string;
-  displayName: string;
-  bio: string;
-  avatarUrl: string;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
   hasAvatar: boolean;
   hasPersonalPhoto: boolean;
   profileImageType: string;
