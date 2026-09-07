@@ -9,7 +9,7 @@ import {
   markNotificationsRead,
 } from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
-import { getDemoNotifications } from "@/lib/demo-data";
+import { getDemoConversations, getDemoNotifications } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { timeAgo } from "@/components/reelzy/format";
@@ -58,8 +58,8 @@ function ActivityPage() {
   }, [data, markRead, demo]);
 
   const demoConvos = demo ? getDemoConversations() : null;
-  const chats = (demoConvos?.chats ?? convos?.chats ?? []) as typeof convos.chats;
-  const requests = (demoConvos?.requests ?? convos?.requests ?? []) as typeof convos.requests;
+  const chats: any[] = demoConvos?.chats ?? convos?.chats ?? [];
+  const requests: any[] = demoConvos?.requests ?? convos?.requests ?? [];
   const preview = [...requests, ...chats].slice(0, 3);
   const unread =
     chats.reduce((n, c) => n + (c.unread ?? 0), 0) + requests.length;
