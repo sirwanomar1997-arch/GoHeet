@@ -261,10 +261,11 @@ const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => str
   whatsapp: (h) => `https://wa.me/${h.replace(/[^\d]/g, "")}`,
 };
 const socialSchema = z
-  .record(z.enum(SOCIAL_KEYS), z.string().trim().max(300))
+  .record(z.string(), z.string().trim().max(300))
   .transform((v) => {
     const out: Record<string, string> = {};
     for (const [k, val] of Object.entries(v)) {
+      if (!(SOCIAL_KEYS as readonly string[]).includes(k)) continue;
       const key = k as (typeof SOCIAL_KEYS)[number];
       const raw = (val ?? "").trim();
       if (!raw) continue;
