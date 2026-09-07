@@ -484,6 +484,7 @@ function CameraPage() {
   );
 
   const pinchRef = useRef<{ distance: number; base: number } | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
 
   const onPreviewTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 2) return;
@@ -494,7 +495,8 @@ function CameraPage() {
     };
   };
 
-  const onPreviewTouchMove = (e: React.TouchEvent) => {
+  const pinchMoveRef = useRef<(e: TouchEvent) => void>(() => undefined);
+  pinchMoveRef.current = (e: TouchEvent) => {
     const pinch = pinchRef.current;
     if (!pinch || e.touches.length !== 2) return;
     const [a, b] = [e.touches[0]!, e.touches[1]!];
@@ -502,9 +504,33 @@ function CameraPage() {
     applyZoom(pinch.base * (distance / pinch.distance));
   };
 
+  // Pinch must zoom the picture only — never the page. React's onTouchMove is
+  // passive, so the listener is attached natively and cancels the browser's
+  // own page-zoom gesture (including Safari's gesture events).
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) e.preventDefault();
+      pinchMoveRef.current(e);
+    };
+    const block = (e: Event) => e.preventDefault();
+    el.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("gesturestart", block as EventListener);
+    document.addEventListener("gesturechange", block as EventListener);
+    document.addEventListener("gestureend", block as EventListener);
+    return () => {
+      el.removeEventListener("touchmove", onMove);
+      document.removeEventListener("gesturestart", block as EventListener);
+      document.removeEventListener("gesturechange", block as EventListener);
+      document.removeEventListener("gestureend", block as EventListener);
+    };
+  }, []);
+
   const onPreviewTouchEnd = () => {
     pinchRef.current = null;
   };
+
 
   async function flipCamera() {
     if (flipping) return;
