@@ -482,6 +482,18 @@ export function MomentStage({
 
 
       {/* Film treatment: vignette + grain so real footage reads cinematic. */}
+      {/* Flames that pop where the frame was double-tapped */}
+      {bursts.map((b) => (
+        <span
+          key={b.id}
+          aria-hidden
+          className="animate-heet-burst pointer-events-none absolute z-20"
+          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+        >
+          <HeetFlame className="size-28" glow />
+        </span>
+      ))}
+
       <div className="stage-vignette pointer-events-none absolute inset-0" aria-hidden />
       <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
 
@@ -663,7 +675,7 @@ export function MomentStage({
                 : "border-border bg-surface-raised text-foreground"
             }`}
           >
-            <Flame className="size-4" strokeWidth={liked ? 2.6 : 1.8} />
+            <HeetFlame className={`size-5 ${liked ? "animate-heet-flicker" : ""}`} filled={liked} />
             <span className="data-figure text-xs">{formatCount(likeCount)}</span>
           </button>
           <button
