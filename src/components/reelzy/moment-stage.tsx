@@ -771,7 +771,7 @@ export function MomentStage({
             ? ""
             : `${window.location.origin}/u/${moment.author.username}?r=${moment.id}`
         }
-        text={`@${moment.author.username} on Reelzy`}
+        text={`@${moment.author.username} on GoHeet`}
         mode={shareMode}
       />
 
