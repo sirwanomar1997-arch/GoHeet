@@ -9,6 +9,7 @@ import {
   Camera,
   ChevronRight,
   History,
+  LifeBuoy,
   MessageCircle,
   Pencil,
   Trash2,
@@ -240,6 +241,14 @@ function SettingsPage() {
           </span>
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
+
+        <Link to="/support" className={`${section} flex items-center justify-between`}>
+          <span className="flex items-center gap-3 text-sm font-medium">
+            <LifeBuoy className="size-4 text-primary" /> Help & support · contact us
+          </span>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </Link>
+
 
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Your activity</h2>

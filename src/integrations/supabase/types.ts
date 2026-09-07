@@ -862,6 +862,74 @@ export type Database = {
           },
         ]
       }
+      support_ticket_messages: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          from_staff: boolean
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          app_version: string | null
+          category: string
+          created_at: string
+          id: string
+          last_activity_at: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          status?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

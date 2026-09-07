@@ -209,7 +209,8 @@ const DOCS: Record<string, Doc> = {
       {
         h: "Contact us",
         p: [
-          `General help and account questions: ${SUPPORT_EMAIL}.`,
+          "Fastest way: open the app and go to Settings → Help & support. You can write to us there and read our reply inside the app.",
+          `General help and account questions by mail: ${SUPPORT_EMAIL}.`,
           `Safety, abuse and urgent reports: ${SAFETY_EMAIL}.`,
           "We reply to support mail within two business days, and to safety reports within 24 hours.",
         ],
