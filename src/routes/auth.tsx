@@ -144,8 +144,7 @@ function AuthPage() {
   return (
     <main className="min-h-svh bg-background px-6 pb-12 pt-10">
       <div className="mx-auto max-w-sm">
-        <Link to="/" className="flex items-center gap-2">
-          <GoHeetMark className="size-8" />
+        <Link to="/" className="flex items-center">
           <GoHeetWordmark />
         </Link>
 
