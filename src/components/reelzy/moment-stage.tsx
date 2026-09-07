@@ -550,20 +550,6 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      {/* Views — blue neon eye, white count + label, top-left */}
-      <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
-        <Eye
-          className="size-4"
-          strokeWidth={2.4}
-          style={{ color: NEON_BLUE, filter: neonFilter(NEON_BLUE) }}
-        />
-        <span
-          className="data-figure text-[12px] font-bold text-white"
-          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-        >
-          {formatCount(moment.viewCount)} views
-        </span>
-      </div>
 
 
       {moment.kind === "video" ? (
@@ -672,6 +658,15 @@ export function MomentStage({
 
       {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
       <div className="absolute bottom-[26px] right-0.5 z-20 flex flex-col items-center gap-2">
+
+        <RailAction
+          label="Views"
+          count={formatCount(moment.viewCount)}
+          color={NEON_AMBER}
+          onClick={() => undefined}
+        >
+          <Eye className="size-5" strokeWidth={2.2} />
+        </RailAction>
 
         <RailAction
           label="Comments"
@@ -999,6 +994,7 @@ const NEON_GREEN = "oklch(0.82 0.19 150)";
 const NEON_VIOLET = "oklch(0.75 0.19 300)";
 const NEON_CYAN = "oklch(0.83 0.14 200)";
 const NEON_RED = "oklch(0.68 0.22 22)";
+const NEON_AMBER = "oklch(0.82 0.17 75)";
 const NEON_CORE = NEON_BLUE;
 const NEON_GLOW = NEON_BLUE;
 
