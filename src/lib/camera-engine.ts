@@ -328,7 +328,7 @@ export class CameraEngine {
       return {
         kind: "denied",
         title: "Camera access is off",
-        body: "Reelzy needs your camera and microphone to record a moment. Turn them on in your device settings, then come back.",
+        body: "GoHeet needs your camera and microphone to record a moment. Turn them on in your device settings, then come back.",
       };
     }
     if (name === "NotFoundError" || name === "OverconstrainedError") {
