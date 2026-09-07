@@ -662,54 +662,65 @@ export function MomentStage({
               glow={liked}
             />
           </button>
-          <span className="data-figure text-[15px] font-bold text-foreground">
+          <span
+            className="data-figure text-[15px] font-bold"
+            style={{
+              color: "oklch(0.88 0.19 55)",
+              filter: "drop-shadow(0 0 6px oklch(0.75 0.22 40 / 85%)) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))",
+            }}
+          >
             {formatCount(likeCount)}
           </span>
+
         </div>
 
         <RailAction
           label="Comments"
           count={formatCount(moment.commentCount)}
           onClick={() => setCommentsOpen(true)}
+          neon="oklch(0.85 0.18 200)"
         >
-          <MessageCircle className="size-5 text-white" fill="currentColor" strokeWidth={0} />
+          <MessageCircle className="size-5" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
           label="Keep this moment"
           active={saved}
           onClick={() => saveMutation.mutate()}
+          neon={saved ? "oklch(0.8 0.2 85)" : "oklch(0.85 0.19 145)"}
         >
-          {saved ? (
-            <Bookmark className="size-5 text-primary" fill="currentColor" strokeWidth={0} />
-          ) : (
-            <Bookmark className="size-5 text-white" fill="currentColor" strokeWidth={0} />
-          )}
+          <Bookmark className="size-5" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
           label={reposted ? "Remove repost" : "Repost to your profile"}
           active={reposted}
           onClick={() => repostMutation.mutate()}
+          neon={reposted ? "oklch(0.8 0.2 85)" : "oklch(0.8 0.2 300)"}
         >
-          <Repeat2
-            className={`size-5 ${reposted ? "text-primary" : "text-white"}`}
-            fill="currentColor"
-            strokeWidth={0}
-          />
+          <Repeat2 className="size-5" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
-        <RailAction label="Share this moment" onClick={() => setShareOpen(true)}>
-          <Share2 className="size-5 text-white" fill="currentColor" strokeWidth={0} />
+        <RailAction
+          label="Share this moment"
+          onClick={() => setShareOpen(true)}
+          neon="oklch(0.85 0.17 240)"
+        >
+          <Share2 className="size-5" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More options"
-            className="grid size-9 place-items-center rounded-full text-white"
+            className="grid size-9 place-items-center rounded-full"
+            style={{
+              color: "oklch(0.9 0.14 330)",
+              filter: "drop-shadow(0 0 5px oklch(0.9 0.14 330 / 80%)) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))",
+            }}
           >
-            <MoreHorizontal className="size-5 text-white" fill="currentColor" strokeWidth={0} />
+            <MoreHorizontal className="size-5" fill="currentColor" strokeWidth={0} />
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" side="top">
             <DropdownMenuItem onClick={() => setShareOpen(true)}>Share</DropdownMenuItem>
             {moment.isOwn ? (
@@ -988,14 +999,17 @@ function RailAction({
   count,
   active,
   onClick,
+  neon = "oklch(0.85 0.18 200)",
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
   onClick: () => void;
+  neon?: string;
   children: ReactNode;
 }) {
+  const glow = `drop-shadow(0 0 5px ${neon.replace(")", " / 80%)")}) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))`;
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -1003,15 +1017,20 @@ function RailAction({
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className={`grid size-9 place-items-center rounded-full transition-transform active:scale-90 ${
-          active ? "text-primary" : "text-foreground/90"
-        }`}
+        className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
+        style={{ color: neon, filter: glow }}
       >
         {children}
       </button>
       {count ? (
-        <span className="data-figure text-[12px] font-semibold text-foreground/85">{count}</span>
+        <span
+          className="data-figure text-[12px] font-semibold"
+          style={{ color: neon, filter: glow }}
+        >
+          {count}
+        </span>
       ) : null}
     </div>
   );
 }
+
