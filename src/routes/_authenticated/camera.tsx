@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon } from "lucide-react";
+import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
+import { saveClip, listSavedClips, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -26,6 +28,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
+  FILTER_CATEGORIES,
   OVERLAY_FONTS,
   OVERLAY_COLORS,
   OVERLAY_STYLES,
@@ -52,23 +55,17 @@ type Captured = {
   poster: Blob | null;
 };
 
+/** 00:04 — quiet, tabular, cinematic. No camcorder energy. */
 function formatClock(ms: number): string {
   const total = Math.floor(ms / 1000);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")} / 5:00`;
-}
-
-function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
-  const candidates = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9,opus", "video/webm"];
-  return candidates.find((c) => MediaRecorder.isTypeSupported(c));
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function CameraPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
+  const engineRef = useRef<CameraEngine | null>(null);
+  if (engineRef.current === null && typeof window !== "undefined") engineRef.current = new CameraEngine();
   const startedAtRef = useRef(0);
   const accumulatedRef = useRef(0);
   const elapsedRef = useRef(0);
@@ -77,7 +74,18 @@ function CameraPage() {
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [withAudio, setWithAudio] = useState(true);
   const [ready, setReady] = useState(false);
-  const [denied, setDenied] = useState<string | null>(null);
+  const [booting, setBooting] = useState(true);
+  const [error, setError] = useState<EngineError | null>(null);
+  const [zoomRange, setZoomRange] = useState<ZoomRange | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [digital, setDigital] = useState(1);
+  const [torch, setTorch] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [flipping, setFlipping] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [filterCat, setFilterCat] = useState<string>("Natural");
+  const [savedCount, setSavedCount] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -191,39 +199,51 @@ function CameraPage() {
   }
 
   const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    engineRef.current?.stop();
   }, []);
 
   const startStream = useCallback(async () => {
-    stopStream();
+    const engine = engineRef.current;
+    if (!engine) return;
     setReady(false);
+    setBooting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
-        audio: withAudio,
-      });
-      streamRef.current = stream;
+      const stream = await engine.start(facing, withAudio);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
       }
+      setZoomRange(engine.state.zoomRange);
+      setZoom(engine.state.zoomRange?.min ?? 1);
+      setDigital(1);
+      setTorchAvailable(engine.state.torchAvailable);
+      setTorch(false);
+      setError(null);
       setReady(true);
-      setDenied(null);
     } catch (err) {
-      setDenied(
-        err instanceof Error && err.name === "NotAllowedError"
-          ? "Reelzy needs camera access. Allow it in your browser settings and reload."
-          : "No camera available on this device.",
+      setError(
+        isEngineError(err)
+          ? err
+          : {
+              kind: "failed",
+              title: "We couldn't start the camera",
+              body: "Something interrupted the camera. Close any other app using it and try again.",
+            },
       );
+    } finally {
+      setBooting(false);
     }
-  }, [facing, withAudio, stopStream]);
+  }, [facing, withAudio]);
 
   useEffect(() => {
     if (captured) return;
     void startStream();
     return stopStream;
   }, [startStream, stopStream, captured]);
+
+  useEffect(() => {
+    void listSavedClips().then((clips) => setSavedCount(clips.length));
+  }, []);
 
   // A server-issued capture session is what proves this came from the Reelzy camera.
   useEffect(() => {
@@ -244,24 +264,14 @@ function CameraPage() {
       const ms = accumulatedRef.current + (Date.now() - startedAtRef.current);
       elapsedRef.current = ms;
       setElapsed(ms);
-      if (ms >= MAX_MS) recorderRef.current?.stop();
+      if (ms >= MAX_MS) finishRecording();
     }, 100);
     return () => clearInterval(id);
   }, [recording, paused]);
 
 
   function grabPoster(): Promise<Blob | null> {
-    return new Promise((resolve) => {
-      const vid = videoRef.current;
-      if (!vid) return resolve(null);
-      const canvas = document.createElement("canvas");
-      canvas.width = vid.videoWidth || 720;
-      canvas.height = vid.videoHeight || 1280;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(null);
-      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.82);
-    });
+    return CameraEngine.grabFrame(videoRef.current, facing === "user");
   }
 
   async function takePhoto() {
@@ -280,46 +290,34 @@ function CameraPage() {
     stopStream();
   }
 
-  /** Cue sounds are for the person filming — never for the clip. Mute the mic while they play. */
-  function silenceMicFor(ms: number) {
-    const tracks = streamRef.current?.getAudioTracks() ?? [];
-    if (!tracks.length) return;
-    tracks.forEach((t) => (t.enabled = false));
-    window.setTimeout(() => {
-      tracks.forEach((t) => (t.enabled = true));
-    }, ms);
-  }
-
   async function beginRecording() {
-    const stream = streamRef.current;
-    if (!stream) return;
-    const mimeType = pickMimeType();
-    const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    chunksRef.current = [];
+    const engine = engineRef.current;
+    if (!engine) return;
     accumulatedRef.current = 0;
     elapsedRef.current = 0;
-    rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
-    rec.onstop = async () => {
+    startedAtRef.current = Date.now();
+    playRecordStart();
+    // Interface cues belong to the person filming, never to the clip.
+    engine.silenceMic(700);
+    engine.startRecording(async (blob) => {
       playRecordStop();
       const duration = elapsedRef.current;
       const poster = await grabPoster();
-      const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
       setRecording(false);
       setPaused(false);
       setElapsed(0);
       if (duration < 800) {
-        toast.error("Hold a moment longer — that clip was too short.");
+        toast("Hold a moment longer — that take was too short.");
         return;
       }
       setCaptured({ blob, url: URL.createObjectURL(blob), kind: "video", durationMs: duration, poster });
       stopStream();
-    };
-    recorderRef.current = rec;
-    startedAtRef.current = Date.now();
-    playRecordStart();
-    silenceMicFor(700);
-    rec.start(250);
+    });
     setRecording(true);
+  }
+
+  function finishRecording() {
+    engineRef.current?.stopRecording();
   }
 
   /** 3 · 2 · 1 before the first frame, so you can get in place. */
@@ -352,23 +350,100 @@ function CameraPage() {
 
   /** Pause banks the elapsed time; resume keeps adding to the same take. */
   function togglePause() {
-    const rec = recorderRef.current;
-    if (!rec) return;
+    const engine = engineRef.current;
+    if (!engine) return;
     if (paused) {
       startedAtRef.current = Date.now();
       playPauseBlip(true);
-      silenceMicFor(500);
-      rec.resume();
+      engine.silenceMic(500);
+      engine.resume();
       setPaused(false);
     } else {
       accumulatedRef.current += Date.now() - startedAtRef.current;
       elapsedRef.current = accumulatedRef.current;
-      rec.pause();
+      engine.pause();
       playPauseBlip(false);
       setPaused(true);
     }
   }
 
+  /** Zoom: real lens zoom where the device offers it, gentle digital zoom otherwise. */
+  const maxDigital = 4;
+  const zoomLabel = zoomRange ? `${(zoom / (zoomRange.min || 1)).toFixed(1)}×` : `${digital.toFixed(1)}×`;
+
+  const applyZoom = useCallback(
+    (next: number) => {
+      const engine = engineRef.current;
+      if (zoomRange && engine) {
+        const clamped = Math.min(zoomRange.max, Math.max(zoomRange.min, next));
+        setZoom(clamped);
+        void engine.setZoom(clamped);
+      } else {
+        setDigital(Math.min(maxDigital, Math.max(1, next)));
+      }
+    },
+    [zoomRange],
+  );
+
+  const pinchRef = useRef<{ distance: number; base: number } | null>(null);
+
+  const onPreviewTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    pinchRef.current = {
+      distance: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+      base: zoomRange ? zoom : digital,
+    };
+  };
+
+  const onPreviewTouchMove = (e: React.TouchEvent) => {
+    const pinch = pinchRef.current;
+    if (!pinch || e.touches.length !== 2) return;
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    applyZoom(pinch.base * (distance / pinch.distance));
+  };
+
+  const onPreviewTouchEnd = () => {
+    pinchRef.current = null;
+  };
+
+  async function flipCamera() {
+    if (flipping) return;
+    setFlipping(true);
+    setFacing((f) => (f === "user" ? "environment" : "user"));
+    window.setTimeout(() => setFlipping(false), 420);
+  }
+
+  async function toggleTorch() {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const next = await engine.setTorch(!torch);
+    setTorch(next);
+  }
+
+  /** Hold a moment on the device — three slots, then you have to share or clear one. */
+  async function saveForLater() {
+    if (!captured) return;
+    setSaving(true);
+    try {
+      await saveClip({
+        blob: captured.blob,
+        poster: captured.poster,
+        kind: captured.kind,
+        durationMs: Math.round(captured.durationMs),
+        caption: caption.trim(),
+        place: place.trim(),
+        styleFilter: look !== "none" ? look : null,
+      });
+      toast.success("Held for later. Share it when you're ready.");
+      await navigate({ to: "/share-later" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't hold that one.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
@@ -592,6 +667,21 @@ function CameraPage() {
               >
                 {publishing ? "Publishing…" : "Publish"}
               </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => void saveForLater()}
+                disabled={saving || savedCount >= SHARE_LATER_LIMIT}
+                className="h-12 w-full rounded-2xl border border-border text-sm"
+              >
+                <Bookmark className="mr-2 size-4" />
+                {savedCount >= SHARE_LATER_LIMIT
+                  ? `Share later is full (${SHARE_LATER_LIMIT}/${SHARE_LATER_LIMIT})`
+                  : `Save to share later · ${savedCount}/${SHARE_LATER_LIMIT}`}
+              </Button>
+              <p className="pb-2 text-center text-xs text-muted-foreground">
+                Holding a moment keeps it on this device only, for sharing soon — not as an album.
+              </p>
             </div>
           </div>
 
@@ -728,8 +818,22 @@ function CameraPage() {
         {/* Filter tray, right on the frame. */}
         {filterOpen && !textOpen ? (
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-8 pt-10">
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+              {FILTER_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCat(cat)}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11px] tracking-[0.08em] transition-colors ${
+                    filterCat === cat ? "bg-white text-black" : "bg-white/12 text-white/75"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-3 overflow-x-auto pb-1">
-              {FILTERS.map((f) => (
+              {FILTERS.filter((f) => f.category === filterCat || f.id === "none").map((f) => (
                 <button
                   key={f.id}
                   type="button"
@@ -916,134 +1020,212 @@ function CameraPage() {
   }
 
 
+  const mirrored = facing === "user";
+  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${zoomRange ? 1 : digital})`;
+
   return (
     <main className="relative h-svh overflow-hidden bg-black">
-      <video
-        ref={videoRef}
-        className="size-full object-cover"
-        playsInline
-        muted
-        autoPlay
-      />
+      <div
+        className="absolute inset-0"
+        onTouchStart={onPreviewTouchStart}
+        onTouchMove={onPreviewTouchMove}
+        onTouchEnd={onPreviewTouchEnd}
+      >
+        <video
+          ref={videoRef}
+          className="size-full object-cover transition-[opacity,transform] duration-300 ease-out"
+          style={{ transform: previewTransform, opacity: flipping || booting ? 0 : 1 }}
+          playsInline
+          muted
+          autoPlay
+        />
+        {/* A whisper of vignette so controls read cleanly over any scene. */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_55%,rgba(0,0,0,0.45)_100%)]" />
+      </div>
 
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+      {/* Top row: leave, timer, sound. */}
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-4">
         <Link
           to="/feed"
           aria-label="Close camera"
-          className="tap-target grid place-items-center rounded-full bg-background/70 backdrop-blur"
+          className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
         >
-          <X className="size-5" />
+          <X className="size-5" strokeWidth={2} />
         </Link>
-        <span className="data-figure flex items-center gap-2 rounded-full bg-background/70 px-3 py-1.5 text-[11px] backdrop-blur">
-          {recording ? (
-            <>
-              <span
-                className={`size-2 rounded-full bg-[image:var(--gradient-ember)] ${paused ? "opacity-50" : "animate-ember-pulse"}`}
-              />
-              {paused ? "Paused" : null} {formatClock(elapsed)}
-            </>
-          ) : (
-            "Reelzy camera"
-          )}
-        </span>
 
-        <button
-          type="button"
-          onClick={() => setWithAudio((a) => !a)}
-          aria-label={withAudio ? "Record without sound" : "Record with sound"}
-          className="tap-target grid place-items-center rounded-full bg-background/70 backdrop-blur"
+        <div
+          className={`flex items-center gap-2 rounded-full px-3.5 py-2 backdrop-blur-md transition-all duration-300 ${
+            recording ? "bg-black/45 opacity-100" : "bg-black/25 opacity-70"
+          }`}
         >
-          {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-        </button>
+          {recording ? (
+            <span
+              className={`size-[7px] rounded-full bg-[image:var(--gradient-ember)] ${
+                paused ? "opacity-40" : "animate-ember-pulse"
+              }`}
+              aria-hidden
+            />
+          ) : null}
+          <span className="data-figure text-[13px] font-medium tabular-nums tracking-[0.16em] text-white">
+            {recording ? formatClock(elapsed) : "00:00"}
+          </span>
+          {paused ? (
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Paused</span>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setWithAudio((a) => !a)}
+            aria-label={withAudio ? "Record without sound" : "Record with sound"}
+            className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
+          >
+            {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5 text-white/50" />}
+          </button>
+          {torchAvailable ? (
+            <button
+              type="button"
+              onClick={() => void toggleTorch()}
+              aria-label={torch ? "Turn the light off" : "Turn the light on"}
+              className={`grid size-10 place-items-center rounded-full backdrop-blur-md transition-transform active:scale-90 ${
+                torch ? "bg-white text-black" : "bg-black/35 text-white"
+              }`}
+            >
+              {torch ? <Zap className="size-5" /> : <ZapOff className="size-5" />}
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      {denied ? (
-        <div className="absolute inset-0 grid place-items-center bg-background/95 px-8 text-center">
-          <div>
-            <h1 className="font-display text-xl font-semibold">Camera blocked</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{denied}</p>
-            <p className="mt-4 text-xs text-muted-foreground">
+      {/* Zoom: a single quiet chip, with a slider only while you're using it. */}
+      {ready && !error ? (
+        <div className="absolute inset-x-0 bottom-44 flex flex-col items-center gap-3 px-10">
+          {zoomOpen ? (
+            <div className="w-full max-w-xs rounded-full bg-black/40 px-4 py-2 backdrop-blur-md">
+              <Slider
+                value={[zoomRange ? zoom : digital]}
+                min={zoomRange ? zoomRange.min : 1}
+                max={zoomRange ? zoomRange.max : maxDigital}
+                step={zoomRange ? zoomRange.step || 0.1 : 0.05}
+                onValueChange={([v]) => applyZoom(v ?? 1)}
+                aria-label="Zoom"
+              />
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setZoomOpen((v) => !v)}
+            onDoubleClick={() => applyZoom(zoomRange ? zoomRange.min : 1)}
+            className="data-figure rounded-full bg-black/40 px-3 py-1.5 text-[11px] tracking-[0.1em] text-white backdrop-blur-md transition-transform active:scale-95"
+          >
+            {zoomLabel}
+          </button>
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="absolute inset-0 grid place-items-center bg-black/85 px-8 text-center backdrop-blur-md">
+          <div className="max-w-sm">
+            <CameraIcon className="mx-auto size-8 text-white/70" />
+            <h1 className="mt-4 font-display text-xl font-semibold text-white">{error.title}</h1>
+            <p className="mt-2 text-sm text-white/70">{error.body}</p>
+            <Button
+              onClick={() => void startStream()}
+              className="ember-fill mt-6 h-11 rounded-full px-8 text-sm font-semibold text-primary-foreground"
+            >
+              Try again
+            </Button>
+            <p className="mt-4 text-xs text-white/45">
               Reelzy has no upload option by design — capture is the only way to post.
             </p>
           </div>
         </div>
       ) : null}
 
-      {/* No looks while filming — the frame stays true. Filters come after, before posting. */}
-      <div className="absolute inset-x-0 bottom-0 pb-10">
+      {/* Bottom controls. */}
+      <div className="absolute inset-x-0 bottom-0 pb-9">
+        <div className="grid grid-cols-3 items-center px-9">
+          <div className="flex justify-start">
+            {recording ? (
+              <button
+                type="button"
+                onClick={togglePause}
+                aria-label={paused ? "Resume recording" : "Pause recording"}
+                className="grid size-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
+              >
+                {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={takePhoto}
+                disabled={!ready || countdown !== null}
+                aria-label="Take a still"
+                className="grid size-12 place-items-center rounded-full bg-black/35 text-[11px] font-medium tracking-[0.08em] text-white backdrop-blur-md transition-transform active:scale-90 disabled:opacity-40"
+              >
+                Still
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center justify-around px-8">
-          {recording ? (
+          <div className="flex justify-center">
             <button
               type="button"
-              onClick={togglePause}
-              aria-label={paused ? "Resume recording" : "Pause recording"}
-              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
-            >
-              {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={takePhoto}
+              aria-label={recording ? "Finish recording" : "Record a moment"}
               disabled={!ready || countdown !== null}
-              className="tap-target rounded-full border border-white/25 px-4 text-xs font-semibold text-white"
+              onClick={() => (recording ? finishRecording() : startCountdown())}
+              className="relative grid size-[78px] place-items-center rounded-full border-[3px] border-white/85 transition-transform duration-200 active:scale-95 disabled:opacity-40"
             >
-              Still
+              <span
+                className={`bg-[image:var(--gradient-ember)] transition-all duration-300 ease-out ${
+                  recording ? "size-7 rounded-[9px]" : "size-[60px] rounded-full"
+                }`}
+              />
+              {recording && !paused ? (
+                <span className="pointer-events-none absolute inset-0 animate-ember-pulse rounded-full border-[3px] border-primary/60" />
+              ) : null}
             </button>
-          )}
+          </div>
 
-          <button
-            type="button"
-            aria-label={
-              recording ? (paused ? "Resume recording" : "Pause recording") : "Record a moment"
-            }
-            disabled={!ready || countdown !== null}
-            onClick={() => (recording ? togglePause() : startCountdown())}
-            className={`size-20 rounded-full bg-[image:var(--gradient-ember)] transition-transform active:scale-95 ${
-              recording && !paused ? "rec-live" : ""
-            }`}
-          />
-
-          {recording ? (
+          <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => recorderRef.current?.stop()}
-              aria-label="Finish recording"
-              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
-            >
-              <Check className="size-5" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+              onClick={() => void flipCamera()}
               disabled={!ready || countdown !== null}
-              aria-label="Flip camera"
-              className="tap-target grid place-items-center rounded-full border border-white/25 text-white"
+              aria-label="Switch camera"
+              className={`grid size-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform duration-300 active:scale-90 disabled:opacity-40 ${
+                flipping ? "rotate-180" : ""
+              }`}
             >
               <SwitchCamera className="size-5" />
             </button>
-          )}
+          </div>
         </div>
-        <p className="mt-4 text-center text-[11px] text-white/60">
-          {recording
-            ? "Pause any time, keep filming, then tap the check when you're done."
-            : "Captured live, up to five minutes. Nothing can be uploaded from your camera roll."}
-        </p>
+
+        {!recording ? (
+          <div className="mt-5 flex justify-center">
+            <Link
+              to="/share-later"
+              className="flex items-center gap-2 rounded-full bg-black/30 px-3.5 py-1.5 text-[11px] text-white/75 backdrop-blur-md"
+            >
+              <Bookmark className="size-3.5" />
+              Share later {savedCount}/{SHARE_LATER_LIMIT}
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {countdown !== null ? (
-        <div className="absolute inset-0 grid place-items-center bg-black/35 backdrop-blur-[2px]">
+        <div className="absolute inset-0 grid place-items-center bg-black/25 backdrop-blur-[2px]">
           <span
             key={countdown}
-            className="ember-text animate-shutter font-display text-[7rem] font-bold leading-none"
+            className="animate-shutter font-display text-[6rem] font-semibold leading-none text-white/90"
           >
             {countdown}
           </span>
         </div>
       ) : null}
-
     </main>
   );
 }
