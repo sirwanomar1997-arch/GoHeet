@@ -230,13 +230,14 @@ function ProfilePage() {
             </div>
           ) : null}
 
-          {/* the heet total — one big flame, one big number */}
-          <div className="mt-5 flex items-center justify-center gap-4">
+          {/* the heet total — one big flame, one big number, optically centered */}
+          <div className="mt-5 flex items-center justify-center gap-3">
             <HeetFlame className="size-16 shrink-0" glow />
-            <span className="flex h-16 items-center font-display text-[46px] font-extrabold leading-none tracking-[-0.04em] text-foreground">
+            <span className="font-display text-[46px] font-extrabold leading-none tracking-[-0.04em] text-foreground translate-y-[0.04em]">
               {formatCount(p.totalLikes)}
             </span>
           </div>
+
 
 
           {/* follower band — two clean segments, matching the profile hierarchy */}
