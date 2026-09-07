@@ -12,15 +12,15 @@ export const Route = createFileRoute("/_authenticated/trash")({
   component: TrashPage,
   head: () => ({
     meta: [
-      { title: "Trash · GoHeet" },
+      { title: "Recently deleted · GoHeet" },
       {
         name: "description",
-        content: "Deleted Reelz stay here for 30 days. Restore a moment or erase it for good.",
+        content: "Recently deleted Reelz stay here for 30 days. Restore a moment or erase it for good.",
       },
-      { property: "og:title", content: "Trash · GoHeet" },
+      { property: "og:title", content: "Recently deleted · GoHeet" },
       {
         property: "og:description",
-        content: "Deleted Reelz stay here for 30 days before they disappear for good.",
+        content: "Recently deleted Reelz stay here for 30 days before they disappear for good.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
