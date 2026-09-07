@@ -251,15 +251,6 @@ export const getMe = createServerFn({ method: "POST" })
   });
 
 const SOCIAL_KEYS = ["instagram", "tiktok", "youtube", "twitter", "facebook", "snapchat", "whatsapp"] as const;
-const SOCIAL_DOMAINS: Record<(typeof SOCIAL_KEYS)[number], string[]> = {
-  instagram: ["instagram.com"],
-  tiktok: ["tiktok.com"],
-  youtube: ["youtube.com", "youtu.be"],
-  twitter: ["x.com", "twitter.com"],
-  facebook: ["facebook.com", "fb.com"],
-  snapchat: ["snapchat.com"],
-  whatsapp: ["wa.me", "whatsapp.com", "api.whatsapp.com"],
-};
 const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => string> = {
   instagram: (h) => `https://instagram.com/${h}`,
   tiktok: (h) => `https://tiktok.com/@${h}`,
