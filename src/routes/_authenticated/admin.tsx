@@ -82,7 +82,7 @@ function AdminPage() {
       <AppShell>
         <EmptyState
           title="Staff only."
-          line="This area is for the Reelzy moderation team."
+          line="This area is for the GoHeet moderation team."
           action={
             <Link to="/feed" className="tap-target inline-flex rounded-full border border-border px-6 text-sm">
               Back to the feed

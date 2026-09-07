@@ -27,7 +27,7 @@ function NotFoundComponent() {
           to="/"
           className="ember-fill mt-6 inline-flex tap-target items-center justify-center rounded-full px-6 text-sm font-semibold text-primary-foreground"
         >
-          Back to Reelzy
+          Back to GoHeet
         </Link>
       </div>
     </div>
@@ -76,21 +76,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#111110" },
-      { name: "application-name", content: "Reelzy" },
+      { name: "application-name", content: "GoHeet" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Reelzy" },
+      { name: "apple-mobile-web-app-title", content: "GoHeet" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { title: "Reelzy — Real moments." },
+      { title: "GoHeet — Real moments." },
       {
         name: "description",
         content:
-          "Reelzy is where real life shows up. Capture moments with the Reelzy camera — no camera roll, no staging, just what is actually happening.",
+          "GoHeet is where real life shows up. Capture moments with the GoHeet camera — no camera roll, no staging, just what is actually happening.",
       },
-      { property: "og:title", content: "Reelzy — Real moments." },
+      { property: "og:title", content: "GoHeet — Real moments." },
       {
         property: "og:description",
-        content: "Real life. Real people. Real moments. Captured only with the Reelzy camera.",
+        content: "Real life. Real people. Real moments. Captured only with the GoHeet camera.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
