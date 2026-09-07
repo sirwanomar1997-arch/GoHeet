@@ -552,18 +552,17 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      {fullscreen ? (
-        <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-3 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
-          <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-            <HeetFlame className="size-3.5" />
-            {formatCount(likeCount)}
-          </span>
-          <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-            <MessageCircle className="size-3" strokeWidth={2} />
-            {formatCount(moment.commentCount)}
-          </span>
-        </div>
-      ) : null}
+      {/* Views — eye symbol with neon glow, top-left */}
+      <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
+        <Eye
+          className="size-4 text-[oklch(0.85_0.18_200)]"
+          strokeWidth={2.2}
+          style={{ filter: "drop-shadow(0 0 4px oklch(0.85 0.18 200 / 75%))" }}
+        />
+        <span className="data-figure text-[12px] font-semibold text-foreground/90">
+          {formatCount(moment.viewCount)} views
+        </span>
+      </div>
 
 
       {moment.kind === "video" ? (
