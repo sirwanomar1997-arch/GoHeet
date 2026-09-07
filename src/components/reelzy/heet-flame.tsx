@@ -43,7 +43,7 @@ export function HeetFlame({
 
       {/* The little ember flake that drifts off the left. */}
       <path
-        d="M20 46c2 7-3 10-6 15-2 4-3 7-3 10 0 7 5 11 11 11s10-5 10-11c0-8-6-15-12-25Z"
+        d="M15 44c2 7-3 10-6 15-2 4-3 7-3 10 0 7 5 11 11 11s10-5 10-11c0-8-6-15-12-25Z"
         fill={filled ? `url(#${id})` : "none"}
         stroke={filled ? "none" : `url(#${id})`}
         strokeWidth={filled ? 0 : 2}
