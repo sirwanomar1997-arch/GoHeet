@@ -241,7 +241,7 @@ function SettingsPage() {
           <div className="mt-2 divide-y divide-border">
             <Link to="/u/$username" params={{ username: me?.profile?.username ?? "" }} className={row}>
               <span className="flex items-center gap-3">
-                <History className="size-4 text-amber-400" /> Reelz history
+                <History className="size-4 text-amber-400" /> Your history
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>

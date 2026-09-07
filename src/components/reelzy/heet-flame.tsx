@@ -2,7 +2,7 @@ import { useId } from "react";
 
 /**
  * The GoHeet flame — the single reaction mark of the platform.
- * Orange at the top, deepening into crimson-pink at the base.
+ * Warm orange at the top, deepening through red with a restrained dark-pink base.
  */
 export function HeetFlame({
   className = "size-6",
@@ -16,21 +16,22 @@ export function HeetFlame({
   const id = `heet-${useId().replace(/:/g, "")}`;
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="0 0 100 100"
       className={className}
       role="img"
       aria-hidden="true"
-      style={glow ? { filter: "drop-shadow(0 0 10px oklch(0.7 0.24 20 / 55%))" } : undefined}
+      style={glow ? { filter: "drop-shadow(0 0 10px oklch(0.67 0.22 28 / 50%))" } : undefined}
     >
       <defs>
-        <linearGradient id={id} x1="0.5" y1="0" x2="0.5" y2="1">
-          <stop offset="0%" stopColor="#FFA51F" />
-          <stop offset="45%" stopColor="#FF6B24" />
-          <stop offset="100%" stopColor="#FF2D8A" />
+        <linearGradient id={id} x1="0.3" y1="0" x2="0.65" y2="1">
+          <stop offset="0%" stopColor="#FF991F" />
+          <stop offset="58%" stopColor="#F43B20" />
+          <stop offset="88%" stopColor="#D91E43" />
+          <stop offset="100%" stopColor="#BE174B" />
         </linearGradient>
       </defs>
       <path
-        d="M13.6 1.6c.6 2.9-.5 4.7-2 6.4-1.6 1.8-3.5 3.4-4.6 5.7-1.6 3.4.1 7.4 3.6 8.9 4 1.7 8.7-.5 9.8-4.7.8-3-.3-5.6-2.1-7.9-.4 1.3-1.1 2.2-2 2.6.7-3.9-.6-7.6-4-10.2-.3-.2-.6-.4-.9-.6-.2.2-.2.4.2.8Z"
+        d="M44 4c20 13 31 34 24 61 9-4 15-12 17-24 14 17 17 34 8 47-9 13-25 18-43 18-22 0-39-9-46-25-7-17 0-34 12-48C28 20 39 15 44 4Z"
         fill={filled ? `url(#${id})` : "none"}
         stroke={filled ? "none" : `url(#${id})`}
         strokeWidth={filled ? 0 : 1.8}
