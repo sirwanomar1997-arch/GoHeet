@@ -278,7 +278,7 @@ function ProfilePage() {
             <div className="mt-5 grid w-full grid-cols-3 gap-2">
               {([
                 { id: "reelz", label: "Your Reelz", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
-                { id: "liked", label: "Liked", Icon: Heart, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
+                { id: "liked", label: "Heeted", Icon: null, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
                 { id: "saved", label: "Saved", Icon: Bookmark, color: "oklch(0.74 0.15 150)", glow: "oklch(0.74 0.15 150 / 60%)" },
               ] as const).map(({ id, label, Icon, color, glow }) => {
                 const activeTab = tab === id;
@@ -290,15 +290,22 @@ function ProfilePage() {
                     aria-label={label}
                     className="relative flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-surface py-3 transition-colors"
                   >
-                    <Icon
-                      className="size-5"
-                      strokeWidth={activeTab ? 2.4 : 1.7}
-                      style={{
-                        color,
-                        opacity: activeTab ? 1 : 0.45,
-                        filter: activeTab ? `drop-shadow(0 0 7px ${glow})` : "none",
-                      }}
-                    />
+                    {Icon ? (
+                      <Icon
+                        className="size-5"
+                        strokeWidth={activeTab ? 2.4 : 1.7}
+                        style={{
+                          color,
+                          opacity: activeTab ? 1 : 0.45,
+                          filter: activeTab ? `drop-shadow(0 0 7px ${glow})` : "none",
+                        }}
+                      />
+                    ) : (
+                      <HeetFlame
+                        className="size-5"
+                        glow={activeTab}
+                      />
+                    )}
                     <span className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
                       {label}
                     </span>
