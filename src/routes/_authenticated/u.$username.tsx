@@ -563,6 +563,18 @@ function ProfilePage() {
                           />
                         ) : null}
                         <span className="stage-vignette absolute inset-0" aria-hidden />
+                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
+                          <Eye
+                            className="size-3.5"
+                            style={{
+                              color: "oklch(0.78 0.16 235)",
+                              filter: "drop-shadow(0 0 5px oklch(0.7 0.2 235 / 75%))",
+                            }}
+                          />
+                          <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
+                            {formatCount(m.viewCount)}
+                          </span>
+                        </span>
                         {m.kind !== "photo" ? (
                           <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
                             <Play className="size-3 fill-current" />
