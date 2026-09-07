@@ -295,3 +295,35 @@ export function getDemoComments(momentId: string) {
 export function getDemoNotifications() {
   return demoNotifications;
 }
+
+export function getDemoConversations() {
+  const chats = [
+    {
+      id: "dm1",
+      status: "accepted" as const,
+      unread: 2,
+      lastMessageAt: hoursAgo(1),
+      person: { username: "lena", displayName: "Lena", avatarUrl: avatar3 },
+      lastMessage: { body: "That skate clip was insane 🔥 where was it?" },
+    },
+    {
+      id: "dm2",
+      status: "accepted" as const,
+      unread: 0,
+      lastMessageAt: hoursAgo(6),
+      person: { username: "david", displayName: "David", avatarUrl: avatar2 },
+      lastMessage: { body: "Let's shoot something at golden hour tomorrow" },
+    },
+  ];
+  const requests = [
+    {
+      id: "dm3",
+      status: "pending" as const,
+      unread: 1,
+      lastMessageAt: hoursAgo(3),
+      person: { username: "goheet", displayName: "GoHeet", avatarUrl: avatar2 },
+      lastMessage: { body: "Your moment is trending this week!" },
+    },
+  ];
+  return { chats, requests };
+}
