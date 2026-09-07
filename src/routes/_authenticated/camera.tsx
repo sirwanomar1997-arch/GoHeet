@@ -138,6 +138,8 @@ function CameraPage() {
   const accumulatedRef = useRef(0);
   const elapsedRef = useRef(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingRef = useRef(false);
+
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [withAudio, setWithAudio] = useState(true);
@@ -278,8 +280,11 @@ function CameraPage() {
   const startStream = useCallback(async () => {
     const engine = engineRef.current;
     if (!engine) return;
+    // Never re-open the camera mid-take (a lens flip handles that itself).
+    if (recordingRef.current) return;
     setReady(false);
     setBooting(true);
+
     try {
       const stream = await engine.start(facing, withAudio);
       if (videoRef.current) {
@@ -393,17 +398,21 @@ function CameraPage() {
     if (!engine) return;
     accumulatedRef.current = 0;
     elapsedRef.current = 0;
+    recordingRef.current = true;
     startedAtRef.current = Date.now();
+
     playRecordStart();
     // Interface cues belong to the person filming, never to the clip.
     engine.silenceMic(700);
     engine.startRecording(async (blob) => {
       playRecordStop();
+      recordingRef.current = false;
       const duration = elapsedRef.current;
       const poster = await grabPoster();
       setRecording(false);
       setPaused(false);
       setElapsed(0);
+
       if (duration < 800) {
         toast("Hold a moment longer — that take was too short.");
         return;
@@ -533,11 +542,33 @@ function CameraPage() {
 
 
   async function flipCamera() {
-    if (flipping) return;
+    const engine = engineRef.current;
+    if (!engine || flipping) return;
     setFlipping(true);
-    setFacing((f) => (f === "user" ? "environment" : "user"));
+    const next = facing === "user" ? "environment" : "user";
+    if (recordingRef.current) {
+      // Keep the take running — only the lens changes.
+      try {
+        const stream = await engine.switchFacing(next);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => undefined);
+        }
+        setZoomRange(engine.state.zoomRange);
+        setZoom(engine.state.zoomRange?.min ?? 1);
+        setDigital(1);
+        setTorchAvailable(engine.state.torchAvailable);
+        setTorch(false);
+        setFacing(next);
+      } catch {
+        toast("We couldn't switch the camera just now.");
+      }
+    } else {
+      setFacing(next);
+    }
     window.setTimeout(() => setFlipping(false), 420);
   }
+
 
   async function toggleTorch() {
     const engine = engineRef.current;
@@ -1201,7 +1232,9 @@ function CameraPage() {
           ) : null}
           <span className="data-figure text-[13px] font-medium tabular-nums tracking-[0.16em] text-white">
             {recording ? formatClock(elapsed) : "00:00"}
+            <span className="text-white/45"> | {formatClock(MAX_MS)}</span>
           </span>
+
           {paused ? (
             <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Paused</span>
           ) : null}

@@ -74,9 +74,14 @@ function audioConstraints(): MediaTrackConstraints {
 
 export class CameraEngine {
   private stream: MediaStream | null = null;
+  private audioStream: MediaStream | null = null;
   private recorder: MediaRecorder | null = null;
   private chunks: BlobPart[] = [];
   private mime: string | undefined;
+  /** Recording pipeline: we always record a canvas so the lens can change mid-take. */
+  private canvas: HTMLCanvasElement | null = null;
+  private mixVideo: HTMLVideoElement | null = null;
+  private raf = 0;
 
   state: EngineState = {
     facing: "user",
@@ -96,30 +101,36 @@ export class CameraEngine {
     return (this.stream?.getVideoTracks()[0] as TrackWithCaps | undefined) ?? null;
   }
 
-  /** Open (or re-open) the camera. Resolves with the live stream. */
-  async start(facing: Facing, withAudio: boolean): Promise<MediaStream> {
-    this.stop();
+  private async openVideo(facing: Facing): Promise<MediaStream> {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       throw this.friendly({ name: "NotFoundError" });
     }
-    let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints(facing),
-        audio: withAudio ? audioConstraints() : false,
-      });
+      return await navigator.mediaDevices.getUserMedia({ video: videoConstraints(facing), audio: false });
     } catch (err) {
-      // Some devices reject the richer constraints — fall back to a plain open
-      // rather than failing the whole camera.
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing },
-          audio: withAudio,
-        });
+        return await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
       } catch {
         throw this.friendly(err);
       }
     }
+  }
+
+  /** Open (or re-open) the camera. Resolves with the live stream. */
+  async start(facing: Facing, withAudio: boolean): Promise<MediaStream> {
+    this.stop();
+    const video = await this.openVideo(facing);
+    if (withAudio) {
+      try {
+        this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints() });
+      } catch {
+        this.audioStream = null;
+      }
+    }
+    const stream = new MediaStream([
+      ...video.getVideoTracks(),
+      ...(this.audioStream?.getAudioTracks() ?? []),
+    ]);
     this.stream = stream;
     this.state.facing = facing;
     this.readCapabilities();
@@ -127,6 +138,29 @@ export class CameraEngine {
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
     return stream;
   }
+
+  /**
+   * Swap lenses without interrupting anything. While recording, the canvas
+   * pipeline simply starts drawing the new lens — the take keeps running.
+   */
+  async switchFacing(facing: Facing): Promise<MediaStream> {
+    const next = await this.openVideo(facing);
+    this.stream?.getVideoTracks().forEach((t) => {
+      t.stop();
+      this.stream?.removeTrack(t);
+    });
+    next.getVideoTracks().forEach((t) => this.stream?.addTrack(t));
+    if (!this.stream) this.stream = next;
+    this.state.facing = facing;
+    this.readCapabilities();
+    await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
+    if (this.mixVideo) {
+      this.mixVideo.srcObject = new MediaStream(this.stream.getVideoTracks());
+      await this.mixVideo.play().catch(() => undefined);
+    }
+    return this.stream;
+  }
+
 
   private readCapabilities() {
     const track = this.videoTrack;
@@ -186,7 +220,42 @@ export class CameraEngine {
     const stream = this.stream;
     if (!stream) return;
     this.mime = bestMimeType();
-    const rec = new MediaRecorder(stream, {
+
+    // Record a canvas rather than the raw camera track: the lens can then be
+    // swapped mid-take without the recorder ever seeing an interruption.
+    const track = this.videoTrack;
+    const settings = track?.getSettings();
+    const canvas = document.createElement("canvas");
+    canvas.width = settings?.width || 1080;
+    canvas.height = settings?.height || 1920;
+    const ctx = canvas.getContext("2d");
+
+    const mix = document.createElement("video");
+    mix.muted = true;
+    mix.playsInline = true;
+    mix.srcObject = new MediaStream(stream.getVideoTracks());
+    void mix.play().catch(() => undefined);
+
+    this.canvas = canvas;
+    this.mixVideo = mix;
+
+    const draw = () => {
+      this.raf = requestAnimationFrame(draw);
+      if (!ctx || !mix.videoWidth) return;
+      // Cover-fit so a lens with a different aspect never letterboxes the take.
+      const scale = Math.max(canvas.width / mix.videoWidth, canvas.height / mix.videoHeight);
+      const w = mix.videoWidth * scale;
+      const h = mix.videoHeight * scale;
+      ctx.drawImage(mix, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    };
+    this.raf = requestAnimationFrame(draw);
+
+    const composed = new MediaStream([
+      ...canvas.captureStream(30).getVideoTracks(),
+      ...stream.getAudioTracks(),
+    ]);
+
+    const rec = new MediaRecorder(composed, {
       ...(this.mime ? { mimeType: this.mime } : {}),
       videoBitsPerSecond: HIGH_BITRATE,
       audioBitsPerSecond: AUDIO_BITRATE,
@@ -212,16 +281,30 @@ export class CameraEngine {
     if (this.recorder?.state === "paused") this.recorder.resume();
   }
 
+  private teardownMixer() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    if (this.mixVideo) {
+      this.mixVideo.srcObject = null;
+      this.mixVideo = null;
+    }
+    this.canvas = null;
+  }
+
   stopRecording() {
     if (this.recorder && this.recorder.state !== "inactive") this.recorder.stop();
     this.recorder = null;
+    this.teardownMixer();
   }
 
   stop() {
     this.stopRecording();
     this.stream?.getTracks().forEach((t) => t.stop());
+    this.audioStream?.getTracks().forEach((t) => t.stop());
+    this.audioStream = null;
     this.stream = null;
   }
+
 
   /** Grab a still frame from a live preview element (used for posters). */
   static async grabFrame(video: HTMLVideoElement | null, mirrored = false): Promise<Blob | null> {
