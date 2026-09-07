@@ -635,12 +635,6 @@ export function MomentStage({
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-center gap-2">
-          <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
-          <span className="data-figure text-[12px] text-foreground/75">
-            {formatCount(moment.viewCount)} views
-          </span>
-        </div>
       </div>
 
       {/* Right reaction rail */}
