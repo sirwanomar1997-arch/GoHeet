@@ -16,6 +16,7 @@ import mountain from "@/assets/demo/mountain.jpg";
 import avatar1 from "@/assets/demo/avatar-1.jpg";
 import avatar2 from "@/assets/demo/avatar-2.jpg";
 import avatar3 from "@/assets/demo/avatar-3.jpg";
+import avatar4 from "@/assets/demo/avatar-4.jpg";
 import styleRef from "@/assets/av2/style-reference.jpg";
 import type { MomentCard } from "@/lib/reelzy.functions";
 
@@ -63,7 +64,7 @@ export const demoAuthors: Array<{
   { id: "d1", username: "maya", displayName: "Maya", avatarUrl: avatar1 },
   { id: "d2", username: "david", displayName: "David", avatarUrl: avatar2 },
   { id: "d3", username: "lena", displayName: "Lena", avatarUrl: avatar3 },
-  { id: "d4", username: "goheet", displayName: "GoHeet", avatarUrl: avatar2 },
+  { id: "d4", username: "yasmin", displayName: "Yasmin", avatarUrl: avatar4 },
 ];
 
 export const demoProfiles: Record<string, DemoProfile> = {
@@ -124,12 +125,12 @@ export const demoProfiles: Record<string, DemoProfile> = {
     socialLinks: { instagram: "lenatravels", tiktok: "lena", website: "lenatravels.blog" },
     createdAt: daysAgo(300),
   },
-  goheet: {
+  yasmin: {
     id: "d4",
-    username: "goheet",
-    displayName: "GoHeet",
-    bio: "REAL LIFE. REAL PEOPLE. REAL MOMENTS. 🔥\nThe home of real moments.",
-    avatarUrl: avatar2,
+    username: "yasmin",
+    displayName: "Yasmin",
+    bio: "Beach days & good vibes ☀️\nReal life, one Heet at a time",
+    avatarUrl: avatar4,
     hasAvatar: true,
     hasPersonalPhoto: false,
     profileImageType: "avatar",
