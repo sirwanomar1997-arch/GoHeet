@@ -15,10 +15,16 @@ const replySchema = z.object({
   body: z.string().trim().min(1).max(4000),
 });
 
-async function isStaff(context: { supabase: unknown; userId: string }) {
-  const rpc = (context.supabase as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> }).rpc;
-  const { data } = await rpc("is_staff", { _user_id: context.userId }).catch(() => ({ data: false }));
-  return data === true;
+async function isStaff(context: { supabase: { from: (t: "user_roles") => never }; userId: string }) {
+  const { data } = await (context.supabase as never as {
+    from: (t: string) => {
+      select: (c: string) => { eq: (c: string, v: string) => Promise<{ data: { role: string }[] | null }> };
+    };
+  })
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId);
+  return (data ?? []).some((r) => r.role === "admin" || r.role === "moderator" || r.role === "support");
 }
 
 async function admin() {
