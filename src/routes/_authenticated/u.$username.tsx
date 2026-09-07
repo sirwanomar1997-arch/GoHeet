@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, type LucideIcon } from "lucide-react";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
@@ -106,7 +106,7 @@ function ProfilePage() {
     },
   });
 
-  const [tab, setTab] = useState<"reelz" | "liked" | "saved">("reelz");
+  const [tab, setTab] = useState<"reelz" | "liked" | "saved" | "reposted">("reelz");
   const fetchFeed = useServerFn(getFeed);
   const isSelf = data?.isSelf ?? false;
   const { data: likedData } = useQuery({
@@ -275,11 +275,12 @@ function ProfilePage() {
           </div>
 
           {data.isSelf ? (
-            <div className="mt-5 grid w-full grid-cols-3 gap-2">
+            <div className="mt-5 grid w-full grid-cols-4 gap-2">
               {([
                 { id: "reelz", label: "Your Reelz", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
                 { id: "liked", label: "Heeted", Icon: null, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
                 { id: "saved", label: "Saved", Icon: Bookmark, color: "oklch(0.74 0.15 150)", glow: "oklch(0.74 0.15 150 / 60%)" },
+                { id: "reposted", label: "Reposts", Icon: Repeat2, color: "oklch(0.72 0.17 150)", glow: "oklch(0.72 0.17 150 / 60%)" },
               ] as const).map(({ id, label, Icon, color, glow }) => {
                 const activeTab = tab === id;
                 return (
@@ -341,6 +342,17 @@ function ProfilePage() {
                 className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
               >
                 Message
+              </button>
+              <button
+                type="button"
+                aria-label={`View @${p.username}'s reposts`}
+                aria-pressed={tab === "reposted"}
+                onClick={() => setTab((current) => (current === "reposted" ? "reelz" : "reposted"))}
+                className={`tap-target grid w-14 place-items-center rounded-2xl border transition-colors ${
+                  tab === "reposted" ? "border-primary bg-primary/10 text-primary" : "border-border"
+                }`}
+              >
+                <Repeat2 className="size-5" />
               </button>
               <div className="relative">
                 <button
@@ -453,13 +465,15 @@ function ProfilePage() {
       <section className="pb-12 pt-8">
         <ProfileSort sort={sort} onChange={setSort} />
         {(() => {
-          const list: MomentCard[] = data.isSelf
-            ? tab === "reelz"
-              ? data.moments
-              : tab === "liked"
-                ? likedData?.moments ?? []
-                : savedData?.moments ?? []
-            : data.moments;
+          const list: MomentCard[] = tab === "reposted"
+            ? data.reposts
+            : data.isSelf
+              ? tab === "reelz"
+                ? data.moments
+                : tab === "liked"
+                  ? likedData?.moments ?? []
+                  : savedData?.moments ?? []
+              : data.moments;
 
           if (list.length === 0) {
             const copy =
@@ -467,6 +481,10 @@ function ProfilePage() {
                 ? { title: "No liked moments yet.", line: "Moments you love will live here." }
                 : data.isSelf && tab === "saved"
                   ? { title: "No saved moments yet.", line: "Moments you save will live here." }
+                  : tab === "reposted"
+                    ? !data.isSelf && !p.showReposts
+                      ? { title: "Reposts are private.", line: `@${p.username} keeps this section private.` }
+                      : { title: "No reposts yet.", line: data.isSelf ? "Videos you repost will live here." : "Check back later." }
                   : data.isSelf
                     ? { title: "Your timeline is empty.", line: "Open the camera and put something real on it." }
                     : p.isPrivate
@@ -557,7 +575,7 @@ function ProfilePage() {
                 <MomentReel
                   moments={list}
                   startIndex={openIndex}
-                  title={tab === "liked" ? "Liked" : tab === "saved" ? "Saved" : `@${p.username}`}
+                  title={tab === "liked" ? "Liked" : tab === "saved" ? "Saved" : tab === "reposted" ? "Reposts" : `@${p.username}`}
                   onClose={() => setOpenIndex(null)}
                   onGone={() => {
                     setOpenIndex(null);

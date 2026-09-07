@@ -59,6 +59,7 @@ function SettingsPage() {
   const [showFollowing, setShowFollowing] = useState(true);
   const [showLikes, setShowLikes] = useState(true);
   const [showSaves, setShowSaves] = useState(false);
+  const [showReposts, setShowReposts] = useState(true);
   const [birthDate, setBirthDate] = useState("");
   const [clearing, setClearing] = useState(false);
   const [confirm, setConfirm] = useState("");
@@ -79,6 +80,7 @@ function SettingsPage() {
     setShowFollowing(p.show_following !== false);
     setShowLikes(p.show_likes !== false);
     setShowSaves(!!p.show_saves);
+    setShowReposts(p.show_reposts !== false);
     setBirthDate(p.birth_date ?? "");
   }, [me]);
 
@@ -104,6 +106,7 @@ function SettingsPage() {
           showFollowing,
           showLikes,
           showSaves,
+          showReposts,
         },
       }),
     onSuccess: () => {
@@ -452,6 +455,15 @@ function SettingsPage() {
                 </span>
               </span>
               <Switch checked={showSaves} onCheckedChange={setShowSaves} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm">
+                Public repost section
+                <span className="block text-xs text-muted-foreground">
+                  Let people see the videos you repost.
+                </span>
+              </span>
+              <Switch checked={showReposts} onCheckedChange={setShowReposts} />
             </label>
             <Button
               onClick={() => privacyMutation.mutate()}

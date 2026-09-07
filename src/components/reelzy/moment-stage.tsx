@@ -15,6 +15,7 @@ import {
   Heart,
   Share2,
   Music2,
+  Repeat2,
 } from "lucide-react";
 import {
   Sheet,
@@ -41,6 +42,7 @@ import {
   toggleBlock,
   toggleCommentLike,
   toggleLike,
+  toggleRepost,
   toggleSave,
   type MomentCard,
 } from "@/lib/reelzy.functions";
@@ -88,6 +90,7 @@ export function MomentStage({
   const [liked, setLiked] = useState(moment.liked);
   const [likeCount, setLikeCount] = useState(moment.likeCount);
   const [saved, setSaved] = useState(moment.saved);
+  const [reposted, setReposted] = useState(moment.reposted);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -391,6 +394,16 @@ export function MomentStage({
       void qc.invalidateQueries({ queryKey: ["feed", "saved"] });
     },
     onError: () => toast.error("Couldn't save that moment."),
+  });
+
+  const repostMutation = useMutation({
+    mutationFn: () => toggleRepost({ data: { momentId: moment.id } }),
+    onSuccess: (res) => {
+      setReposted(res.reposted);
+      toast.success(res.reposted ? "Reposted to your profile." : "Removed from your reposts.");
+      void qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: () => toast.error("Couldn't update your repost."),
   });
 
   const reportMutation = useMutation({
@@ -702,6 +715,17 @@ export function MomentStage({
             className="tap-target grid w-14 place-items-center rounded-2xl border border-border bg-surface-raised active:scale-[0.97]"
           >
             <Share2 className="size-4" strokeWidth={1.8} />
+          </button>
+          <button
+            type="button"
+            onClick={() => repostMutation.mutate()}
+            aria-pressed={reposted}
+            aria-label={reposted ? "Remove repost" : "Repost to your profile"}
+            className={`tap-target grid w-14 place-items-center rounded-2xl border active:scale-[0.97] ${
+              reposted ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface-raised"
+            }`}
+          >
+            <Repeat2 className="size-4" strokeWidth={reposted ? 2.6 : 1.8} />
           </button>
           <button
             type="button"
