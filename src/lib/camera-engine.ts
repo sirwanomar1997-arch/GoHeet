@@ -144,11 +144,33 @@ export class CameraEngine {
    * pipeline simply starts drawing the new lens — the take keeps running.
    */
   async switchFacing(facing: Facing): Promise<MediaStream> {
-    const next = await this.openVideo(facing);
-    this.stream?.getVideoTracks().forEach((t) => {
+    // iOS only allows one active capture at a time, so release the current lens
+    // first. The recorder keeps running because it records the canvas, not this
+    // track — the canvas simply holds the last frame for a moment.
+    const previous = this.stream?.getVideoTracks() ?? [];
+    previous.forEach((t) => {
       t.stop();
       this.stream?.removeTrack(t);
     });
+
+    let next: MediaStream;
+    try {
+      next = await this.openVideo(facing);
+    } catch (err) {
+      // Couldn't open the other lens — put the original one back.
+      try {
+        const back = await this.openVideo(this.state.facing);
+        back.getVideoTracks().forEach((t) => this.stream?.addTrack(t));
+        if (this.mixVideo && this.stream) {
+          this.mixVideo.srcObject = new MediaStream(this.stream.getVideoTracks());
+          await this.mixVideo.play().catch(() => undefined);
+        }
+      } catch {
+        /* nothing more we can do */
+      }
+      throw err;
+    }
+
     next.getVideoTracks().forEach((t) => this.stream?.addTrack(t));
     if (!this.stream) this.stream = next;
     this.state.facing = facing;
