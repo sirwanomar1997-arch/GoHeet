@@ -667,15 +667,24 @@ export function MomentStage({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={() => likeMutation.mutate()}
+            onClick={(e) => {
+              const host = containerRef.current?.getBoundingClientRect();
+              if (!liked && host) {
+                heetRef.current(host.width / 2, host.height / 2);
+              } else {
+                likeMutation.mutate();
+              }
+              e.currentTarget.blur();
+            }}
             aria-pressed={liked}
+            aria-label={liked ? "Remove your heet" : "Heet this moment"}
             className={`tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition-all active:scale-[0.97] ${
               liked
-                ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
+                ? "border-[#FF6B24]/60 bg-[#FF6B24]/12 text-foreground"
                 : "border-border bg-surface-raised text-foreground"
             }`}
           >
-            <HeetFlame className={`size-5 ${liked ? "animate-heet-flicker" : ""}`} filled={liked} />
+            <HeetFlame className={`size-6 ${liked ? "animate-heet-flicker" : ""}`} filled={liked} />
             <span className="data-figure text-xs">{formatCount(likeCount)}</span>
           </button>
           <button
