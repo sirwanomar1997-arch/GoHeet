@@ -260,7 +260,7 @@ function SettingsPage() {
             </Link>
             <Link to="/trash" className={row}>
               <span className="flex items-center gap-3">
-                <Trash2 className="size-4 text-rose-400" /> Trash · deleted Reelz (30 days)
+                <Trash2 className="size-4 text-rose-400" /> Recently deleted (30 days)
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>

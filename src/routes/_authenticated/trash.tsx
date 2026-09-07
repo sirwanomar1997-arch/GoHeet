@@ -12,15 +12,15 @@ export const Route = createFileRoute("/_authenticated/trash")({
   component: TrashPage,
   head: () => ({
     meta: [
-      { title: "Trash · GoHeet" },
+      { title: "Recently deleted · GoHeet" },
       {
         name: "description",
-        content: "Deleted Reelz stay here for 30 days. Restore a moment or erase it for good.",
+        content: "Recently deleted Reelz stay here for 30 days. Restore a moment or erase it for good.",
       },
-      { property: "og:title", content: "Trash · GoHeet" },
+      { property: "og:title", content: "Recently deleted · GoHeet" },
       {
         property: "og:description",
-        content: "Deleted Reelz stay here for 30 days before they disappear for good.",
+        content: "Recently deleted Reelz stay here for 30 days before they disappear for good.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -61,7 +61,7 @@ function TrashPage() {
         <Link to="/settings" className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
           <ChevronLeft className="size-3.5" /> Settings
         </Link>
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Trash</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Recently deleted</h1>
         <p className="text-sm text-muted-foreground">
           Deleted Reelz wait here for 30 days, then they are erased automatically.
         </p>
