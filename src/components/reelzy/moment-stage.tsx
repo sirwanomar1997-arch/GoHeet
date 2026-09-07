@@ -664,13 +664,6 @@ export function MomentStage({
               glow={liked}
             />
           </button>
-          <span
-            className="data-figure -mt-1.5 text-[14px] font-bold leading-none text-white"
-            style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-          >
-            {formatCount(likeCount)}
-          </span>
-
         </div>
 
         <RailAction
