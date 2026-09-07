@@ -61,7 +61,7 @@ function TrashPage() {
         <Link to="/settings" className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
           <ChevronLeft className="size-3.5" /> Settings
         </Link>
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Trash</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Recently deleted</h1>
         <p className="text-sm text-muted-foreground">
           Deleted Reelz wait here for 30 days, then they are erased automatically.
         </p>
