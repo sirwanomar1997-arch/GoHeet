@@ -1195,6 +1195,26 @@ export const getProfile = createServerFn({ method: "POST" })
       .order(orderCol, { ascending: data.sort === "old" })
       .limit(40);
 
+    const { data: repostRows } = await context.supabase
+      .from("reposts")
+      .select("moment_id, created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    const repostIds = (repostRows ?? []).map((repost) => repost.moment_id);
+    const { data: repostedMoments } = repostIds.length
+      ? await context.supabase
+          .from("moments")
+          .select(MOMENT_SELECT)
+          .in("id", repostIds)
+          .eq("status", "published")
+          .is("deleted_at", null)
+      : { data: [] as unknown[] };
+    const repostOrder = new Map(repostIds.map((id, index) => [id, index]));
+    const orderedReposts = ((repostedMoments ?? []) as unknown as FeedRow[]).sort(
+      (a, b) => (repostOrder.get(a.id) ?? 0) - (repostOrder.get(b.id) ?? 0),
+    );
+
     const avatars = await signAvatars([profile.avatar_url]);
     return {
       profile: {
@@ -1209,12 +1229,14 @@ export const getProfile = createServerFn({ method: "POST" })
         totalViews: Number(profile.total_views ?? 0),
         totalLikes: Number(profile.total_likes ?? 0),
         isPrivate: profile.is_private,
+        showReposts: profile.show_reposts,
         socialLinks: ((profile as unknown as { social_links?: Record<string, string> })
           .social_links ?? {}) as Record<string, string>,
         createdAt: profile.created_at,
 
       },
       moments: await decorate((rows ?? []) as unknown as FeedRow[], context.userId),
+      reposts: await decorate(orderedReposts, context.userId),
       isFollowing: !!rel,
       isSelf,
     };
