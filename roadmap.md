@@ -16,8 +16,3 @@
 
 - [x] Match the login page to the supplied GoHeet reference
 - [x] Use the same reference-matched flame everywhere in the app
-
-- [x] Restore the blue neon views treatment
-- [x] Redesign and lower the feed action symbols
-- [x] Separate in-app sending from outside sharing
-- [x] Verify the updated feed loads without errors
