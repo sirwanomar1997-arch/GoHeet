@@ -243,14 +243,21 @@ function ProfilePage() {
             </div>
           ) : null}
 
+          {/* the heet total — one big flame, one big number */}
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <HeetFlame className="size-16" glow />
+            <span className="font-display text-[46px] font-extrabold leading-none tracking-[-0.04em] text-foreground">
+              {formatCount(p.totalLikes)}
+            </span>
+          </div>
+
           {/* stat band — a premium segmented strip */}
-          <div className="mt-2 grid w-full grid-cols-5 overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="mt-5 grid w-full grid-cols-4 overflow-hidden rounded-2xl border border-border bg-surface">
             {[
               ["Reelz", formatCount(p.momentCount)],
               ["Followers", formatCount(p.followerCount)],
               ["Following", formatCount(p.followingCount)],
               ["Views", formatCount(p.totalViews)],
-              ["Likes", formatCount(p.totalLikes)],
             ].map(([k, v]) => (
               <div
                 key={k as string}
