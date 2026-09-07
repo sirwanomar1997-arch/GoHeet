@@ -64,7 +64,6 @@ function formatClock(ms: number): string {
 function CameraPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const engineRef = useRef<CameraEngine | null>(null);
   if (engineRef.current === null && typeof window !== "undefined") engineRef.current = new CameraEngine();
   const startedAtRef = useRef(0);
@@ -198,39 +197,51 @@ function CameraPage() {
   }
 
   const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    engineRef.current?.stop();
   }, []);
 
   const startStream = useCallback(async () => {
-    stopStream();
+    const engine = engineRef.current;
+    if (!engine) return;
     setReady(false);
+    setBooting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
-        audio: withAudio,
-      });
-      streamRef.current = stream;
+      const stream = await engine.start(facing, withAudio);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
       }
+      setZoomRange(engine.state.zoomRange);
+      setZoom(engine.state.zoomRange?.min ?? 1);
+      setDigital(1);
+      setTorchAvailable(engine.state.torchAvailable);
+      setTorch(false);
+      setError(null);
       setReady(true);
-      setDenied(null);
     } catch (err) {
-      setDenied(
-        err instanceof Error && err.name === "NotAllowedError"
-          ? "Reelzy needs camera access. Allow it in your browser settings and reload."
-          : "No camera available on this device.",
+      setError(
+        isEngineError(err)
+          ? err
+          : {
+              kind: "failed",
+              title: "We couldn't start the camera",
+              body: "Something interrupted the camera. Close any other app using it and try again.",
+            },
       );
+    } finally {
+      setBooting(false);
     }
-  }, [facing, withAudio, stopStream]);
+  }, [facing, withAudio]);
 
   useEffect(() => {
     if (captured) return;
     void startStream();
     return stopStream;
   }, [startStream, stopStream, captured]);
+
+  useEffect(() => {
+    void listSavedClips().then((clips) => setSavedCount(clips.length));
+  }, []);
 
   // A server-issued capture session is what proves this came from the Reelzy camera.
   useEffect(() => {
@@ -251,24 +262,14 @@ function CameraPage() {
       const ms = accumulatedRef.current + (Date.now() - startedAtRef.current);
       elapsedRef.current = ms;
       setElapsed(ms);
-      if (ms >= MAX_MS) recorderRef.current?.stop();
+      if (ms >= MAX_MS) finishRecording();
     }, 100);
     return () => clearInterval(id);
   }, [recording, paused]);
 
 
   function grabPoster(): Promise<Blob | null> {
-    return new Promise((resolve) => {
-      const vid = videoRef.current;
-      if (!vid) return resolve(null);
-      const canvas = document.createElement("canvas");
-      canvas.width = vid.videoWidth || 720;
-      canvas.height = vid.videoHeight || 1280;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(null);
-      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.82);
-    });
+    return CameraEngine.grabFrame(videoRef.current, facing === "user");
   }
 
   async function takePhoto() {
@@ -287,46 +288,34 @@ function CameraPage() {
     stopStream();
   }
 
-  /** Cue sounds are for the person filming — never for the clip. Mute the mic while they play. */
-  function silenceMicFor(ms: number) {
-    const tracks = streamRef.current?.getAudioTracks() ?? [];
-    if (!tracks.length) return;
-    tracks.forEach((t) => (t.enabled = false));
-    window.setTimeout(() => {
-      tracks.forEach((t) => (t.enabled = true));
-    }, ms);
-  }
-
   async function beginRecording() {
-    const stream = streamRef.current;
-    if (!stream) return;
-    const mimeType = pickMimeType();
-    const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    chunksRef.current = [];
+    const engine = engineRef.current;
+    if (!engine) return;
     accumulatedRef.current = 0;
     elapsedRef.current = 0;
-    rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
-    rec.onstop = async () => {
+    startedAtRef.current = Date.now();
+    playRecordStart();
+    // Interface cues belong to the person filming, never to the clip.
+    engine.silenceMic(700);
+    engine.startRecording(async (blob) => {
       playRecordStop();
       const duration = elapsedRef.current;
       const poster = await grabPoster();
-      const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
       setRecording(false);
       setPaused(false);
       setElapsed(0);
       if (duration < 800) {
-        toast.error("Hold a moment longer — that clip was too short.");
+        toast("Hold a moment longer — that take was too short.");
         return;
       }
       setCaptured({ blob, url: URL.createObjectURL(blob), kind: "video", durationMs: duration, poster });
       stopStream();
-    };
-    recorderRef.current = rec;
-    startedAtRef.current = Date.now();
-    playRecordStart();
-    silenceMicFor(700);
-    rec.start(250);
+    });
     setRecording(true);
+  }
+
+  function finishRecording() {
+    engineRef.current?.stopRecording();
   }
 
   /** 3 · 2 · 1 before the first frame, so you can get in place. */
@@ -359,23 +348,100 @@ function CameraPage() {
 
   /** Pause banks the elapsed time; resume keeps adding to the same take. */
   function togglePause() {
-    const rec = recorderRef.current;
-    if (!rec) return;
+    const engine = engineRef.current;
+    if (!engine) return;
     if (paused) {
       startedAtRef.current = Date.now();
       playPauseBlip(true);
-      silenceMicFor(500);
-      rec.resume();
+      engine.silenceMic(500);
+      engine.resume();
       setPaused(false);
     } else {
       accumulatedRef.current += Date.now() - startedAtRef.current;
       elapsedRef.current = accumulatedRef.current;
-      rec.pause();
+      engine.pause();
       playPauseBlip(false);
       setPaused(true);
     }
   }
 
+  /** Zoom: real lens zoom where the device offers it, gentle digital zoom otherwise. */
+  const maxDigital = 4;
+  const zoomLabel = zoomRange ? `${(zoom / (zoomRange.min || 1)).toFixed(1)}×` : `${digital.toFixed(1)}×`;
+
+  const applyZoom = useCallback(
+    (next: number) => {
+      const engine = engineRef.current;
+      if (zoomRange && engine) {
+        const clamped = Math.min(zoomRange.max, Math.max(zoomRange.min, next));
+        setZoom(clamped);
+        void engine.setZoom(clamped);
+      } else {
+        setDigital(Math.min(maxDigital, Math.max(1, next)));
+      }
+    },
+    [zoomRange],
+  );
+
+  const pinchRef = useRef<{ distance: number; base: number } | null>(null);
+
+  const onPreviewTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    pinchRef.current = {
+      distance: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+      base: zoomRange ? zoom : digital,
+    };
+  };
+
+  const onPreviewTouchMove = (e: React.TouchEvent) => {
+    const pinch = pinchRef.current;
+    if (!pinch || e.touches.length !== 2) return;
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    applyZoom(pinch.base * (distance / pinch.distance));
+  };
+
+  const onPreviewTouchEnd = () => {
+    pinchRef.current = null;
+  };
+
+  async function flipCamera() {
+    if (flipping) return;
+    setFlipping(true);
+    setFacing((f) => (f === "user" ? "environment" : "user"));
+    window.setTimeout(() => setFlipping(false), 420);
+  }
+
+  async function toggleTorch() {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const next = await engine.setTorch(!torch);
+    setTorch(next);
+  }
+
+  /** Hold a moment on the device — three slots, then you have to share or clear one. */
+  async function saveForLater() {
+    if (!captured) return;
+    setSaving(true);
+    try {
+      await saveClip({
+        blob: captured.blob,
+        poster: captured.poster,
+        kind: captured.kind,
+        durationMs: Math.round(captured.durationMs),
+        caption: caption.trim(),
+        place: place.trim(),
+        styleFilter: look !== "none" ? look : null,
+      });
+      toast.success("Held for later. Share it when you're ready.");
+      await navigate({ to: "/share-later" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't hold that one.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
