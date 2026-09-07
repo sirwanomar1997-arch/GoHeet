@@ -82,6 +82,8 @@ function CameraPage() {
   const [torch, setTorch] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [flipping, setFlipping] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [filterCat, setFilterCat] = useState<string>("Natural");
   const [savedCount, setSavedCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -665,6 +667,21 @@ function CameraPage() {
               >
                 {publishing ? "Publishing…" : "Publish"}
               </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => void saveForLater()}
+                disabled={saving || savedCount >= SHARE_LATER_LIMIT}
+                className="h-12 w-full rounded-2xl border border-border text-sm"
+              >
+                <Bookmark className="mr-2 size-4" />
+                {savedCount >= SHARE_LATER_LIMIT
+                  ? `Share later is full (${SHARE_LATER_LIMIT}/${SHARE_LATER_LIMIT})`
+                  : `Save to share later · ${savedCount}/${SHARE_LATER_LIMIT}`}
+              </Button>
+              <p className="pb-2 text-center text-xs text-muted-foreground">
+                Holding a moment keeps it on this device only, for sharing soon — not as an album.
+              </p>
             </div>
           </div>
 
@@ -801,8 +818,22 @@ function CameraPage() {
         {/* Filter tray, right on the frame. */}
         {filterOpen && !textOpen ? (
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-8 pt-10">
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+              {FILTER_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCat(cat)}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11px] tracking-[0.08em] transition-colors ${
+                    filterCat === cat ? "bg-white text-black" : "bg-white/12 text-white/75"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-3 overflow-x-auto pb-1">
-              {FILTERS.map((f) => (
+              {FILTERS.filter((f) => f.category === filterCat || f.id === "none").map((f) => (
                 <button
                   key={f.id}
                   type="button"
