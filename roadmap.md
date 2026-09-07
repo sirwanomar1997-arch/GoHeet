@@ -32,3 +32,6 @@
 - [x] Replace the rejected glossy icon with the selected dynamic-motion direction
 - [x] Update every app icon, splash, and favicon size
 - [x] Verify the new mark at full and small sizes
+- [x] Add the selected fitted obsidian chrome frame to the GoHeet icon
+- [x] Replace every icon, splash, and favicon size with the framed version
+- [x] Verify the framed icon remains recognizable from 256px down to 32px
