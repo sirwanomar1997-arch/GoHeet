@@ -82,6 +82,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [adultLink, setAdultLink] = useState<string | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
   const { data, isLoading, refetch } = useQuery({
@@ -600,6 +601,40 @@ function ProfilePage() {
           );
         })()}
       </section>
+
+      {adultLink ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-surface p-5 text-center">
+            <span className="mx-auto grid size-12 place-items-center rounded-full bg-[oklch(0.6_0.22_25/15%)] text-[oklch(0.7_0.2_25)]">
+              <ShieldAlert className="size-6" />
+            </span>
+            <h3 className="mt-3 font-display text-lg font-bold">Adult content ahead</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This link leaves GoHeet and may contain content for adults only. Continue only if you
+              are 18 or older.
+            </p>
+            <p className="mt-2 break-all text-[11px] text-muted-foreground/80">{adultLink}</p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdultLink(null)}
+                className="h-11 flex-1 rounded-2xl border border-border text-sm font-semibold"
+              >
+                Go back
+              </button>
+              <a
+                href={adultLink}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={() => setAdultLink(null)}
+                className="ember-fill grid h-11 flex-1 place-items-center rounded-2xl text-sm font-semibold text-primary-foreground"
+              >
+                I'm 18+, continue
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }
