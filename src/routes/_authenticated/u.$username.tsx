@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { useDemoMode } from "@/lib/use-demo-mode";
+import { getDemoProfile } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
@@ -70,6 +72,7 @@ function ProfileSort({
 
 function ProfilePage() {
   const { username } = Route.useParams();
+  const demo = useDemoMode();
   const fetchProfile = useServerFn(getProfile);
   const follow = useServerFn(toggleFollow);
   const report = useServerFn(submitReport);
@@ -86,8 +89,11 @@ function ProfilePage() {
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["profile", username, sort],
-    queryFn: () => fetchProfile({ data: { username, sort } }),
+    queryKey: ["profile", username, sort, demo],
+    queryFn: () =>
+      demo
+        ? getDemoProfile(username, sort)
+        : fetchProfile({ data: { username, sort } }),
   });
 
   // Opening a shared reel link (?r=<id>) lands straight on that reel.
