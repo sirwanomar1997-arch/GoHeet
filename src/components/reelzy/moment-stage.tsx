@@ -639,7 +639,7 @@ export function MomentStage({
       </div>
 
       {/* Heet flame — separated above the lower rail, bigger symbol + count */}
-      <div className="absolute bottom-[150px] right-1 z-20 flex flex-col items-center gap-2">
+      <div className="absolute bottom-[300px] right-1 z-20 flex flex-col items-center gap-2">
         <button
           type="button"
           onClick={(e) => {
