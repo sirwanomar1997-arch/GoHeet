@@ -398,7 +398,9 @@ function CameraPage() {
     if (!engine) return;
     accumulatedRef.current = 0;
     elapsedRef.current = 0;
+    recordingRef.current = true;
     startedAtRef.current = Date.now();
+
     playRecordStart();
     // Interface cues belong to the person filming, never to the clip.
     engine.silenceMic(700);
@@ -538,11 +540,33 @@ function CameraPage() {
 
 
   async function flipCamera() {
-    if (flipping) return;
+    const engine = engineRef.current;
+    if (!engine || flipping) return;
     setFlipping(true);
-    setFacing((f) => (f === "user" ? "environment" : "user"));
+    const next = facing === "user" ? "environment" : "user";
+    if (recordingRef.current) {
+      // Keep the take running — only the lens changes.
+      try {
+        const stream = await engine.switchFacing(next);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => undefined);
+        }
+        setZoomRange(engine.state.zoomRange);
+        setZoom(engine.state.zoomRange?.min ?? 1);
+        setDigital(1);
+        setTorchAvailable(engine.state.torchAvailable);
+        setTorch(false);
+        setFacing(next);
+      } catch {
+        toast("We couldn't switch the camera just now.");
+      }
+    } else {
+      setFacing(next);
+    }
     window.setTimeout(() => setFlipping(false), 420);
   }
+
 
   async function toggleTorch() {
     const engine = engineRef.current;
