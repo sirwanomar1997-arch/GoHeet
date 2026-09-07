@@ -228,6 +228,8 @@ export function MomentStage({
     if (pointersRef.current.size < 2) pinchRef.current = null;
   };
 
+  const heetRef = useRef<(x: number, y: number) => void>(() => undefined);
+
   const onMediaTap = (e: React.PointerEvent) => {
     endPointer(e);
     if (movedRef.current) return;
@@ -240,9 +242,10 @@ export function MomentStage({
       if (zoomStateRef.current.zoom > 1) {
         setZoom(1);
         setOffset({ x: 0, y: 0 });
-      } else {
-        zoomAtRef.current(2.5, e.clientX - rect.left, e.clientY - rect.top);
+        return;
       }
+      // Double tap anywhere on the frame = heet it, with the flame popping up.
+      heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
       return;
     }
     lastTapRef.current = now;
