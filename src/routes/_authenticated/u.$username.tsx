@@ -132,7 +132,7 @@ function ProfilePage() {
   if (!data?.profile) {
     return (
       <AppShell hideNav>
-        <EmptyState title="No one by that name." line={`@${username} doesn't exist on Reelzy.`} />
+        <EmptyState title="No one by that name." line={`@${username} doesn't exist on GoHeet.`} />
       </AppShell>
     );
   }

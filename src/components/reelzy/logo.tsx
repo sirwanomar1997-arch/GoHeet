@@ -47,5 +47,5 @@ export function GoHeetWordmark({ className = "" }: { className?: string }) {
 }
 
 // Back-compat aliases so existing imports keep working during the rename.
-export const ReelzyMark = GoHeetMark;
-export const ReelzyWordmark = GoHeetWordmark;
+export const GoHeetMark = GoHeetMark;
+export const GoHeetWordmark = GoHeetWordmark;

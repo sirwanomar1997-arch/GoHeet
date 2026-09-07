@@ -34,10 +34,10 @@ function ProfileIcon({ className }: { className?: string }) {
 }
 
 /**
- * The Reelzy ledger bar: four quiet destinations around one loud capture key.
+ * The GoHeet ledger bar: four quiet destinations around one loud capture key.
  * The camera is the only thing in the product that gets the ember gradient.
  */
-export function ReelzyNav() {
+export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data } = useMe();
   const username = data?.profile?.username;
@@ -184,7 +184,7 @@ export function AppShell({ children, hideNav = false }: { children: React.ReactN
       onTouchEnd={swipe.onTouchEnd}
     >
       <div className="mx-auto max-w-lg">{children}</div>
-      {hideNav ? null : <ReelzyNav />}
+      {hideNav ? null : <GoHeetNav />}
     </div>
   );
 }

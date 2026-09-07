@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { assertSafeText } from "@/lib/text-safety";
 
 /**
- * Reelzy core server API.
+ * GoHeet core server API.
  *
  * Every rule that matters (age, camera-origin, ownership, blocking, rate
  * limits) is enforced here and/or by database policies. The client is never
@@ -495,7 +495,7 @@ export const publishMoment = createServerFn({ method: "POST" })
       throw new Error("Thumbnail does not belong to this capture session.");
     }
 
-    // 3. The object must actually exist in Reelzy storage.
+    // 3. The object must actually exist in GoHeet storage.
     const folder = data.mediaPath.slice(0, data.mediaPath.lastIndexOf("/"));
     const fileName = data.mediaPath.slice(data.mediaPath.lastIndexOf("/") + 1);
     const { data: listed } = await sb.storage.from("moments").list(folder, { limit: 100 });
@@ -842,7 +842,7 @@ async function signMusic(paths: Array<string | null>): Promise<Record<string, st
   return out;
 }
 
-/** The Reelzy music library. Only licensed tracks loaded by staff appear here. */
+/** The GoHeet music library. Only licensed tracks loaded by staff appear here. */
 export const listMusicTracks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
@@ -1282,7 +1282,7 @@ export const getProfile = createServerFn({ method: "POST" })
     };
   });
 
-export const searchReelzy = createServerFn({ method: "POST" })
+export const searchGoHeet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { q: string }) => ({ q: z.string().trim().max(60).parse(d.q) }))
   .handler(async ({ data, context }) => {

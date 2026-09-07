@@ -1,6 +1,6 @@
 /**
- * Reelzy creative kit — the small, opinionated set of looks and type styles a
- * moment can carry. Kept deliberately tight: Reelzy is about the real frame,
+ * GoHeet creative kit — the small, opinionated set of looks and type styles a
+ * moment can carry. Kept deliberately tight: GoHeet is about the real frame,
  * so the treatments are graded like film stock, never like face filters.
  */
 

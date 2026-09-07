@@ -15,12 +15,12 @@ export const Route = createFileRoute("/_authenticated/share-later")({
   component: ShareLaterPage,
   head: () => ({
     meta: [
-      { title: "Share later · Reelzy" },
+      { title: "Share later · GoHeet" },
       {
         name: "description",
         content: "Hold up to three captured moments on your device and share them when you're ready.",
       },
-      { property: "og:title", content: "Share later · Reelzy" },
+      { property: "og:title", content: "Share later · GoHeet" },
       {
         property: "og:description",
         content: "A three-slot holding area for moments you captured now and want to share soon.",

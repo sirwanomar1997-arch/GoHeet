@@ -17,7 +17,7 @@ const COPY: Record<string, string> = {
   comment: "said something on your moment",
   mention: "mentioned you",
   moderation: "· a moderation update on your account",
-  system: "· a message from Reelzy",
+  system: "· a message from GoHeet",
 };
 
 function ActivityPage() {
@@ -70,7 +70,7 @@ function ActivityPage() {
                     @{n.actor.username}
                   </Link>
                 ) : (
-                  <span className="font-semibold">Reelzy</span>
+                  <span className="font-semibold">GoHeet</span>
                 )}{" "}
                 <span className="text-muted-foreground">{COPY[n.type] ?? n.type}</span>
               </p>

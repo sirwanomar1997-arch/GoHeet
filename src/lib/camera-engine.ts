@@ -1,5 +1,5 @@
 /**
- * Reelzy camera engine.
+ * GoHeet camera engine.
  *
  * A small, modular controller that sits between the UI and the browser media
  * stack. It owns lens selection, framing, zoom, torch and recording so the
