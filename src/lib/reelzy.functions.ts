@@ -143,6 +143,7 @@ export type MomentCard = {
   commentCount: number;
   liked: boolean;
   saved: boolean;
+  reposted: boolean;
   styleFilter: string | null;
   overlay: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number } | null;
   music: {
@@ -293,6 +294,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     showFollowing?: boolean;
     showLikes?: boolean;
     showSaves?: boolean;
+    showReposts?: boolean;
     socialLinks?: Record<string, string>;
   }) => ({
     displayName: z.string().trim().max(40).optional().parse(d.displayName),
@@ -309,6 +311,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     showFollowing: d.showFollowing,
     showLikes: d.showLikes,
     showSaves: d.showSaves,
+    showReposts: d.showReposts,
     socialLinks: d.socialLinks ? socialSchema.parse(d.socialLinks) : undefined,
   }))
   .handler(async ({ data, context }) => {
@@ -324,6 +327,7 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.showFollowing !== undefined) patch["show_following"] = data.showFollowing;
     if (data.showLikes !== undefined) patch["show_likes"] = data.showLikes;
     if (data.showSaves !== undefined) patch["show_saves"] = data.showSaves;
+    if (data.showReposts !== undefined) patch["show_reposts"] = data.showReposts;
     if (data.socialLinks !== undefined) patch["social_links"] = data.socialLinks;
     // Profile pictures are avatars only — avatar_url is set exclusively by saveAvatar.
 
@@ -736,15 +740,18 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
 
   let liked = new Set<string>();
   let saved = new Set<string>();
+  let reposted = new Set<string>();
   if (viewerId && rows.length) {
     const sb = await admin();
     const ids = rows.map((r) => r.id);
-    const [{ data: l }, { data: s }] = await Promise.all([
+    const [{ data: l }, { data: s }, { data: r }] = await Promise.all([
       sb.from("likes").select("moment_id").eq("user_id", viewerId).in("moment_id", ids),
       sb.from("saves").select("moment_id").eq("user_id", viewerId).in("moment_id", ids),
+      sb.from("reposts").select("moment_id").eq("user_id", viewerId).in("moment_id", ids),
     ]);
     liked = new Set((l ?? []).map((x) => x.moment_id));
     saved = new Set((s ?? []).map((x) => x.moment_id));
+    reposted = new Set((r ?? []).map((x) => x.moment_id));
   }
 
   return rows.map((r) => ({
@@ -761,6 +768,7 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
     commentCount: r.comment_count ?? 0,
     liked: liked.has(r.id),
     saved: saved.has(r.id),
+    reposted: reposted.has(r.id),
     styleFilter: r.style_filter ?? null,
     overlay: (r.overlay as MomentCard["overlay"]) ?? null,
     originalAudioVolume: Number(r.original_audio_volume ?? 1),
@@ -975,6 +983,29 @@ export const toggleSave = createServerFn({ method: "POST" })
     return { saved: true };
   });
 
+export const toggleRepost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
+  .handler(async ({ data, context }) => {
+    const { data: existing } = await context.supabase
+      .from("reposts")
+      .select("id")
+      .eq("moment_id", data.momentId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (existing) {
+      const { error } = await context.supabase.from("reposts").delete().eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return { reposted: false };
+    }
+    const { error } = await context.supabase
+      .from("reposts")
+      .insert({ moment_id: data.momentId, user_id: context.userId });
+    if (error) throw new Error(error.message);
+    await track(context.userId, "moment_reposted");
+    return { reposted: true };
+  });
+
 export const toggleFollow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string }) => ({ userId: z.string().uuid().parse(d.userId) }))
@@ -1164,6 +1195,26 @@ export const getProfile = createServerFn({ method: "POST" })
       .order(orderCol, { ascending: data.sort === "old" })
       .limit(40);
 
+    const { data: repostRows } = await context.supabase
+      .from("reposts")
+      .select("moment_id, created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    const repostIds = (repostRows ?? []).map((repost) => repost.moment_id);
+    const { data: repostedMoments } = repostIds.length
+      ? await context.supabase
+          .from("moments")
+          .select(MOMENT_SELECT)
+          .in("id", repostIds)
+          .eq("status", "published")
+          .is("deleted_at", null)
+      : { data: [] as unknown[] };
+    const repostOrder = new Map(repostIds.map((id, index) => [id, index]));
+    const orderedReposts = ((repostedMoments ?? []) as unknown as FeedRow[]).sort(
+      (a, b) => (repostOrder.get(a.id) ?? 0) - (repostOrder.get(b.id) ?? 0),
+    );
+
     const avatars = await signAvatars([profile.avatar_url]);
     return {
       profile: {
@@ -1178,12 +1229,14 @@ export const getProfile = createServerFn({ method: "POST" })
         totalViews: Number(profile.total_views ?? 0),
         totalLikes: Number(profile.total_likes ?? 0),
         isPrivate: profile.is_private,
+        showReposts: profile.show_reposts,
         socialLinks: ((profile as unknown as { social_links?: Record<string, string> })
           .social_links ?? {}) as Record<string, string>,
         createdAt: profile.created_at,
 
       },
       moments: await decorate((rows ?? []) as unknown as FeedRow[], context.userId),
+      reposts: await decorate(orderedReposts, context.userId),
       isFollowing: !!rel,
       isSelf,
     };

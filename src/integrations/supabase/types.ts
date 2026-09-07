@@ -687,6 +687,7 @@ export type Database = {
           moment_count: number
           show_following: boolean
           show_likes: boolean
+          show_reposts: boolean
           show_saves: boolean
           social_links: Json
           suspended_until: string | null
@@ -713,6 +714,7 @@ export type Database = {
           moment_count?: number
           show_following?: boolean
           show_likes?: boolean
+          show_reposts?: boolean
           show_saves?: boolean
           social_links?: Json
           suspended_until?: string | null
@@ -739,6 +741,7 @@ export type Database = {
           moment_count?: number
           show_following?: boolean
           show_likes?: boolean
+          show_reposts?: boolean
           show_saves?: boolean
           social_links?: Json
           suspended_until?: string | null
@@ -787,6 +790,42 @@ export type Database = {
           target_type?: string
         }
         Relationships: []
+      }
+      reposts: {
+        Row: {
+          created_at: string
+          id: string
+          moment_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          moment_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moment_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposts_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saves: {
         Row: {
