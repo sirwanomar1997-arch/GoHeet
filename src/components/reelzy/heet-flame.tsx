@@ -15,7 +15,6 @@ export function HeetFlame({
   const raw = useId().replace(/:/g, "");
   const id = `heet-${raw}`;
   const haloId = `heet-halo-${raw}`;
-  const coreId = `heet-core-${raw}`;
 
   return (
     <svg
