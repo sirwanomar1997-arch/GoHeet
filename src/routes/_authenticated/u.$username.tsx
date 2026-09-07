@@ -161,7 +161,65 @@ function ProfilePage() {
               <Settings className="size-4" />
             </Link>
           </div>
-        ) : null}
+        ) : (
+          <div className="absolute right-5 top-5 z-50">
+            <button
+              type="button"
+              aria-label="More options"
+              aria-expanded={safetyOpen}
+              onClick={() => setSafetyOpen((v) => !v)}
+              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <MoreHorizontal className="size-5" />
+            </button>
+            {safetyOpen ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setSafetyOpen(false)}
+                />
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSafetyOpen(false);
+                      await report({ data: { targetType: "user", targetId: p.id, category: "harassment" } });
+                      toast.success("Reported to the safety team.");
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
+                  >
+                    <ShieldAlert className="size-4 text-amber-400" />
+                    Report @{p.username}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSafetyOpen(false);
+                      try {
+                        const res = await blockUser({ data: { userId: p.id } });
+                        toast.success(
+                          res.blocked
+                            ? `@${p.username} is blocked. They can't see or contact you.`
+                            : `@${p.username} is unblocked.`,
+                        );
+                        void refetch();
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                    className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-surface"
+                  >
+                    <Ban className="size-4" />
+                    Block @{p.username}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
+
         <div className="relative flex flex-col items-center">
           <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
             {p.avatarUrl ? (
