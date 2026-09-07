@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Ban,
   Bookmark,
+  Camera,
   ChevronRight,
   History,
   MessageCircle,
