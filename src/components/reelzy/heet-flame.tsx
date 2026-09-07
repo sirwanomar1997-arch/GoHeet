@@ -1,9 +1,9 @@
+import { useId } from "react";
+
 /**
  * The GoHeet flame — the single reaction mark of the platform.
  * Orange at the top, deepening into crimson-pink at the base.
  */
-let uid = 0;
-
 export function HeetFlame({
   className = "size-6",
   filled = true,
@@ -13,7 +13,7 @@ export function HeetFlame({
   filled?: boolean;
   glow?: boolean;
 }) {
-  const id = `heet-${++uid}`;
+  const id = `heet-${useId().replace(/:/g, "")}`;
   return (
     <svg
       viewBox="0 0 24 24"
