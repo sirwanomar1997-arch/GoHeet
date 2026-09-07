@@ -993,28 +993,37 @@ function CommentSheet({
 }
 
 
-/* Exclusive champagne-neon: warm white core, soft ember-gold halo,
-   plus a dark edge so symbols stay visible on bright videos. */
-const NEON_CORE = "oklch(0.97 0.02 95)";
-const NEON_GLOW = "oklch(0.82 0.16 75)";
+/* Neon palette — outlined symbols, each its own colour, dark edge for
+   visibility on bright videos. Counts stay plain white. */
+const NEON_BLUE = "oklch(0.78 0.16 235)";
+const NEON_GREEN = "oklch(0.82 0.19 150)";
+const NEON_VIOLET = "oklch(0.75 0.19 300)";
+const NEON_CYAN = "oklch(0.83 0.14 200)";
+const NEON_RED = "oklch(0.68 0.22 22)";
+const NEON_CORE = NEON_BLUE;
+const NEON_GLOW = NEON_BLUE;
+
 const neonFilter = (glow: string) =>
-  `drop-shadow(0 0 6px ${glow.replace(")", " / 90%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 70%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))`;
+  `drop-shadow(0 0 6px ${glow.replace(")", " / 85%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 65%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
 
 function RailAction({
   label,
   count,
   active,
+  color,
+  activeColor,
   onClick,
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
+  color: string;
+  activeColor?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
-  const core = active ? "oklch(0.82 0.17 60)" : NEON_CORE;
-  const glow = neonFilter(NEON_GLOW);
+  const core = active ? (activeColor ?? color) : color;
   return (
     <div className="flex flex-col items-center">
       <button
@@ -1023,14 +1032,14 @@ function RailAction({
         aria-pressed={active}
         onClick={onClick}
         className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
-        style={{ color: core, filter: glow }}
+        style={{ color: core, filter: neonFilter(core) }}
       >
         {children}
       </button>
       {count ? (
         <span
-          className="data-figure -mt-1 text-[11px] font-bold leading-none"
-          style={{ color: core, filter: glow }}
+          className="data-figure -mt-1 text-[11px] font-bold leading-none text-white"
+          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
         >
           {count}
         </span>
