@@ -2,11 +2,38 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { getFeed } from "@/lib/reelzy.functions";
+import { getFeed, type MomentCard } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
 import { MomentStage } from "@/components/reelzy/moment-stage";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
+
+const DEMO_FEED = new URLSearchParams(
+  typeof window === "undefined" ? "" : window.location.search,
+).has("demo");
+
+const demoMoment: MomentCard = {
+  id: "demo",
+  caption: "Golden hour at the harbour 🌅",
+  kind: "video",
+  mediaUrl: null,
+  posterUrl: null,
+  durationMs: 12_000,
+  locationLabel: "Stockholm",
+  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  viewCount: 1284,
+  likeCount: 231,
+  commentCount: 18,
+  liked: false,
+  saved: false,
+  reposted: false,
+  styleFilter: null,
+  overlay: { text: "Real moments", font: "bungee", style: "gradient", place: "custom", color: "sunset", x: 50, y: 30, size: 34, rotate: -4 },
+  music: { id: "m1", title: "Wallpaper", artist: "Kevin MacLeod", url: null, artworkUrl: null, attributionText: null, offsetMs: 0, volume: 1 },
+  originalAudioVolume: 1,
+  author: { id: "demo", username: "goheet", displayName: "GoHeet", avatarUrl: null },
+  isOwn: false,
+};
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: FeedPage,
