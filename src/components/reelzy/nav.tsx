@@ -42,6 +42,15 @@ export function ReelzyNav() {
   const { data } = useMe();
   const username = data?.profile?.username;
 
+  const fetchNotifications = useServerFn(listNotifications);
+  const { data: notif } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetchNotifications({ data: undefined as never }),
+    refetchInterval: 45_000,
+    staleTime: 20_000,
+  });
+  const hasUnread = !!notif?.notifications.some((n) => !n.read);
+
   const item = (active: boolean, color: string, glow: string) =>
     `group relative grid size-14 place-items-center rounded-2xl transition-all duration-300 active:scale-90 ${color} ${
       active ? `${glow} scale-105 opacity-100` : "opacity-65"
