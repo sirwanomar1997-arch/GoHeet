@@ -45,6 +45,7 @@ import {
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { formatCount, timeAgo } from "./format";
+import { HeetFlame } from "./heet-flame";
 import { ShareSheet } from "./share-sheet";
 import {
   filterCss,
