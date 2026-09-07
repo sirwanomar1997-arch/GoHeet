@@ -992,14 +992,17 @@ function RailAction({
   count,
   active,
   onClick,
+  neon = "oklch(0.85 0.18 200)",
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
   onClick: () => void;
+  neon?: string;
   children: ReactNode;
 }) {
+  const glow = `drop-shadow(0 0 5px ${neon.replace(")", " / 80%)")}) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))`;
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -1007,15 +1010,20 @@ function RailAction({
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className={`grid size-9 place-items-center rounded-full transition-transform active:scale-90 ${
-          active ? "text-primary" : "text-foreground/90"
-        }`}
+        className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
+        style={{ color: neon, filter: glow }}
       >
         {children}
       </button>
       {count ? (
-        <span className="data-figure text-[12px] font-semibold text-foreground/85">{count}</span>
+        <span
+          className="data-figure text-[12px] font-semibold"
+          style={{ color: neon, filter: glow }}
+        >
+          {count}
+        </span>
       ) : null}
     </div>
   );
 }
+
