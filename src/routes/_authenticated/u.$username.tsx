@@ -271,7 +271,7 @@ function ProfilePage() {
 
           {Object.keys(p.socialLinks ?? {}).length > 0 ? (
             <div className="mt-4 flex flex-wrap justify-center gap-2.5">
-              {Object.entries(p.socialLinks ?? {}).map(([key, url]) => {
+              {Object.entries((p.socialLinks ?? {}) as Record<string, string>).map(([key, url]) => {
                 const icons: Record<string, { Icon: LucideIcon; label: string; color: string }> = {
                   instagram: { Icon: Instagram, label: "Instagram", color: "oklch(0.65 0.24 350)" },
                   tiktok: { Icon: Music2, label: "TikTok", color: "oklch(0.72 0.15 195)" },
