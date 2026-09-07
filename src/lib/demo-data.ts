@@ -71,7 +71,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
     id: "d1",
     username: "maya",
     displayName: "Maya",
-    bio: "Golden hour chaser | Stockholm to everywhere\nCapturing real life, one Heet at a time",
+    bio: "Golden hour chaser 🌅 | Stockholm → everywhere\n📷 Capturing real life, one Heet at a time",
     avatarUrl: avatar1,
     hasAvatar: true,
     hasPersonalPhoto: true,
@@ -146,7 +146,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
 };
 
 const captions = [
-  "Rolling down to the beach at golden hour",
+  "Rolling down to the beach at golden hour 🛹🌅",
   "Golden hour at the harbour 🌅 Stockholm never disappoints",
   "City lights hit different at midnight ✨",
   "Morning ritual ☕ What's yours?",
