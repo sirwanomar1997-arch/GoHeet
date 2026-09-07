@@ -484,7 +484,7 @@ function CameraPage() {
   );
 
   const pinchRef = useRef<{ distance: number; base: number } | null>(null);
-  const stageRef = useRef<HTMLDivElement | null>(null);
+  const camStageRef = useRef<HTMLDivElement | null>(null);
 
   const onPreviewTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 2) return;
@@ -508,7 +508,7 @@ function CameraPage() {
   // passive, so the listener is attached natively and cancels the browser's
   // own page-zoom gesture (including Safari's gesture events).
   useEffect(() => {
-    const el = stageRef.current;
+    const el = camStageRef.current;
     if (!el) return;
     const onMove = (e: TouchEvent) => {
       if (e.touches.length >= 2) e.preventDefault();
@@ -1144,9 +1144,9 @@ function CameraPage() {
   return (
     <main className="relative h-svh overflow-hidden bg-black">
       <div
-        className="absolute inset-0"
+        ref={camStageRef}
+        className="absolute inset-0 touch-none"
         onTouchStart={onPreviewTouchStart}
-        onTouchMove={onPreviewTouchMove}
         onTouchEnd={onPreviewTouchEnd}
       >
         <video
