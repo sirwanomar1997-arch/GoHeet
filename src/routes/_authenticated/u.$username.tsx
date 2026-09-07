@@ -410,6 +410,51 @@ function ProfilePage() {
         </div>
       </section>
 
+      {messageOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-end bg-background/70 backdrop-blur-sm">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setMessageOpen(false)}
+          />
+          <div className="relative w-full rounded-t-3xl border-t border-border bg-surface-raised p-5">
+            <p className="font-display text-sm font-semibold">Message @{p.username}</p>
+            <textarea
+              value={messageBody}
+              onChange={(e) => setMessageBody(e.target.value)}
+              rows={3}
+              placeholder="Say something…"
+              className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface p-3 text-sm outline-none"
+            />
+            <button
+              type="button"
+              disabled={sending || !messageBody.trim()}
+              onClick={async () => {
+                setSending(true);
+                try {
+                  const res = await postMessage({ data: { toUserId: p.id, body: messageBody.trim() } });
+                  setMessageOpen(false);
+                  setMessageBody("");
+                  void navigate({
+                    to: "/messages/$conversationId",
+                    params: { conversationId: res.conversationId },
+                  });
+                } catch (err) {
+                  toast.error((err as Error).message);
+                } finally {
+                  setSending(false);
+                }
+              }}
+              className="ember-fill tap-target mt-3 w-full rounded-full text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {sending ? "Sending…" : "Send"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+
       {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
       <section className="pb-12 pt-8">
         <ProfileSort sort={sort} onChange={setSort} />
