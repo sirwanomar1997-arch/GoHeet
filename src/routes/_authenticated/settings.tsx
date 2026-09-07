@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Ban,
   Bookmark,
+  Camera,
   ChevronRight,
   History,
   MessageCircle,
@@ -23,6 +24,7 @@ import {
   updateProfile,
 } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
+import { useDemoMode, setDemoMode } from "@/lib/use-demo-mode";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/reelzy/nav";
 import { Input } from "@/components/ui/input";
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const demoMode = useDemoMode();
   const { data: me } = useMe();
   const save = useServerFn(updateProfile);
   const exportData = useServerFn(exportMyData);
@@ -529,6 +532,24 @@ function SettingsPage() {
                 {d}
               </Link>
             ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-border p-4">
+          <h2 className="font-display text-base font-semibold">Screenshot mode</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Fills the feed, profiles, discover, and activity with sample content so you can capture App Store screenshots. Turn it off to see your real content.
+          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-sm font-medium">Screenshot mode</span>
+            <Switch
+              checked={demoMode}
+              onCheckedChange={(v) => {
+                setDemoMode(v);
+                toast.success(v ? "Screenshot mode on — showing demo content" : "Screenshot mode off — showing real content");
+              }}
+              aria-label="Toggle screenshot mode"
+            />
           </div>
         </section>
 

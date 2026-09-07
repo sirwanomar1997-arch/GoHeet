@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listNotifications, markNotificationsRead } from "@/lib/reelzy.functions";
+import { useDemoMode } from "@/lib/use-demo-mode";
+import { getDemoNotifications } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { timeAgo } from "@/components/reelzy/format";
@@ -21,19 +23,23 @@ const COPY: Record<string, string> = {
 };
 
 function ActivityPage() {
+  const demo = useDemoMode();
   const fetchNotifications = useServerFn(listNotifications);
   const markRead = useServerFn(markNotificationsRead);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => fetchNotifications({ data: undefined as never }),
+    queryKey: ["notifications", demo],
+    queryFn: () =>
+      demo
+        ? { notifications: getDemoNotifications() }
+        : fetchNotifications({ data: undefined as never }),
   });
 
   useEffect(() => {
-    if (data?.notifications.some((n) => !n.read)) {
+    if (!demo && data?.notifications.some((n) => !n.read)) {
       void markRead({ data: undefined as never });
     }
-  }, [data, markRead]);
+  }, [data, markRead, demo]);
 
   return (
     <AppShell>
