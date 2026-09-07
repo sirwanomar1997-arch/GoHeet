@@ -449,7 +449,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     return (
       <div className="min-h-svh bg-background px-5 pb-10 pt-8">
         <div className="mx-auto max-w-md">
-          <p className="text-xs font-bold uppercase text-primary">Your Reelzy identity</p>
+          <p className="text-xs font-bold uppercase text-primary">Your GoHeet identity</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold">Create your avatar</h2>
           <p className="mt-2 text-sm text-muted-foreground">Choose where to start. Everything after this is pictures.</p>
           <div className="grid grid-cols-2 gap-4">
@@ -512,7 +512,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           {frame ? (
             <img
               src={frame}
-              alt="Your Reelzy avatar"
+              alt="Your GoHeet avatar"
               width={1024}
               height={1280}
               className={`size-full object-cover transition-[filter] duration-500 ${isFinal ? "blur-0" : "blur-lg"}`}
@@ -542,7 +542,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             >
               <ArrowLeft />
             </Button>
-            <span className="font-display text-lg font-extrabold text-foreground">REELZY</span>
+            <span className="font-display text-lg font-extrabold text-foreground">GOHEET</span>
             <Button
               type="button"
               disabled={!isFinal || saving}

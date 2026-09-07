@@ -63,7 +63,7 @@ export function ReelzyNav() {
 
   return (
     <nav
-      aria-label="Reelzy"
+      aria-label="GoHeet"
       className="fixed inset-x-0 bottom-0 z-40 px-2"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -87,7 +87,7 @@ export function ReelzyNav() {
 
         <Link
           to="/camera"
-          aria-label="Open the Reelzy camera"
+          aria-label="Open the GoHeet camera"
           className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
         >
           <span className="absolute inset-0 rounded-2xl bg-ember opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
