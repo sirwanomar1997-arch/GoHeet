@@ -638,7 +638,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail */}
-      <div className="absolute bottom-40 right-2.5 z-20 flex flex-col items-center gap-3.5">
+      <div className="absolute bottom-40 right-2.5 z-20 flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-1">
           <button
             type="button"
@@ -654,14 +654,10 @@ export function MomentStage({
             }}
             aria-pressed={liked}
             aria-label={liked ? "Remove your heet" : "Heet this moment"}
-            className={`grid size-14 place-items-center rounded-full border backdrop-blur-md transition-all active:scale-90 ${
-              liked
-                ? "border-[#FF6B24]/60 bg-[#FF6B24]/15"
-                : "border-[oklch(1_0_0/10%)] bg-background/40"
-            }`}
+            className="grid size-16 place-items-center rounded-full transition-transform active:scale-90"
           >
             <HeetFlame
-              className={`size-9 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
+              className={`size-16 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
               filled
               glow={liked}
             />
@@ -676,7 +672,7 @@ export function MomentStage({
           count={formatCount(moment.commentCount)}
           onClick={() => setCommentsOpen(true)}
         >
-          <MessageCircle className="size-6" strokeWidth={1.8} />
+          <MessageCircle className="size-5 text-white" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
@@ -684,7 +680,11 @@ export function MomentStage({
           active={saved}
           onClick={() => saveMutation.mutate()}
         >
-          <Bookmark className="size-6" strokeWidth={saved ? 2.6 : 1.8} />
+          {saved ? (
+            <Bookmark className="size-5 text-primary" fill="currentColor" strokeWidth={0} />
+          ) : (
+            <Bookmark className="size-5 text-white" fill="currentColor" strokeWidth={0} />
+          )}
         </RailAction>
 
         <RailAction
@@ -692,19 +692,23 @@ export function MomentStage({
           active={reposted}
           onClick={() => repostMutation.mutate()}
         >
-          <Repeat2 className="size-6" strokeWidth={reposted ? 2.6 : 1.8} />
+          <Repeat2
+            className={`size-5 ${reposted ? "text-primary" : "text-white"}`}
+            fill="currentColor"
+            strokeWidth={0}
+          />
         </RailAction>
 
         <RailAction label="Share this moment" onClick={() => setShareOpen(true)}>
-          <Share2 className="size-6" strokeWidth={1.8} />
+          <Share2 className="size-5 text-white" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More options"
-            className="grid size-9 place-items-center rounded-full text-foreground/90"
+            className="grid size-9 place-items-center rounded-full text-white"
           >
-            <MoreHorizontal className="size-6" />
+            <MoreHorizontal className="size-5 text-white" fill="currentColor" strokeWidth={0} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top">
             <DropdownMenuItem onClick={() => setShareOpen(true)}>Share</DropdownMenuItem>
