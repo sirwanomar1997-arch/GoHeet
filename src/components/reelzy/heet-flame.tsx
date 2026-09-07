@@ -42,12 +42,6 @@ export function HeetFlame({
           <stop offset="55%" stopColor="#FF762E" stopOpacity="0.18" />
           <stop offset="100%" stopColor="#F74650" stopOpacity="0" />
         </radialGradient>
-        {/* Bright inner core — the "life" of the flame. */}
-        <radialGradient id={coreId} cx="0.5" cy="0.74" r="0.34">
-          <stop offset="0%" stopColor="#FFF7DD" stopOpacity="0.98" />
-          <stop offset="42%" stopColor="#FFE08A" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#FFAD35" stopOpacity="0" />
-        </radialGradient>
       </defs>
 
       {/* Soft luminous halo behind the flame */}
