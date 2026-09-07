@@ -266,11 +266,14 @@ const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => str
   facebook: (h) => `https://facebook.com/${h}`,
   snapchat: (h) => `https://snapchat.com/add/${h}`,
   whatsapp: (h) => `https://wa.me/${h.replace(/[^\d]/g, "")}`,
+  website: (h) => `https://${h}`,
 };
 const socialSchema = z
   .record(z.string(), z.string().trim().max(300))
   .transform((v) => {
     const out: Record<string, string> = {};
+    // "website_adult" is a flag, not a link: it forces the age warning.
+    if (String(v["website_adult"] ?? "").trim() === "1") out["website_adult"] = "1";
     for (const [k, val] of Object.entries(v)) {
       if (!(SOCIAL_KEYS as readonly string[]).includes(k)) continue;
       const key = k as (typeof SOCIAL_KEYS)[number];
