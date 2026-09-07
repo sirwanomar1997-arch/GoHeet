@@ -21,3 +21,7 @@
 - [x] App icons, maskable icon, launch screen
 - [x] Store release guide with listing text and form answers
 - [ ] Apple/Google accounts, screenshots, push keys, device testing (needs your accounts)
+
+- [ ] Redesign the Apple app icon with a cleaner G and an integrated fire symbol
+- [ ] Replace all app-icon sizes, splash artwork, and favicon
+- [ ] Verify the new icon at full and small sizes
