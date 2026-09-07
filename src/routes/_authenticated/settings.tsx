@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const demoMode = useDemoMode();
   const { data: me } = useMe();
   const save = useServerFn(updateProfile);
   const exportData = useServerFn(exportMyData);
