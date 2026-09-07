@@ -3,8 +3,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 type Doc = { title: string; summary: string; sections: Array<{ h: string; p: string[] }> };
 
 const UPDATED = "September 2026";
-export const SUPPORT_EMAIL = "support@goheet.app";
-export const SAFETY_EMAIL = "safety@goheet.app";
+export const SUPPORT_EMAIL = "sirwanomar@hotmail.com";
+export const SAFETY_EMAIL = "sirwanomar@hotmail.com";
 
 const DOCS: Record<string, Doc> = {
   terms: {
