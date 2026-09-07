@@ -36,7 +36,7 @@ function DiscoverPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 bg-background/90 px-4 py-3 backdrop-blur-xl">
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Find real people</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Discover</h1>
         <form
           className="relative mt-3"
           onSubmit={(e) => {

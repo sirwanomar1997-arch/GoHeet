@@ -15,12 +15,13 @@ export const Route = createFileRoute("/_authenticated/activity")({
 
 const COPY: Record<string, string> = {
   follow: "started following you",
-  like: "felt your moment",
-  comment: "said something on your moment",
+  like: "heeted your video",
+  comment: "commented your video",
   mention: "mentioned you",
   moderation: "· a moderation update on your account",
   system: "· a message from GoHeet",
 };
+
 
 function ActivityPage() {
   const demo = useDemoMode();
@@ -44,9 +45,9 @@ function ActivityPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 bg-background/90 px-4 py-4 backdrop-blur-xl">
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Pulse</h1>
-        <p className="text-sm text-muted-foreground">Everything people did with your moments.</p>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Notice</h1>
       </header>
+
 
       {isLoading ? (
         <LoadingRail label="Checking" />
