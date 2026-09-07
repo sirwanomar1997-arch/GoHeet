@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Flame,
+  
   MessageCircle,
   Bookmark,
   MoreHorizontal,
@@ -552,7 +552,7 @@ export function MomentStage({
         {fullscreen ? (
           <>
             <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-              <Flame className="size-3" strokeWidth={2} />
+              <HeetFlame className="size-3.5" />
               {formatCount(likeCount)}
             </span>
             <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
