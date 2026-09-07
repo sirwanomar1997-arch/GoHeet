@@ -13,7 +13,6 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Share2,
   Music2,
   Repeat2,
 } from "lucide-react";
@@ -95,6 +94,7 @@ export function MomentStage({
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [shareMode, setShareMode] = useState<"friends" | "outside">("friends");
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
@@ -557,11 +557,11 @@ export function MomentStage({
         <Eye
           className="size-4"
           strokeWidth={2.4}
-          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+          style={{ color: VIEW_NEON, filter: neonFilter(VIEW_NEON) }}
         />
         <span
           className="data-figure text-[12px] font-bold"
-          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+          style={{ color: VIEW_NEON, filter: neonFilter(VIEW_NEON) }}
         >
           {formatCount(moment.viewCount)} views
         </span>
@@ -641,7 +641,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — sits low, just above the bottom bar */}
-      <div className="absolute bottom-[74px] right-2 z-20 flex flex-col items-center gap-2.5">
+      <div className="absolute bottom-[58px] right-2 z-20 flex flex-col items-center gap-2">
         <div className="flex flex-col items-center">
           <button
             type="button"
@@ -666,11 +666,7 @@ export function MomentStage({
             />
           </button>
           <span
-            className="data-figure -mt-1.5 text-[14px] font-bold leading-none"
-            style={{
-              color: "oklch(0.92 0.08 75)",
-              filter: "drop-shadow(0 0 6px oklch(0.78 0.18 60 / 90%)) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))",
-            }}
+            className="data-figure -mt-1.5 text-[14px] font-bold leading-none text-foreground drop-shadow-[0_1px_2px_oklch(0_0_0/90%)]"
           >
             {formatCount(likeCount)}
           </span>
@@ -680,32 +676,46 @@ export function MomentStage({
         <RailAction
           label="Comments"
           count={formatCount(moment.commentCount)}
+          color={COMMENT_NEON}
           onClick={() => setCommentsOpen(true)}
         >
-          <MessageCircle className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <span className="relative grid size-[23px] place-items-center">
+            <MessageCircle className="absolute inset-0 size-[23px]" strokeWidth={2.2} />
+            <span className="relative flex gap-[2px]">
+              <i className="size-[2.5px] rounded-full bg-foreground shadow-[0_0_4px_currentColor]" />
+              <i className="size-[2.5px] rounded-full bg-foreground shadow-[0_0_4px_currentColor]" />
+              <i className="size-[2.5px] rounded-full bg-foreground shadow-[0_0_4px_currentColor]" />
+            </span>
+          </span>
         </RailAction>
 
         <RailAction
           label="Keep this moment"
           active={saved}
+          color={SAVE_NEON}
           onClick={() => saveMutation.mutate()}
         >
-          <Bookmark className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Bookmark className="size-[22px]" strokeWidth={2.2} />
         </RailAction>
 
         <RailAction
           label={reposted ? "Remove repost" : "Repost to your profile"}
           active={reposted}
+          color={REPOST_NEON}
           onClick={() => repostMutation.mutate()}
         >
-          <Repeat2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Repeat2 className="size-[23px]" strokeWidth={2.2} />
         </RailAction>
 
         <RailAction
-          label="Share this moment"
-          onClick={() => setShareOpen(true)}
+          label="Send to friends"
+          color={SEND_NEON}
+          onClick={() => {
+            setShareMode("friends");
+            setShareOpen(true);
+          }}
         >
-          <Share2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Send className="size-[22px]" strokeWidth={2.2} />
         </RailAction>
 
         <DropdownMenu>
@@ -713,15 +723,22 @@ export function MomentStage({
             aria-label="More options"
             className="grid size-9 place-items-center rounded-full"
             style={{
-              color: NEON_CORE,
-              filter: neonFilter(NEON_GLOW),
+              color: MORE_NEON,
+              filter: neonFilter(MORE_NEON),
             }}
           >
-            <MoreHorizontal className="size-[22px]" fill="currentColor" strokeWidth={0} />
+            <MoreHorizontal className="size-[22px]" strokeWidth={2.2} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top">
-            <DropdownMenuItem onClick={() => setShareOpen(true)}>Share</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setShareMode("outside");
+                setShareOpen(true);
+              }}
+            >
+              Share outside GoHeet
+            </DropdownMenuItem>
             {moment.isOwn ? (
               <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
                 Delete moment
@@ -730,7 +747,7 @@ export function MomentStage({
               <>
                 <DropdownMenuItem onClick={() => setReportOpen(true)}>Report</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => blockMutation.mutate()}>
-                  Not interested — show less from @{moment.author.username}
+                  Not interested
                 </DropdownMenuItem>
               </>
             )}
@@ -755,6 +772,7 @@ export function MomentStage({
             : `${window.location.origin}/u/${moment.author.username}?r=${moment.id}`
         }
         text={`@${moment.author.username} on Reelzy`}
+        mode={shareMode}
       />
 
 
@@ -993,28 +1011,32 @@ function CommentSheet({
 }
 
 
-/* Exclusive champagne-neon: warm white core, soft ember-gold halo,
-   plus a dark edge so symbols stay visible on bright videos. */
-const NEON_CORE = "oklch(0.97 0.02 95)";
-const NEON_GLOW = "oklch(0.82 0.16 75)";
+const VIEW_NEON = "oklch(0.78 0.17 235)";
+const COMMENT_NEON = "oklch(0.76 0.18 235)";
+const SAVE_NEON = "oklch(0.78 0.2 150)";
+const REPOST_NEON = "oklch(0.75 0.2 315)";
+const SEND_NEON = "oklch(0.8 0.17 190)";
+const MORE_NEON = "oklch(0.7 0.23 25)";
 const neonFilter = (glow: string) =>
-  `drop-shadow(0 0 6px ${glow.replace(")", " / 90%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 70%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))`;
+  `drop-shadow(0 0 6px ${glow.replace(")", " / 85%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 65%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 90%))`;
 
 function RailAction({
   label,
   count,
   active,
+  color,
   onClick,
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
+  color: string;
   onClick: () => void;
   children: ReactNode;
 }) {
-  const core = active ? "oklch(0.82 0.17 60)" : NEON_CORE;
-  const glow = neonFilter(NEON_GLOW);
+  const core = color;
+  const glow = neonFilter(color);
   return (
     <div className="flex flex-col items-center">
       <button
@@ -1023,7 +1045,7 @@ function RailAction({
         aria-pressed={active}
         onClick={onClick}
         className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
-        style={{ color: core, filter: glow }}
+           className="data-figure -mt-1 text-[11px] font-bold leading-none text-foreground drop-shadow-[0_1px_2px_oklch(0_0_0/90%)]"
       >
         {children}
       </button>
