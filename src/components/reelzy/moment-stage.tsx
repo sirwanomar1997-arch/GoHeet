@@ -984,3 +984,36 @@ function CommentSheet({
   );
 }
 
+
+function RailAction({
+  label,
+  count,
+  active,
+  onClick,
+  children,
+}: {
+  label: string;
+  count?: string;
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={active}
+        onClick={onClick}
+        className={`grid size-11 place-items-center rounded-full transition-transform active:scale-90 ${
+          active ? "text-primary" : "text-foreground/90"
+        }`}
+      >
+        {children}
+      </button>
+      {count ? (
+        <span className="data-figure text-[12px] font-semibold text-foreground/85">{count}</span>
+      ) : null}
+    </div>
+  );
+}
