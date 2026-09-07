@@ -632,6 +632,8 @@ export function MomentStage({
           onClick={(e) => {
             const host = containerRef.current?.getBoundingClientRect();
             const r = e.currentTarget.getBoundingClientRect();
+            setHeetPop(true);
+            window.setTimeout(() => setHeetPop(false), 560);
             if (!liked && host) {
               heetRef.current(r.left - host.left + r.width / 2, r.top - host.top + r.height / 2);
             } else {
@@ -644,9 +646,11 @@ export function MomentStage({
           className="grid size-20 place-items-center rounded-full transition-transform active:scale-90"
         >
           <HeetFlame
-            className={`size-20 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
+            className={`size-20 transition-transform ${heetPop ? "animate-heet-pop" : ""} ${
+              liked && !heetPop ? "animate-heet-flicker" : ""
+            }`}
             filled
-            glow={liked}
+            glow={liked || heetPop}
           />
         </button>
         <span
