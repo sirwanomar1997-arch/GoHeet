@@ -141,13 +141,13 @@ export const demoProfiles: Record<string, DemoProfile> = {
     totalLikes: 234000,
     isPrivate: false,
     showReposts: true,
-    socialLinks: { website: "goheet.com", instagram: "goheet", tiktok: "goheet" },
+    socialLinks: { instagram: "yasmin", tiktok: "yasmin", snapchat: "yasmin" },
     createdAt: daysAgo(365),
   },
 };
 
 const captions = [
-  "Rolling down to the beach at golden hour 🛹🌅",
+  "Rolling down to the beach at golden hour",
   "Golden hour at the harbour 🌅 Stockholm never disappoints",
   "City lights hit different at midnight ✨",
   "Morning ritual ☕ What's yours?",
