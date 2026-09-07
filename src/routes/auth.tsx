@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { signInWithIdentifier } from "@/lib/reelzy.functions";
-import { ReelzyMark, ReelzyWordmark } from "@/components/reelzy/logo";
+import { GoHeetMark, GoHeetWordmark } from "@/components/reelzy/logo";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Log in to Reelzy" },
+      { title: "Log in to GoHeet" },
       {
         name: "description",
-        content: "Log back in to Reelzy to capture and share real moments, or create a new account.",
+        content: "Log back in to GoHeet to capture and share real moments, or create a new account.",
       },
-      { property: "og:title", content: "Log in to Reelzy" },
+      { property: "og:title", content: "Log in to GoHeet" },
       { property: "og:description", content: "Camera-first social video. Real moments only." },
     ],
   }),
@@ -130,7 +130,7 @@ function AuthPage() {
     return (
       <main className="grid min-h-svh place-items-center bg-background px-6 text-center">
         <div className="max-w-sm">
-          <ReelzyMark className="mx-auto size-10" />
+          <GoHeetMark className="mx-auto size-10" />
           <h1 className="mt-6 font-display text-2xl font-semibold">Check your email</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             We sent a confirmation link to {identifier}. Tap it and come back to finish setting up
@@ -145,12 +145,12 @@ function AuthPage() {
     <main className="min-h-svh bg-background px-6 pb-12 pt-10">
       <div className="mx-auto max-w-sm">
         <Link to="/" className="flex items-center gap-2">
-          <ReelzyMark className="size-8" />
-          <ReelzyWordmark />
+          <GoHeetMark className="size-8" />
+          <GoHeetWordmark />
         </Link>
 
         <h1 className="mt-12 font-brand text-[2.6rem] leading-[1.02] tracking-tight">
-          <span className="ember-text">Reelz</span> your moment
+          <span className="ember-text">Heet</span> your moment
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Capture your moment, right as it happens.
