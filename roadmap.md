@@ -9,3 +9,7 @@
 - [x] Add avatar/photo display switch
 - [x] Remove the orange symbol beside Out there
 - [x] Verify profile and homepage changes
+
+- [x] Match the profile Heet flame to the chosen silhouette
+- [x] Show only Followers and Following in the profile count band
+- [x] Remove profile messaging and place Edit beside Settings
