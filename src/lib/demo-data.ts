@@ -146,6 +146,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
 };
 
 const captions = [
+  "Rolling down to the beach at golden hour 🛹🌅",
   "Golden hour at the harbour 🌅 Stockholm never disappoints",
   "City lights hit different at midnight ✨",
   "Morning ritual ☕ What's yours?",
@@ -153,8 +154,8 @@ const captions = [
   "Real moments only. This is what GoHeet is about 🔥",
   "Sunset chase never stops 🌇",
   "Late night walks > everything",
-  "Coffee + creativity = the perfect morning ☕",
 ];
+
 
 const locations = ["Stockholm", "Gothenburg", "Malmö", "Abisko", "Kiruna", "Lisbon", "Oslo", "Copenhagen"];
 
