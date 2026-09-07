@@ -6,12 +6,17 @@ import { toast } from "sonner";
 import {
   Ban,
   Bookmark,
+  BookOpen,
+  Bug,
   Camera,
   ChevronRight,
+  Download,
+  FileText,
   History,
   LifeBuoy,
   MessageCircle,
   Pencil,
+  ShieldCheck,
   Trash2,
   UserPlus,
 } from "lucide-react";
@@ -242,12 +247,6 @@ function SettingsPage() {
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
 
-        <Link to="/support" className={`${section} flex items-center justify-between`}>
-          <span className="flex items-center gap-3 text-sm font-medium">
-            <LifeBuoy className="size-4 text-primary" /> Help & support · contact us
-          </span>
-          <ChevronRight className="size-4 text-muted-foreground" />
-        </Link>
 
 
         <section className={section}>
@@ -531,17 +530,64 @@ function SettingsPage() {
         ) : null}
 
         <section className={section}>
-          <h2 className="font-display text-base font-semibold">Your data</h2>
-          <button type="button" onClick={download} className="mt-3 text-sm underline">
-            Download everything we hold about you
-          </button>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {["terms", "privacy", "guidelines", "safety", "support", "cookies", "copyright"].map((d) => (
-              <Link key={d} to="/legal/$doc" params={{ doc: d }} className="underline capitalize">
-                {d}
+          <h2 className="font-display text-base font-semibold">Support and feedback</h2>
+          <div className="mt-2 divide-y divide-border">
+            <Link to="/support" search={{ topic: "bug" }} className={row}>
+              <span className="flex items-center gap-3">
+                <Bug className="size-4 text-emerald-400" /> Bugs and suggestions
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link to="/support" search={{ topic: "safety" }} className={row}>
+              <span className="flex items-center gap-3">
+                <ShieldCheck className="size-4 text-sky-400" /> Safety and privacy
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link to="/support" search={{ topic: "account" }} className={row}>
+              <span className="flex items-center gap-3">
+                <LifeBuoy className="size-4 text-primary" /> Help with my account
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link to="/legal/$doc" params={{ doc: "support" }} className={row}>
+              <span className="flex items-center gap-3">
+                <BookOpen className="size-4 text-amber-400" /> Help centre
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+          </div>
+        </section>
+
+        <section className={section}>
+          <h2 className="font-display text-base font-semibold">More information</h2>
+          <div className="mt-2 divide-y divide-border">
+            {[
+              { doc: "privacy", label: "Privacy policy" },
+              { doc: "terms", label: "Terms of use" },
+              { doc: "guidelines", label: "Community guidelines" },
+              { doc: "safety", label: "Safety centre" },
+              { doc: "cookies", label: "Cookies" },
+              { doc: "copyright", label: "Copyright" },
+            ].map((d) => (
+              <Link key={d.doc} to="/legal/$doc" params={{ doc: d.doc }} className={row}>
+                <span className="flex items-center gap-3">
+                  <FileText className="size-4 text-muted-foreground" /> {d.label}
+                </span>
+                <ChevronRight className="size-4 text-muted-foreground" />
               </Link>
             ))}
           </div>
+        </section>
+
+        <section className={section}>
+          <h2 className="font-display text-base font-semibold">Your data</h2>
+          <button type="button" onClick={download} className={`${row} mt-1`}>
+            <span className="flex items-center gap-3">
+              <Download className="size-4 text-muted-foreground" /> Download everything we hold about you
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
         </section>
 
         <section className="rounded-2xl border border-border p-4">
@@ -561,6 +607,8 @@ function SettingsPage() {
             />
           </div>
         </section>
+
+        <h2 className="px-1 pt-2 font-display text-base font-semibold">Account actions</h2>
 
         <button
           type="button"
