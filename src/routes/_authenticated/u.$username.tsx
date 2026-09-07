@@ -587,8 +587,7 @@ function ProfilePage() {
                             </span>
                           ) : null}
                           <span className="data-figure mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <span>{formatCount(m.viewCount)} seen</span>
-                            <span className="text-primary">{formatCount(m.likeCount)} felt</span>
+                            <span className="text-primary">{formatCount(m.likeCount)} heets</span>
                           </span>
                         </span>
                       </button>
