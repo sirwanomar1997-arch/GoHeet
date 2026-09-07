@@ -272,9 +272,28 @@ function ProfilePage() {
                   facebook: { Icon: Facebook, label: "Facebook", color: "oklch(0.6 0.18 255)" },
                   snapchat: { Icon: Ghost, label: "Snapchat", color: "oklch(0.88 0.16 100)" },
                   whatsapp: { Icon: MessageCircle, label: "WhatsApp", color: "oklch(0.72 0.17 150)" },
+                  website: { Icon: Globe, label: "Website", color: "oklch(0.68 0.18 250)" },
                 };
                 const meta = icons[key];
                 if (!meta) return null;
+                if (key === "website" && (p.socialLinks ?? {})["website_adult"] === "1") {
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setAdultLink(url)}
+                      aria-label="Website (18+)"
+                      title="Website (18+)"
+                      className="relative grid size-11 place-items-center rounded-2xl border border-border bg-surface transition-transform hover:scale-105 active:scale-95"
+                      style={{ color: meta.color }}
+                    >
+                      <Globe className="size-5" />
+                      <span className="absolute -right-1 -top-1 rounded-full bg-[oklch(0.6_0.22_25)] px-1.5 py-px text-[9px] font-bold text-white">
+                        18+
+                      </span>
+                    </button>
+                  );
+                }
                 return (
                   <a
                     key={key}
