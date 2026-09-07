@@ -101,11 +101,19 @@ export function ReelzyNav() {
 
         <Link
           to="/activity"
-          className={item(pathname === "/activity", "text-nav-pulse", "nav-glow-pulse")}
-          aria-label="Notifications and messages"
+          className={`group relative grid size-14 place-items-center rounded-2xl transition-all duration-300 active:scale-90 ${
+            pathname === "/activity" ? "scale-105 opacity-100" : "opacity-75"
+          }`}
+          aria-label={hasUnread ? "New activity" : "Notifications and messages"}
         >
-          <Heart className="size-8" strokeWidth={2.25} />
-          <span className={spark(pathname === "/activity")} />
+          <HeetFlame
+            className={`size-8 ${hasUnread ? "animate-heet-flicker" : ""}`}
+            glow={pathname === "/activity"}
+          />
+          {hasUnread ? (
+            <span className="absolute right-3 top-2.5 size-2 rounded-full bg-[#FF2D8A] shadow-[0_0_8px_#FF2D8A]" />
+          ) : null}
+          <span className={`${spark(pathname === "/activity")} text-nav-pulse`} />
         </Link>
         {username ? (
           <Link
