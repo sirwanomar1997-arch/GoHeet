@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon } from "lucide-react";
+import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
+import { saveClip, listSavedClips, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -26,6 +28,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
+  FILTER_CATEGORIES,
   OVERLAY_FONTS,
   OVERLAY_COLORS,
   OVERLAY_STYLES,
@@ -52,23 +55,18 @@ type Captured = {
   poster: Blob | null;
 };
 
+/** 00:04 — quiet, tabular, cinematic. No camcorder energy. */
 function formatClock(ms: number): string {
   const total = Math.floor(ms / 1000);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")} / 5:00`;
-}
-
-function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
-  const candidates = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9,opus", "video/webm"];
-  return candidates.find((c) => MediaRecorder.isTypeSupported(c));
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function CameraPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
+  const engineRef = useRef<CameraEngine | null>(null);
+  if (engineRef.current === null && typeof window !== "undefined") engineRef.current = new CameraEngine();
   const startedAtRef = useRef(0);
   const accumulatedRef = useRef(0);
   const elapsedRef = useRef(0);
@@ -77,7 +75,16 @@ function CameraPage() {
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [withAudio, setWithAudio] = useState(true);
   const [ready, setReady] = useState(false);
-  const [denied, setDenied] = useState<string | null>(null);
+  const [booting, setBooting] = useState(true);
+  const [error, setError] = useState<EngineError | null>(null);
+  const [zoomRange, setZoomRange] = useState<ZoomRange | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [digital, setDigital] = useState(1);
+  const [torch, setTorch] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [flipping, setFlipping] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
