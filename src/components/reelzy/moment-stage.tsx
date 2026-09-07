@@ -1045,15 +1045,12 @@ function RailAction({
         aria-pressed={active}
         onClick={onClick}
         className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
-           className="data-figure -mt-1 text-[11px] font-bold leading-none text-foreground drop-shadow-[0_1px_2px_oklch(0_0_0/90%)]"
+        style={{ color: core, filter: glow }}
       >
         {children}
       </button>
       {count ? (
-        <span
-          className="data-figure -mt-1 text-[11px] font-bold leading-none"
-          style={{ color: core, filter: glow }}
-        >
+        <span className="data-figure -mt-1 text-[11px] font-bold leading-none text-foreground drop-shadow-[0_1px_2px_oklch(0_0_0/90%)]">
           {count}
         </span>
       ) : null}

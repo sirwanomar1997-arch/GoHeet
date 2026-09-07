@@ -66,11 +66,13 @@ export function ShareSheet({
   onOpenChange,
   url,
   text,
+  mode = "all",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   url: string;
   text: string;
+  mode?: "all" | "friends" | "outside";
 }) {
   const fetchConversations = useServerFn(listConversations);
   const send = useServerFn(sendMessage);
@@ -102,16 +104,22 @@ export function ShareSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl border-border bg-surface pb-8">
         <SheetHeader className="text-left">
-          <SheetTitle className="font-display text-lg">Share this reel</SheetTitle>
+          <SheetTitle className="font-display text-lg">
+            {mode === "friends" ? "Send to friends" : "Share this Heet"}
+          </SheetTitle>
           <SheetDescription className="text-xs">
-            Send it to someone on Reelzy, or out to any other app.
+            {mode === "friends"
+              ? "Send it directly to a GoHeet conversation."
+              : mode === "outside"
+                ? "Share it outside GoHeet."
+                : "Send it to someone on GoHeet, or out to another app."}
           </SheetDescription>
         </SheetHeader>
 
-        {people.length > 0 ? (
+        {mode !== "outside" && people.length > 0 ? (
           <div className="mt-4">
             <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              On Reelzy
+              On GoHeet
             </p>
             <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
               {people.map((p) => (
@@ -142,7 +150,7 @@ export function ShareSheet({
           </div>
         ) : null}
 
-        <div className="mt-5">
+        {mode !== "friends" ? <div className="mt-5">
           <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Anywhere else
           </p>
@@ -184,9 +192,9 @@ export function ShareSheet({
               <span className="text-[11px] text-muted-foreground">Email</span>
             </a>
           </div>
-        </div>
+        </div> : null}
 
-        <div className="mt-5 flex gap-2">
+        {mode !== "friends" ? <div className="mt-5 flex gap-2">
           <button
             type="button"
             onClick={copy}
@@ -213,7 +221,7 @@ export function ShareSheet({
             <Share2 className="size-4" strokeWidth={2} />
             More
           </button>
-        </div>
+        </div> : null}
 
         <p className="mt-3 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
           <Link2 className="size-3 shrink-0" />
