@@ -102,7 +102,7 @@ function ProfilePage() {
     if (!data?.moments?.length) return;
     const id = new URLSearchParams(window.location.search).get("r");
     if (!id) return;
-    const i = data.moments.findIndex((m) => m.id === id);
+    const i = data.moments.findIndex((m: { id: string }) => m.id === id);
     if (i >= 0) setOpenIndex(i);
   }, [data]);
 
