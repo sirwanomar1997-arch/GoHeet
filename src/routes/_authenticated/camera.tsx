@@ -406,11 +406,13 @@ function CameraPage() {
     engine.silenceMic(700);
     engine.startRecording(async (blob) => {
       playRecordStop();
+      recordingRef.current = false;
       const duration = elapsedRef.current;
       const poster = await grabPoster();
       setRecording(false);
       setPaused(false);
       setElapsed(0);
+
       if (duration < 800) {
         toast("Hold a moment longer — that take was too short.");
         return;
