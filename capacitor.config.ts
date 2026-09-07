@@ -24,23 +24,23 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "never",
     limitsNavigationsToAppBoundDomains: false,
-    backgroundColor: "#111110",
+    backgroundColor: "#000000",
   },
   android: {
-    backgroundColor: "#111110",
+    backgroundColor: "#000000",
 allowMixedContent: false,
   },
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 900,
-      backgroundColor: "#111110",
+      backgroundColor: "#000000",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
     },
     StatusBar: {
       style: "DARK",
-      backgroundColor: "#111110",
+      backgroundColor: "#000000",
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
