@@ -638,38 +638,40 @@ export function MomentStage({
 
       </div>
 
-      {/* Right reaction rail — sits low, just above the bottom bar */}
+      {/* Heet flame — separated above the lower rail, bigger symbol + count */}
+      <div className="absolute bottom-[150px] right-1 z-20 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            const host = containerRef.current?.getBoundingClientRect();
+            const r = e.currentTarget.getBoundingClientRect();
+            if (!liked && host) {
+              heetRef.current(r.left - host.left + r.width / 2, r.top - host.top + r.height / 2);
+            } else {
+              likeMutation.mutate();
+            }
+            e.currentTarget.blur();
+          }}
+          aria-pressed={liked}
+          aria-label={liked ? "Remove your heet" : "Heet this moment"}
+          className="grid size-20 place-items-center rounded-full transition-transform active:scale-90"
+        >
+          <HeetFlame
+            className={`size-20 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
+            filled
+            glow={liked}
+          />
+        </button>
+        <span
+          className="data-figure text-[16px] font-bold leading-none text-white"
+          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
+        >
+          {formatCount(moment.likeCount)}
+        </span>
+      </div>
+
+      {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
       <div className="absolute bottom-[26px] right-0.5 z-20 flex flex-col items-center gap-2">
-        <div className="flex flex-col items-center gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              const host = containerRef.current?.getBoundingClientRect();
-              const r = e.currentTarget.getBoundingClientRect();
-              if (!liked && host) {
-                heetRef.current(r.left - host.left + r.width / 2, r.top - host.top + r.height / 2);
-              } else {
-                likeMutation.mutate();
-              }
-              e.currentTarget.blur();
-            }}
-            aria-pressed={liked}
-            aria-label={liked ? "Remove your heet" : "Heet this moment"}
-            className="grid size-16 place-items-center rounded-full transition-transform active:scale-90"
-          >
-            <HeetFlame
-              className={`size-16 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
-              filled
-              glow={liked}
-            />
-          </button>
-          <span
-            className="data-figure text-[12px] font-bold leading-none text-white"
-            style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-          >
-            {formatCount(moment.likeCount)}
-          </span>
-        </div>
 
         <RailAction
           label="Comments"
