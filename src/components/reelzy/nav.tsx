@@ -34,10 +34,10 @@ function ProfileIcon({ className }: { className?: string }) {
 }
 
 /**
- * The Reelzy ledger bar: four quiet destinations around one loud capture key.
+ * The GoHeet ledger bar: four quiet destinations around one loud capture key.
  * The camera is the only thing in the product that gets the ember gradient.
  */
-export function ReelzyNav() {
+export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data } = useMe();
   const username = data?.profile?.username;
@@ -63,7 +63,7 @@ export function ReelzyNav() {
 
   return (
     <nav
-      aria-label="Reelzy"
+      aria-label="GoHeet"
       className="fixed inset-x-0 bottom-0 z-40 px-2"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -87,7 +87,7 @@ export function ReelzyNav() {
 
         <Link
           to="/camera"
-          aria-label="Open the Reelzy camera"
+          aria-label="Open the GoHeet camera"
           className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
         >
           <span className="absolute inset-0 rounded-2xl bg-ember opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
@@ -184,7 +184,7 @@ export function AppShell({ children, hideNav = false }: { children: React.ReactN
       onTouchEnd={swipe.onTouchEnd}
     >
       <div className="mx-auto max-w-lg">{children}</div>
-      {hideNav ? null : <ReelzyNav />}
+      {hideNav ? null : <GoHeetNav />}
     </div>
   );
 }

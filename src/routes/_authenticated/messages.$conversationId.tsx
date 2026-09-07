@@ -14,10 +14,10 @@ export const Route = createFileRoute("/_authenticated/messages/$conversationId")
   component: ThreadPage,
   head: () => ({
     meta: [
-      { title: "Chat — Reelzy" },
-      { name: "description", content: "A private Reelzy conversation." },
-      { property: "og:title", content: "Chat — Reelzy" },
-      { property: "og:description", content: "A private Reelzy conversation." },
+      { title: "Chat — GoHeet" },
+      { name: "description", content: "A private GoHeet conversation." },
+      { property: "og:title", content: "Chat — GoHeet" },
+      { property: "og:description", content: "A private GoHeet conversation." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

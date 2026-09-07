@@ -104,14 +104,14 @@ export function ShareSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="font-display text-lg">Share this reel</SheetTitle>
           <SheetDescription className="text-xs">
-            Send it to someone on Reelzy, or out to any other app.
+            Send it to someone on GoHeet, or out to any other app.
           </SheetDescription>
         </SheetHeader>
 
         {people.length > 0 ? (
           <div className="mt-4">
             <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              On Reelzy
+              On GoHeet
             </p>
             <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
               {people.map((p) => (

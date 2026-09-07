@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { searchReelzy, toggleFollow } from "@/lib/reelzy.functions";
+import { searchGoHeet, toggleFollow } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { formatCount } from "@/components/reelzy/format";
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/discover")({
 function DiscoverPage() {
   const [q, setQ] = useState("");
   const [term, setTerm] = useState("");
-  const search = useServerFn(searchReelzy);
+  const search = useServerFn(searchGoHeet);
   const follow = useServerFn(toggleFollow);
   const qc = useQueryClient();
 
@@ -47,7 +47,7 @@ function DiscoverPage() {
             onChange={(e) => setQ(e.target.value)}
             onBlur={() => setTerm(q.trim())}
             placeholder="Search names, usernames, captions"
-            aria-label="Search Reelzy"
+            aria-label="Search GoHeet"
             className="h-12 bg-surface-raised pl-10"
           />
         </form>

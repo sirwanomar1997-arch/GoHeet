@@ -757,7 +757,7 @@ export function MomentStage({
             ? ""
             : `${window.location.origin}/u/${moment.author.username}?r=${moment.id}`
         }
-        text={`@${moment.author.username} on Reelzy`}
+        text={`@${moment.author.username} on GoHeet`}
       />
 
 
@@ -767,7 +767,7 @@ export function MomentStage({
           <SheetHeader className="px-0">
             <SheetTitle className="font-display">Report this moment</SheetTitle>
             <SheetDescription>
-              Tell us what&apos;s wrong. Reports are reviewed by the Reelzy safety team.
+              Tell us what&apos;s wrong. Reports are reviewed by the GoHeet safety team.
             </SheetDescription>
           </SheetHeader>
           <div className="grid max-h-[50vh] grid-cols-2 gap-2 overflow-y-auto pb-6">

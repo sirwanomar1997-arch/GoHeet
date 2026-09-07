@@ -11,16 +11,16 @@ export const Route = createFileRoute("/_authenticated/messages")({
   component: MessagesPage,
   head: () => ({
     meta: [
-      { title: "Messages — Reelzy" },
+      { title: "Messages — GoHeet" },
       {
         name: "description",
         content:
-          "Your Reelzy chats and message requests. People you don't follow back land in requests first.",
+          "Your GoHeet chats and message requests. People you don't follow back land in requests first.",
       },
-      { property: "og:title", content: "Messages — Reelzy" },
+      { property: "og:title", content: "Messages — GoHeet" },
       {
         property: "og:description",
-        content: "Chats and message requests on Reelzy.",
+        content: "Chats and message requests on GoHeet.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -6,8 +6,8 @@ import type { Database } from "@/integrations/supabase/types";
 const MAX_GENERATIONS_PER_HOUR = 60;
 
 /**
- * Streams a Reelzy 3D-style avatar portrait from the Lovable AI Gateway.
- * Accepts an optional selfie (data URL) captured in the Reelzy camera.
+ * Streams a GoHeet 3D-style avatar portrait from the Lovable AI Gateway.
+ * Accepts an optional selfie (data URL) captured in the GoHeet camera.
  * Requires a signed-in user; rate limited per user.
  */
 export const Route = createFileRoute("/api/generate-avatar")({

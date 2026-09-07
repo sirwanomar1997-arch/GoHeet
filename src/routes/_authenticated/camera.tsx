@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/camera")({
 
 });
 
-const MAX_MS = 300_000; // Reelzy caps a moment at five minutes.
+const MAX_MS = 300_000; // GoHeet caps a moment at five minutes.
 
 type Captured = {
   blob: Blob;
@@ -348,7 +348,7 @@ function CameraPage() {
   }, [editId]);
 
 
-  // A server-issued capture session is what proves this came from the Reelzy camera.
+  // A server-issued capture session is what proves this came from the GoHeet camera.
   useEffect(() => {
     let cancelled = false;
     void openSession({ data: { deviceKind: "web" } })
@@ -683,7 +683,7 @@ function CameraPage() {
       <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
         <SheetHeader className="px-0">
           <SheetTitle className="font-display">Add a track</SheetTitle>
-          <SheetDescription>Free instrumentals, cleared for use inside Reelzy.</SheetDescription>
+          <SheetDescription>Free instrumentals, cleared for use inside GoHeet.</SheetDescription>
         </SheetHeader>
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -1300,7 +1300,7 @@ function CameraPage() {
               Try again
             </Button>
             <p className="mt-4 text-xs text-white/45">
-              Reelzy has no upload option by design — capture is the only way to post.
+              GoHeet has no upload option by design — capture is the only way to post.
             </p>
           </div>
         </div>

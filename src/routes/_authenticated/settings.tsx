@@ -212,7 +212,7 @@ function SettingsPage() {
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "reelzy-data.json";
+    a.download = "goheet-data.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -477,7 +477,7 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Date of birth</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Used for age checks. You must be 13 or over to use Reelzy.
+            Used for age checks. You must be 13 or over to use GoHeet.
           </p>
           <Input
             type="date"

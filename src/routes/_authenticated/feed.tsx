@@ -126,7 +126,7 @@ function FeedPage() {
           line={
             scope === "following"
               ? "Follow a few people, or capture the first moment yourself."
-              : "Reelzy only shows what people actually captured. Be the reason there's something here."
+              : "GoHeet only shows what people actually captured. Be the reason there's something here."
           }
           action={
             <Link

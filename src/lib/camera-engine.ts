@@ -1,5 +1,5 @@
 /**
- * Reelzy camera engine.
+ * GoHeet camera engine.
  *
  * A small, modular controller that sits between the UI and the browser media
  * stack. It owns lens selection, framing, zoom, torch and recording so the
@@ -328,7 +328,7 @@ export class CameraEngine {
       return {
         kind: "denied",
         title: "Camera access is off",
-        body: "Reelzy needs your camera and microphone to record a moment. Turn them on in your device settings, then come back.",
+        body: "GoHeet needs your camera and microphone to record a moment. Turn them on in your device settings, then come back.",
       };
     }
     if (name === "NotFoundError" || name === "OverconstrainedError") {
