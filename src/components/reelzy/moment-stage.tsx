@@ -551,30 +551,19 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      <div
-        className={`absolute top-4 flex items-center gap-3 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md ${
-          fullscreen ? "left-1/2 -translate-x-1/2" : "left-4"
-        }`}
-      >
-        <span className="flex items-center gap-2">
-          <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
-          <span className="data-figure text-[11px] text-foreground">
-            {formatCount(moment.viewCount)} seen
+      {fullscreen ? (
+        <div className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-3 rounded-full border border-[oklch(1_0_0/12%)] bg-background/45 px-3 py-1.5 backdrop-blur-md">
+          <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+            <HeetFlame className="size-3.5" />
+            {formatCount(likeCount)}
           </span>
-        </span>
-        {fullscreen ? (
-          <>
-            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-              <HeetFlame className="size-3.5" />
-              {formatCount(likeCount)}
-            </span>
-            <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
-              <MessageCircle className="size-3" strokeWidth={2} />
-              {formatCount(moment.commentCount)}
-            </span>
-          </>
-        ) : null}
-      </div>
+          <span className="data-figure flex items-center gap-1 text-[11px] text-foreground">
+            <MessageCircle className="size-3" strokeWidth={2} />
+            {formatCount(moment.commentCount)}
+          </span>
+        </div>
+      ) : null}
+
 
       {moment.kind === "video" ? (
         <button
@@ -627,39 +616,8 @@ export function MomentStage({
               {timeAgo(moment.createdAt)}
             </p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label="More options"
-              className="tap-target grid place-items-center rounded-full border border-border"
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  void navigator.clipboard?.writeText(
-                    `${window.location.origin}/u/${moment.author.username}`,
-                  );
-                  toast.success("Link copied.");
-                }}
-              >
-                Share this person
-              </DropdownMenuItem>
-              {moment.isOwn ? (
-                <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
-                  Delete moment
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuItem onClick={() => setReportOpen(true)}>Report moment</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => blockMutation.mutate()}>
-                    Block @{moment.author.username}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
+
 
         {moment.caption ? (
           <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95">
@@ -677,13 +635,24 @@ export function MomentStage({
           </div>
         ) : null}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-3 flex items-center gap-2">
+          <span className="ember-fill animate-ember-pulse size-1.5 rounded-full" />
+          <span className="data-figure text-[12px] text-foreground/75">
+            {formatCount(moment.viewCount)} views
+          </span>
+        </div>
+      </div>
+
+      {/* Right reaction rail */}
+      <div className="absolute bottom-44 right-3 z-20 flex flex-col items-center gap-5">
+        <div className="flex flex-col items-center gap-1">
           <button
             type="button"
             onClick={(e) => {
               const host = containerRef.current?.getBoundingClientRect();
+              const r = e.currentTarget.getBoundingClientRect();
               if (!liked && host) {
-                heetRef.current(host.width / 2, host.height / 2);
+                heetRef.current(r.left - host.left + r.width / 2, r.top - host.top + r.height / 2);
               } else {
                 likeMutation.mutate();
               }
@@ -691,54 +660,75 @@ export function MomentStage({
             }}
             aria-pressed={liked}
             aria-label={liked ? "Remove your heet" : "Heet this moment"}
-            className={`tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition-all active:scale-[0.97] ${
+            className={`grid size-16 place-items-center rounded-full border backdrop-blur-md transition-all active:scale-90 ${
               liked
-                ? "border-[#FF6B24]/60 bg-[#FF6B24]/12 text-foreground"
-                : "border-border bg-surface-raised text-foreground"
+                ? "border-[#FF6B24]/60 bg-[#FF6B24]/15"
+                : "border-[oklch(1_0_0/10%)] bg-background/40"
             }`}
           >
-            <HeetFlame className={`size-6 ${liked ? "animate-heet-flicker" : ""}`} filled={liked} />
-            <span className="data-figure text-xs">{formatCount(likeCount)}</span>
+            <HeetFlame
+              className={`size-11 transition-transform ${liked ? "animate-heet-flicker" : ""}`}
+              filled
+              glow={liked}
+            />
           </button>
-          <button
-            type="button"
-            onClick={() => setCommentsOpen(true)}
-            className="tap-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-surface-raised px-3 text-sm font-medium active:scale-[0.97]"
-          >
-            <MessageCircle className="size-4" strokeWidth={1.8} />
-            <span className="data-figure text-xs">{formatCount(moment.commentCount)}</span>
-          </button>
-          <button
-            type="button"
-            aria-label="Share this moment"
-            onClick={() => setShareOpen(true)}
-            className="tap-target grid w-14 place-items-center rounded-2xl border border-border bg-surface-raised active:scale-[0.97]"
-          >
-            <Share2 className="size-4" strokeWidth={1.8} />
-          </button>
-          <button
-            type="button"
-            onClick={() => repostMutation.mutate()}
-            aria-pressed={reposted}
-            aria-label={reposted ? "Remove repost" : "Repost to your profile"}
-            className={`tap-target grid w-14 place-items-center rounded-2xl border active:scale-[0.97] ${
-              reposted ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface-raised"
-            }`}
-          >
-            <Repeat2 className="size-4" strokeWidth={reposted ? 2.6 : 1.8} />
-          </button>
-          <button
-            type="button"
-            onClick={() => saveMutation.mutate()}
-            aria-pressed={saved}
-            aria-label="Keep this moment"
-            className={`tap-target grid w-14 place-items-center rounded-2xl border active:scale-[0.97] ${
-              saved ? "border-primary text-primary" : "border-border bg-surface-raised"
-            }`}
-          >
-            <Bookmark className="size-4" strokeWidth={saved ? 2.6 : 1.8} />
-          </button>
+          <span className="data-figure text-[15px] font-bold text-foreground">
+            {formatCount(likeCount)}
+          </span>
         </div>
+
+        <RailAction
+          label="Comments"
+          count={formatCount(moment.commentCount)}
+          onClick={() => setCommentsOpen(true)}
+        >
+          <MessageCircle className="size-7" strokeWidth={1.8} />
+        </RailAction>
+
+        <RailAction
+          label="Keep this moment"
+          active={saved}
+          onClick={() => saveMutation.mutate()}
+        >
+          <Bookmark className="size-7" strokeWidth={saved ? 2.6 : 1.8} />
+        </RailAction>
+
+        <RailAction
+          label={reposted ? "Remove repost" : "Repost to your profile"}
+          active={reposted}
+          onClick={() => repostMutation.mutate()}
+        >
+          <Repeat2 className="size-7" strokeWidth={reposted ? 2.6 : 1.8} />
+        </RailAction>
+
+        <RailAction label="Share this moment" onClick={() => setShareOpen(true)}>
+          <Share2 className="size-7" strokeWidth={1.8} />
+        </RailAction>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="More options"
+            className="grid size-11 place-items-center rounded-full text-foreground/90"
+          >
+            <MoreHorizontal className="size-7" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top">
+            <DropdownMenuItem onClick={() => setShareOpen(true)}>Share</DropdownMenuItem>
+            {moment.isOwn ? (
+              <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
+                Delete moment
+              </DropdownMenuItem>
+            ) : (
+              <>
+                <DropdownMenuItem onClick={() => setReportOpen(true)}>Report</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => blockMutation.mutate()}>
+                  Not interested — show less from @{moment.author.username}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
       </div>
 
       <CommentSheet
