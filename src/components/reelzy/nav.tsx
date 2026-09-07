@@ -107,8 +107,8 @@ export function ReelzyNav() {
           aria-label={hasUnread ? "New activity" : "Notifications and messages"}
         >
           <HeetFlame
-            className={`size-8 ${hasUnread ? "animate-heet-flicker" : ""}`}
-            glow={pathname === "/activity"}
+            className={`size-8 ${hasUnread ? "animate-heet-flicker" : "animate-heet-shimmer"}`}
+            glow={pathname === "/activity" || hasUnread}
           />
           {hasUnread ? (
             <span className="absolute right-3 top-2.5 size-2 rounded-full bg-[#FF2D8A] shadow-[0_0_8px_#FF2D8A]" />
