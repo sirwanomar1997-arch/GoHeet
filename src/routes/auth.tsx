@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { signInWithIdentifier } from "@/lib/reelzy.functions";
 import { GoHeetMark, GoHeetWordmark } from "@/components/reelzy/logo";
+import { HeetFlame } from "@/components/reelzy/heet-flame";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,8 @@ export const Route = createFileRoute("/auth")({
       },
       { property: "og:title", content: "Log in to GoHeet" },
       { property: "og:description", content: "Camera-first social video. Real moments only." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
@@ -148,9 +151,14 @@ function AuthPage() {
           <GoHeetWordmark />
         </Link>
 
-        <h1 className="mt-12 font-brand text-[2.6rem] leading-[1.02] tracking-tight">
-          <span className="ember-text">Heet</span> your moment
-        </h1>
+        <div className="mt-12 grid grid-cols-[minmax(0,1fr)_5.5rem] items-center gap-3">
+          <h1 className="font-brand text-[2.5rem] uppercase leading-[1.08] tracking-normal">
+            <span className="ember-text">Heet</span> your
+            <br />
+            moment
+          </h1>
+          <HeetFlame className="size-[5.5rem] justify-self-end" />
+        </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Capture your moment, right as it happens.
           <br />

@@ -7,7 +7,6 @@ import {
   Ban,
   Bookmark,
   ChevronRight,
-  Heart,
   History,
   MessageCircle,
   Pencil,

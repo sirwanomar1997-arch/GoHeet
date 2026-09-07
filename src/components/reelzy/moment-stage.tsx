@@ -12,7 +12,6 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Heart,
   Share2,
   Music2,
   Repeat2,
@@ -898,7 +897,7 @@ function CommentSheet({
               c.liked ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <Heart className="size-3.5" strokeWidth={c.liked ? 2.6 : 1.8} fill={c.liked ? "currentColor" : "none"} />
+            <HeetFlame className="size-3.5" filled={c.liked} />
             {c.likeCount > 0 ? <span className="data-figure">{formatCount(c.likeCount)}</span> : null}
           </button>
           <button

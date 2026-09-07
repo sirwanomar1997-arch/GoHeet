@@ -13,3 +13,6 @@
 - [x] Match the profile Heet flame to the chosen silhouette
 - [x] Show only Followers and Following in the profile count band
 - [x] Remove profile messaging and place Edit beside Settings
+
+- [x] Match the login page to the supplied GoHeet reference
+- [x] Use the same reference-matched flame everywhere in the app
