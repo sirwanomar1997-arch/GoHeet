@@ -212,7 +212,7 @@ function SettingsPage() {
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "reelzy-data.json";
+    a.download = "goheet-data.json";
     a.click();
     URL.revokeObjectURL(url);
   }
