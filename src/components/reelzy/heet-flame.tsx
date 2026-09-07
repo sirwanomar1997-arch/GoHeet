@@ -30,8 +30,8 @@ export function HeetFlame({
     >
       <defs>
         <linearGradient id={id} x1="0.28" y1="0.08" x2="0.7" y2="0.92">
-          <stop offset="0%" stopColor="#FFD93B" />
-          <stop offset="20%" stopColor="#FFAD35" />
+          <stop offset="0%" stopColor="#FFAD35" />
+          <stop offset="22%" stopColor="#FF8A2E" />
           <stop offset="50%" stopColor="#FF762E" />
           <stop offset="80%" stopColor="#F74650" />
           <stop offset="100%" stopColor="#E82F72" />
