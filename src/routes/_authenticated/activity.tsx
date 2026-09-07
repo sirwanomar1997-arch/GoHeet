@@ -172,7 +172,6 @@ function ActivityPage() {
               {n.momentId ? (
                 <Link
                   to="/feed"
-                  search={{ moment: n.momentId }}
                   className="block size-11 shrink-0 overflow-hidden rounded-xl bg-surface-raised"
                 >
                   {n.momentThumbUrl ? (
