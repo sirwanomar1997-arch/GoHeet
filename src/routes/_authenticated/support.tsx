@@ -22,6 +22,9 @@ import {
 
 export const Route = createFileRoute("/_authenticated/support")({
   component: SupportPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    topic: typeof search["topic"] === "string" ? (search["topic"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Help & support · GoHeet" },
@@ -73,7 +76,11 @@ function SupportPage() {
     enabled: staff && tab === "inbox",
   });
 
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]["value"]>("general");
+  const { topic } = Route.useSearch();
+  const initialCategory = CATEGORIES.some((c) => c.value === topic)
+    ? (topic as (typeof CATEGORIES)[number]["value"])
+    : "general";
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]["value"]>(initialCategory);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
 
