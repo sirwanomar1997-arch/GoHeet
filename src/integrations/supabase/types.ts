@@ -685,6 +685,8 @@ export type Database = {
           id: string
           is_private: boolean
           moment_count: number
+          personal_photo_url: string | null
+          profile_image_type: string
           show_following: boolean
           show_likes: boolean
           show_reposts: boolean
@@ -712,6 +714,8 @@ export type Database = {
           id: string
           is_private?: boolean
           moment_count?: number
+          personal_photo_url?: string | null
+          profile_image_type?: string
           show_following?: boolean
           show_likes?: boolean
           show_reposts?: boolean
@@ -739,6 +743,8 @@ export type Database = {
           id?: string
           is_private?: boolean
           moment_count?: number
+          personal_photo_url?: string | null
+          profile_image_type?: string
           show_following?: boolean
           show_likes?: boolean
           show_reposts?: boolean
