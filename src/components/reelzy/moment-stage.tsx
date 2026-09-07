@@ -555,11 +555,14 @@ export function MomentStage({
       {/* Views — eye symbol with neon glow, top-left */}
       <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
         <Eye
-          className="size-4 text-[oklch(0.85_0.18_200)]"
-          strokeWidth={2.2}
-          style={{ filter: "drop-shadow(0 0 4px oklch(0.85 0.18 200 / 75%))" }}
+          className="size-4"
+          strokeWidth={2.4}
+          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
         />
-        <span className="data-figure text-[12px] font-semibold text-foreground/90">
+        <span
+          className="data-figure text-[12px] font-bold"
+          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+        >
           {formatCount(moment.viewCount)} views
         </span>
       </div>
@@ -639,7 +642,7 @@ export function MomentStage({
 
       {/* Right reaction rail — sits low, just above the bottom bar */}
       <div className="absolute bottom-[74px] right-2 z-20 flex flex-col items-center gap-2.5">
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center">
           <button
             type="button"
             onClick={(e) => {
