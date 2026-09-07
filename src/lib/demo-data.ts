@@ -7,7 +7,9 @@
  * needing real users or media.
  */
 
+import skate from "@/assets/demo/skate-sunset.jpg";
 import sunset from "@/assets/demo/sunset.jpg";
+
 import city from "@/assets/demo/city.jpg";
 import coffee from "@/assets/demo/coffee.jpg";
 import mountain from "@/assets/demo/mountain.jpg";
