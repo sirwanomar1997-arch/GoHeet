@@ -373,6 +373,15 @@ export function MomentStage({
     },
   });
 
+  heetRef.current = (x: number, y: number) => {
+    const id = Date.now() + Math.random();
+    setBursts((b) => [...b, { id, x, y }]);
+    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 900);
+    if (!liked) likeMutation.mutate();
+  };
+
+
+
   const saveMutation = useMutation({
     mutationFn: () => save({ data: { momentId: moment.id } }),
     onSuccess: (res) => {
