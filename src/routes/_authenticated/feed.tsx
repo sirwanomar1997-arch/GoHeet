@@ -80,20 +80,6 @@ function FeedPage() {
 
       {isLoading ? (
         <LoadingRail label="Gathering moments" />
-      ) : DEMO_FEED ? (
-        <div className="h-[calc(100svh-6.5rem)] snap-y snap-mandatory space-y-3 overflow-y-auto px-3 pb-3">
-          <div className="relative">
-            <div
-              aria-hidden
-              className="absolute inset-3 rounded-3xl"
-              style={{
-                background:
-                  "linear-gradient(180deg, oklch(0.62 0.17 55) 0%, oklch(0.45 0.14 30) 45%, oklch(0.22 0.05 340) 100%)",
-              }}
-            />
-            <MomentStage moment={demoMoment} onGone={() => {}} />
-          </div>
-        </div>
       ) : (data?.moments.length ?? 0) === 0 ? (
         <EmptyState
           title={scope === "following" ? "Quiet in here." : "Nothing new yet."}
