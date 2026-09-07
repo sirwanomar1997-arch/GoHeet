@@ -666,11 +666,8 @@ export function MomentStage({
             />
           </button>
           <span
-            className="data-figure -mt-1.5 text-[14px] font-bold leading-none"
-            style={{
-              color: "oklch(0.92 0.08 75)",
-              filter: "drop-shadow(0 0 6px oklch(0.78 0.18 60 / 90%)) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))",
-            }}
+            className="data-figure -mt-1.5 text-[14px] font-bold leading-none text-white"
+            style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
           >
             {formatCount(likeCount)}
           </span>
@@ -680,32 +677,36 @@ export function MomentStage({
         <RailAction
           label="Comments"
           count={formatCount(moment.commentCount)}
+          color={NEON_BLUE}
           onClick={() => setCommentsOpen(true)}
         >
-          <MessageCircle className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <MessageSquareMore className="size-[24px]" strokeWidth={2} />
         </RailAction>
 
         <RailAction
           label="Keep this moment"
           active={saved}
+          color={NEON_GREEN}
           onClick={() => saveMutation.mutate()}
         >
-          <Bookmark className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Bookmark className="size-[23px]" strokeWidth={2} fill={saved ? "currentColor" : "none"} />
         </RailAction>
 
         <RailAction
           label={reposted ? "Remove repost" : "Repost to your profile"}
           active={reposted}
+          color={NEON_VIOLET}
           onClick={() => repostMutation.mutate()}
         >
-          <Repeat2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Repeat className="size-[23px]" strokeWidth={2.2} />
         </RailAction>
 
         <RailAction
-          label="Share this moment"
+          label="Send this moment"
+          color={NEON_CYAN}
           onClick={() => setShareOpen(true)}
         >
-          <Share2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
+          <Send className="size-[23px] -rotate-12" strokeWidth={2} />
         </RailAction>
 
         <DropdownMenu>
@@ -713,15 +714,14 @@ export function MomentStage({
             aria-label="More options"
             className="grid size-9 place-items-center rounded-full"
             style={{
-              color: NEON_CORE,
-              filter: neonFilter(NEON_GLOW),
+              color: NEON_RED,
+              filter: neonFilter(NEON_RED),
             }}
           >
-            <MoreHorizontal className="size-[22px]" fill="currentColor" strokeWidth={0} />
+            <MoreHorizontal className="size-[23px]" strokeWidth={2.4} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top">
-            <DropdownMenuItem onClick={() => setShareOpen(true)}>Share</DropdownMenuItem>
             {moment.isOwn ? (
               <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
                 Delete moment
