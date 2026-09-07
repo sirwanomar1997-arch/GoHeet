@@ -26,3 +26,6 @@
 - [x] Redesign the Apple app icon with a cleaner G and an integrated fire symbol
 - [x] Replace all app-icon sizes, splash artwork, and favicon
 - [x] Verify the new icon at full and small sizes
+- [ ] Refine the existing G-and-flame icon with an exclusive luminous frame
+- [ ] Replace all icon, splash, and favicon sizes with the approved finish
+- [ ] Verify the refined icon at full and small sizes
