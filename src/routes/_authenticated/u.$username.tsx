@@ -321,12 +321,16 @@ function ProfilePage() {
           ) : null}
 
           {/* the heet total — one big flame, one big number, optically centered */}
-          <div className="mt-5 flex items-center justify-center gap-4">
+          <div className="mt-5 flex items-end justify-center gap-3">
             <HeetFlame className="size-24 shrink-0" glow />
-            <span className="font-display text-[64px] font-extrabold leading-none tracking-[-0.04em] text-foreground translate-y-[0.03em]">
+            <span
+              className="text-[58px] font-semibold leading-none tracking-[-0.05em] text-foreground translate-y-[-0.18em]"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
               {formatCount(p.totalLikes)}
             </span>
           </div>
+
 
 
 
