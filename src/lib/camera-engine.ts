@@ -24,7 +24,7 @@ export type EngineState = {
 export type EngineError = { title: string; body: string; kind: "denied" | "missing" | "failed" };
 
 type TrackWithCaps = MediaStreamTrack & {
-  getCapabilities?: () => MediaTrackCapabilities & { zoom?: ZoomRange; torch?: boolean };
+  getCapabilities?: () => Record<string, unknown>;
   getSettings: () => MediaTrackSettings & { zoom?: number };
 };
 
@@ -131,7 +131,7 @@ export class CameraEngine {
   private readCapabilities() {
     const track = this.videoTrack;
     if (!track) return;
-    const caps = track.getCapabilities?.() ?? {};
+    const caps = (track.getCapabilities?.() ?? {}) as { zoom?: Partial<ZoomRange>; torch?: boolean };
     const settings = track.getSettings();
     const zoom = caps.zoom && typeof caps.zoom.max === "number" && caps.zoom.max > (caps.zoom.min ?? 1)
       ? { min: caps.zoom.min ?? 1, max: caps.zoom.max, step: caps.zoom.step || 0.1 }
@@ -154,7 +154,7 @@ export class CameraEngine {
     }
     const clamped = Math.min(range.max, Math.max(range.min, value));
     try {
-      await track.applyConstraints({ advanced: [{ zoom: clamped }] } as MediaTrackConstraints);
+      await track.applyConstraints({ advanced: [{ zoom: clamped }] } as unknown as MediaTrackConstraints);
       this.state.zoom = clamped;
     } catch {
       this.state.zoom = clamped;
@@ -166,7 +166,7 @@ export class CameraEngine {
     const track = this.videoTrack;
     if (!track || !this.state.torchAvailable) return false;
     try {
-      await track.applyConstraints({ advanced: [{ torch: on }] } as MediaTrackConstraints);
+      await track.applyConstraints({ advanced: [{ torch: on }] } as unknown as MediaTrackConstraints);
       this.state.torch = on;
       return on;
     } catch {
