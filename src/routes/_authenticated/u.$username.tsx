@@ -264,7 +264,7 @@ function ProfilePage() {
           {data.isSelf ? (
             <div className="mt-5 grid w-full grid-cols-4 gap-2">
               {([
-                { id: "reelz", label: "Your Reelz", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
+                { id: "reelz", label: "Posts", Icon: LayoutGrid, color: "oklch(0.82 0.16 75)", glow: "oklch(0.82 0.16 75 / 60%)" },
                 { id: "liked", label: "Heeted", Icon: null, color: "oklch(0.64 0.22 18)", glow: "oklch(0.64 0.22 18 / 60%)" },
                 { id: "saved", label: "Saved", Icon: Bookmark, color: "oklch(0.74 0.15 150)", glow: "oklch(0.74 0.15 150 / 60%)" },
                 { id: "reposted", label: "Reposts", Icon: Repeat2, color: "oklch(0.72 0.17 150)", glow: "oklch(0.72 0.17 150 / 60%)" },
