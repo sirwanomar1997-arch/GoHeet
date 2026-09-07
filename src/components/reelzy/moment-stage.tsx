@@ -999,6 +999,7 @@ const NEON_GREEN = "oklch(0.82 0.19 150)";
 const NEON_VIOLET = "oklch(0.75 0.19 300)";
 const NEON_CYAN = "oklch(0.83 0.14 200)";
 const NEON_RED = "oklch(0.68 0.22 22)";
+const NEON_AMBER = "oklch(0.82 0.17 75)";
 const NEON_CORE = NEON_BLUE;
 const NEON_GLOW = NEON_BLUE;
 
