@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { searchGoHeet, toggleFollow } from "@/lib/reelzy.functions";
+import { useDemoMode } from "@/lib/use-demo-mode";
+import { getDemoSearch } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { formatCount } from "@/components/reelzy/format";
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/discover")({
 });
 
 function DiscoverPage() {
+  const demo = useDemoMode();
   const [q, setQ] = useState("");
   const [term, setTerm] = useState("");
   const search = useServerFn(searchGoHeet);
@@ -21,8 +24,8 @@ function DiscoverPage() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["search", term],
-    queryFn: () => search({ data: { q: term } }),
+    queryKey: ["search", term, demo],
+    queryFn: () => (demo ? getDemoSearch(term) : search({ data: { q: term } })),
   });
 
   const followMutation = useMutation({
