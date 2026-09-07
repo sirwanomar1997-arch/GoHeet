@@ -555,11 +555,14 @@ export function MomentStage({
       {/* Views — eye symbol with neon glow, top-left */}
       <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
         <Eye
-          className="size-4 text-[oklch(0.85_0.18_200)]"
-          strokeWidth={2.2}
-          style={{ filter: "drop-shadow(0 0 4px oklch(0.85 0.18 200 / 75%))" }}
+          className="size-4"
+          strokeWidth={2.4}
+          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
         />
-        <span className="data-figure text-[12px] font-semibold text-foreground/90">
+        <span
+          className="data-figure text-[12px] font-bold"
+          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+        >
           {formatCount(moment.viewCount)} views
         </span>
       </div>
@@ -637,9 +640,9 @@ export function MomentStage({
 
       </div>
 
-      {/* Right reaction rail */}
-      <div className="absolute bottom-40 right-2.5 z-20 flex flex-col items-center gap-4">
-        <div className="flex flex-col items-center gap-1">
+      {/* Right reaction rail — sits low, just above the bottom bar */}
+      <div className="absolute bottom-[74px] right-2 z-20 flex flex-col items-center gap-2.5">
+        <div className="flex flex-col items-center">
           <button
             type="button"
             onClick={(e) => {
@@ -663,10 +666,10 @@ export function MomentStage({
             />
           </button>
           <span
-            className="data-figure text-[15px] font-bold"
+            className="data-figure -mt-1.5 text-[14px] font-bold leading-none"
             style={{
-              color: "oklch(0.88 0.19 55)",
-              filter: "drop-shadow(0 0 6px oklch(0.75 0.22 40 / 85%)) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))",
+              color: "oklch(0.92 0.08 75)",
+              filter: "drop-shadow(0 0 6px oklch(0.78 0.18 60 / 90%)) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))",
             }}
           >
             {formatCount(likeCount)}
@@ -678,35 +681,31 @@ export function MomentStage({
           label="Comments"
           count={formatCount(moment.commentCount)}
           onClick={() => setCommentsOpen(true)}
-          neon="oklch(0.85 0.18 200)"
         >
-          <MessageCircle className="size-5" fill="currentColor" strokeWidth={0} />
+          <MessageCircle className="size-[22px]" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
           label="Keep this moment"
           active={saved}
           onClick={() => saveMutation.mutate()}
-          neon={saved ? "oklch(0.8 0.2 85)" : "oklch(0.85 0.19 145)"}
         >
-          <Bookmark className="size-5" fill="currentColor" strokeWidth={0} />
+          <Bookmark className="size-[22px]" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
           label={reposted ? "Remove repost" : "Repost to your profile"}
           active={reposted}
           onClick={() => repostMutation.mutate()}
-          neon={reposted ? "oklch(0.8 0.2 85)" : "oklch(0.8 0.2 300)"}
         >
-          <Repeat2 className="size-5" fill="currentColor" strokeWidth={0} />
+          <Repeat2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <RailAction
           label="Share this moment"
           onClick={() => setShareOpen(true)}
-          neon="oklch(0.85 0.17 240)"
         >
-          <Share2 className="size-5" fill="currentColor" strokeWidth={0} />
+          <Share2 className="size-[22px]" fill="currentColor" strokeWidth={0} />
         </RailAction>
 
         <DropdownMenu>
@@ -714,11 +713,11 @@ export function MomentStage({
             aria-label="More options"
             className="grid size-9 place-items-center rounded-full"
             style={{
-              color: "oklch(0.9 0.14 330)",
-              filter: "drop-shadow(0 0 5px oklch(0.9 0.14 330 / 80%)) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))",
+              color: NEON_CORE,
+              filter: neonFilter(NEON_GLOW),
             }}
           >
-            <MoreHorizontal className="size-5" fill="currentColor" strokeWidth={0} />
+            <MoreHorizontal className="size-[22px]" fill="currentColor" strokeWidth={0} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top">
@@ -994,38 +993,44 @@ function CommentSheet({
 }
 
 
+/* Exclusive champagne-neon: warm white core, soft ember-gold halo,
+   plus a dark edge so symbols stay visible on bright videos. */
+const NEON_CORE = "oklch(0.97 0.02 95)";
+const NEON_GLOW = "oklch(0.82 0.16 75)";
+const neonFilter = (glow: string) =>
+  `drop-shadow(0 0 6px ${glow.replace(")", " / 90%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 70%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))`;
+
 function RailAction({
   label,
   count,
   active,
   onClick,
-  neon = "oklch(0.85 0.18 200)",
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
   onClick: () => void;
-  neon?: string;
   children: ReactNode;
 }) {
-  const glow = `drop-shadow(0 0 5px ${neon.replace(")", " / 80%)")}) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))`;
+  const core = active ? "oklch(0.82 0.17 60)" : NEON_CORE;
+  const glow = neonFilter(NEON_GLOW);
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center">
       <button
         type="button"
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
         className="grid size-9 place-items-center rounded-full transition-transform active:scale-90"
-        style={{ color: neon, filter: glow }}
+        style={{ color: core, filter: glow }}
       >
         {children}
       </button>
       {count ? (
         <span
-          className="data-figure text-[12px] font-semibold"
-          style={{ color: neon, filter: glow }}
+          className="data-figure -mt-1 text-[11px] font-bold leading-none"
+          style={{ color: core, filter: glow }}
         >
           {count}
         </span>
