@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Check, Facebook, Ghost, Instagram, MessageCircle, Music2, Sparkles, Twitter, Youtube } from "lucide-react";
+import { ArrowLeft, Camera, Check, Facebook, Ghost, Globe, Instagram, MessageCircle, Music2, Sparkles, Twitter, Youtube } from "lucide-react";
 import { saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
