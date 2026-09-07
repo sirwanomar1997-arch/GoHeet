@@ -80,3 +80,23 @@ export async function saveClip(clip: Omit<SavedClip, "id" | "createdAt">): Promi
 export async function deleteClip(id: string): Promise<void> {
   await tx("readwrite", (s) => s.delete(id));
 }
+
+export async function getClip(id: string): Promise<SavedClip | null> {
+  if (typeof indexedDB === "undefined") return null;
+  try {
+    const found = await tx<SavedClip | undefined>("readonly", (s) => s.get(id) as IDBRequest<SavedClip | undefined>);
+    return found ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Re-save a held clip after editing — same slot, same id. */
+export async function updateClip(
+  id: string,
+  patch: Partial<Omit<SavedClip, "id" | "createdAt">>,
+): Promise<void> {
+  const existing = await getClip(id);
+  if (!existing) return;
+  await tx("readwrite", (s) => s.put({ ...existing, ...patch }));
+}

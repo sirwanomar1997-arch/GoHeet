@@ -2,10 +2,11 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
-import { saveClip, listSavedClips, SHARE_LATER_LIMIT } from "@/lib/share-later";
+import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   primeCaptureSounds,
@@ -43,6 +44,9 @@ import {
 
 export const Route = createFileRoute("/_authenticated/camera")({
   component: CameraPage,
+  validateSearch: (search: Record<string, unknown>): { edit?: string } =>
+    typeof search["edit"] === "string" ? { edit: search["edit"] as string } : {},
+
 });
 
 const MAX_MS = 300_000; // Reelzy caps a moment at five minutes.
@@ -60,6 +64,70 @@ function formatClock(ms: number): string {
   const total = Math.floor(ms / 1000);
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
+
+/**
+ * Playback of what you just filmed.
+ *
+ * A freshly recorded blob often paints black until the browser is nudged: it
+ * has no duration yet and autoplay with sound is blocked on phones. So we mute
+ * for the first play, nudge the first frame into view, and offer a tap to play
+ * if the browser still refuses.
+ */
+function ReviewVideo({ src, filter, posterUrl }: { src: string; filter: string | undefined; posterUrl?: string | undefined }) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+  const [needsTap, setNeedsTap] = useState(false);
+
+  const kick = useCallback(async () => {
+    const el = ref.current;
+    if (!el) return;
+    try {
+      // Force the decoder to paint a frame instead of a black canvas.
+      if (el.currentTime < 0.05) el.currentTime = 0.05;
+      await el.play();
+      setNeedsTap(false);
+    } catch {
+      setNeedsTap(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    setNeedsTap(false);
+    const id = window.setTimeout(() => void kick(), 60);
+    return () => window.clearTimeout(id);
+  }, [src, kick]);
+
+  return (
+    <>
+      <video
+        ref={ref}
+        src={src}
+        poster={posterUrl}
+        className="size-full object-cover"
+        style={filter ? { filter } : undefined}
+        playsInline
+        autoPlay
+        muted
+        loop
+        controls={false}
+        onLoadedData={() => void kick()}
+        onCanPlay={() => void kick()}
+      />
+      {needsTap ? (
+        <button
+          type="button"
+          onClick={() => void kick()}
+          aria-label="Play your recording"
+          className="absolute inset-0 z-10 grid place-items-center bg-black/25"
+        >
+          <span className="grid size-16 place-items-center rounded-full bg-black/55 text-white backdrop-blur">
+            <Play className="size-7" />
+          </span>
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 
 function CameraPage() {
   const navigate = useNavigate();
@@ -82,7 +150,12 @@ function CameraPage() {
   const [torch, setTorch] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [flipping, setFlipping] = useState(false);
-  const [zoomOpen, setZoomOpen] = useState(false);
+  // Front-camera glow: the screen itself becomes a soft ring light.
+  const [glow, setGlow] = useState(0);
+  const [textTab, setTextTab] = useState<"font" | "colour" | "finish" | "size">("font");
+  const { edit: editId } = Route.useSearch();
+  const editingId = editId;
+
   const [filterCat, setFilterCat] = useState<string>("Natural");
   const [savedCount, setSavedCount] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -244,6 +317,31 @@ function CameraPage() {
   useEffect(() => {
     void listSavedClips().then((clips) => setSavedCount(clips.length));
   }, []);
+
+  // Opened from "Share later" to keep working on a held moment.
+  useEffect(() => {
+    if (!editId) return;
+    let url: string | null = null;
+    void getClip(editId).then((clip) => {
+      if (!clip) return;
+      url = URL.createObjectURL(clip.blob);
+      setCaptured({
+        blob: clip.blob,
+        url,
+        kind: clip.kind,
+        durationMs: clip.durationMs,
+        poster: clip.poster,
+      });
+      setCaption(clip.caption ?? "");
+      setPlace(clip.place ?? "");
+      setLook((clip.styleFilter as FilterId | null) ?? "none");
+      setStage("edit");
+    });
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [editId]);
+
 
   // A server-issued capture session is what proves this came from the Reelzy camera.
   useEffect(() => {
@@ -427,16 +525,25 @@ function CameraPage() {
     if (!captured) return;
     setSaving(true);
     try {
-      await saveClip({
-        blob: captured.blob,
-        poster: captured.poster,
-        kind: captured.kind,
-        durationMs: Math.round(captured.durationMs),
-        caption: caption.trim(),
-        place: place.trim(),
-        styleFilter: look !== "none" ? look : null,
-      });
-      toast.success("Held for later. Share it when you're ready.");
+      if (editingId) {
+        await updateClip(editingId, {
+          caption: caption.trim(),
+          place: place.trim(),
+          styleFilter: look !== "none" ? look : null,
+        });
+        toast.success("Changes saved.");
+      } else {
+        await saveClip({
+          blob: captured.blob,
+          poster: captured.poster,
+          kind: captured.kind,
+          durationMs: Math.round(captured.durationMs),
+          caption: caption.trim(),
+          place: place.trim(),
+          styleFilter: look !== "none" ? look : null,
+        });
+        toast.success("Held for later. Share it when you're ready.");
+      }
       await navigate({ to: "/share-later" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't hold that one.");
@@ -447,6 +554,10 @@ function CameraPage() {
 
   function retake() {
     if (captured) URL.revokeObjectURL(captured.url);
+    if (editingId) {
+      void navigate({ to: "/share-later" });
+      return;
+    }
     setCaptured(null);
     setStage("edit");
     setFilterOpen(false);
@@ -459,6 +570,7 @@ function CameraPage() {
     setOriginalAudioVolume(1);
     setLook("none");
   }
+
 
   async function doPublish() {
     if (!captured || !session) return;
@@ -497,7 +609,10 @@ function CameraPage() {
           originalAudioVolume,
         },
       });
+      // Publishing a held moment empties its slot.
+      if (editingId) await deleteClip(editingId);
       toast.success("Published. That's a real one.");
+
       await navigate({ to: "/feed" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't publish that moment.");
@@ -574,15 +689,7 @@ function CameraPage() {
   if (captured) {
     const media =
       captured.kind === "video" ? (
-        <video
-          src={captured.url}
-          className="size-full object-cover"
-          style={filterCss(look) ? { filter: filterCss(look) } : undefined}
-          playsInline
-          autoPlay
-          loop
-          controls={false}
-        />
+        <ReviewVideo src={captured.url} filter={filterCss(look) || undefined} />
       ) : (
         <img
           src={captured.url}
@@ -591,6 +698,7 @@ function CameraPage() {
           style={filterCss(look) ? { filter: filterCss(look) } : undefined}
         />
       );
+
 
     if (stage === "details") {
       return (
@@ -868,24 +976,8 @@ function CameraPage() {
         ) : null}
 
         {textOpen ? (
-          <div className="absolute inset-x-0 bottom-0 z-40 rounded-t-[28px] border border-border bg-surface p-5 shadow-[0_-18px_60px_rgba(0,0,0,0.55)]">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <p className="font-display text-lg">Say it loud</p>
-                <p className="text-xs text-muted-foreground">
-                  Everything updates live on your video as you tap.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTextOpen(false)}
-                aria-label="Close text editor"
-                className="tap-target -mr-1 -mt-1 text-muted-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-            <div className="max-h-[42svh] space-y-5 overflow-y-auto pb-6">
+          <div className="absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6">
+            <div className="flex items-center gap-2">
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
@@ -896,23 +988,54 @@ function CameraPage() {
                   }))
                 }
                 placeholder="Say it in a few words"
-                className="h-12 bg-surface-raised"
+                className="h-11 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/50"
               />
+              <button
+                type="button"
+                onClick={() => {
+                  setOverlay(null);
+                  setTextOpen(false);
+                }}
+                aria-label="Remove text"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-white/10 text-white"
+              >
+                <Trash2 className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setTextOpen(false)}
+                aria-label="Done with text"
+                className="ember-fill grid size-11 shrink-0 place-items-center rounded-full text-primary-foreground"
+              >
+                <Check className="size-5" />
+              </button>
+            </div>
 
-              <div>
-                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Font
-                </p>
+            <div className="mt-2.5 flex gap-2">
+              {(["font", "colour", "finish", "size"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setTextTab(tab)}
+                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.14em] transition-colors ${
+                    textTab === tab ? "bg-white text-black" : "bg-white/12 text-white/75"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-2.5 min-h-[52px]">
+              {textTab === "font" ? (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {OVERLAY_FONTS.map((f) => (
                     <button
                       key={f.id}
                       type="button"
                       onClick={() => overlay && setOverlay({ ...overlay, font: f.id })}
-                      className={`h-14 shrink-0 rounded-2xl border px-4 text-lg ${
-                        overlay?.font === f.id
-                          ? "border-primary text-primary"
-                          : "border-border text-foreground"
+                      className={`h-11 shrink-0 rounded-xl border px-3.5 text-base text-white ${
+                        overlay?.font === f.id ? "border-primary" : "border-white/25"
                       }`}
                       style={overlayFontStyle(f.id)}
                     >
@@ -920,12 +1043,9 @@ function CameraPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              ) : null}
 
-              <div>
-                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Colour
-                </p>
+              {textTab === "colour" ? (
                 <div className="flex gap-2.5 overflow-x-auto pb-1">
                   {OVERLAY_COLORS.map((c) => (
                     <button
@@ -934,85 +1054,57 @@ function CameraPage() {
                       aria-label={c.label}
                       onClick={() => overlay && setOverlay({ ...overlay, color: c.value })}
                       className={`size-9 shrink-0 rounded-full border-2 transition-transform ${
-                        overlay?.color === c.value
-                          ? "border-primary scale-110"
-                          : "border-border/60"
+                        overlay?.color === c.value ? "border-primary scale-110" : "border-white/40"
                       }`}
                       style={{ background: c.value }}
                     />
                   ))}
                 </div>
-              </div>
+              ) : null}
 
-              <div>
-                <p className="data-figure mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Finish
-                </p>
+              {textTab === "finish" ? (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {OVERLAY_STYLES.map((st) => (
                     <button
                       key={st.id}
                       type="button"
                       onClick={() => overlay && setOverlay({ ...overlay, style: st.id })}
-                      className={`h-11 shrink-0 rounded-xl border px-4 text-xs uppercase tracking-[0.14em] ${
-                        overlay?.style === st.id
-                          ? "border-primary text-primary"
-                          : "border-border text-muted-foreground"
+                      className={`h-10 shrink-0 rounded-xl border px-3.5 text-[11px] uppercase tracking-[0.14em] ${
+                        overlay?.style === st.id ? "border-primary text-primary" : "border-white/25 text-white/80"
                       }`}
                     >
                       {st.label}
                     </button>
                   ))}
                 </div>
-              </div>
+              ) : null}
 
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span>Size</span>
-                <Slider
-                  value={[overlay?.size ?? DEFAULT_OVERLAY.size]}
-                  min={14}
-                  max={64}
-                  step={1}
-                  onValueChange={([v]) =>
-                    overlay && setOverlay({ ...overlay, size: v ?? overlay.size })
-                  }
-                />
-              </label>
-
-              <label className="block space-y-2 text-xs text-muted-foreground">
-                <span>Tilt</span>
-                <Slider
-                  value={[overlay?.rotate ?? 0]}
-                  min={-30}
-                  max={30}
-                  step={1}
-                  onValueChange={([v]) =>
-                    overlay && setOverlay({ ...overlay, rotate: v ?? overlay.rotate })
-                  }
-                />
-              </label>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  className="h-12 flex-1 rounded-2xl border border-border"
-                  onClick={() => {
-                    setOverlay(null);
-                    setTextOpen(false);
-                  }}
-                >
-                  Remove
-                </Button>
-                <Button
-                  className="ember-fill h-12 flex-1 rounded-2xl text-primary-foreground"
-                  onClick={() => setTextOpen(false)}
-                >
-                  Done
-                </Button>
-              </div>
+              {textTab === "size" ? (
+                <div className="flex items-center gap-4 px-1">
+                  <span className="w-10 text-[10px] uppercase tracking-[0.14em] text-white/60">Size</span>
+                  <Slider
+                    className="flex-1"
+                    value={[overlay?.size ?? DEFAULT_OVERLAY.size]}
+                    min={14}
+                    max={64}
+                    step={1}
+                    onValueChange={([v]) => overlay && setOverlay({ ...overlay, size: v ?? overlay.size })}
+                  />
+                  <span className="w-10 text-[10px] uppercase tracking-[0.14em] text-white/60">Tilt</span>
+                  <Slider
+                    className="flex-1"
+                    value={[overlay?.rotate ?? 0]}
+                    min={-30}
+                    max={30}
+                    step={1}
+                    onValueChange={([v]) => overlay && setOverlay({ ...overlay, rotate: v ?? overlay.rotate })}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
+
 
         {musicSheet}
       </main>
@@ -1041,7 +1133,22 @@ function CameraPage() {
         />
         {/* A whisper of vignette so controls read cleanly over any scene. */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_55%,rgba(0,0,0,0.45)_100%)]" />
+        {/* Selfie glow: the screen edges become a soft ring light on your face. */}
+        {mirrored && glow > 0 ? (
+          <div
+            className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+            style={{
+              boxShadow: "inset 0 0 90px 40px rgba(255,244,230,0.9)",
+              borderWidth: `${[0, 26, 42, 64][glow]}px`,
+              borderStyle: "solid",
+              borderColor: "rgba(255,246,235,0.96)",
+              opacity: [0, 0.55, 0.8, 1][glow],
+            }}
+            aria-hidden
+          />
+        ) : null}
       </div>
+
 
       {/* Top row: leave, timer, sound. */}
       <div className="absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-4">
@@ -1083,7 +1190,7 @@ function CameraPage() {
           >
             {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5 text-white/50" />}
           </button>
-          {torchAvailable ? (
+          {torchAvailable && !mirrored ? (
             <button
               type="button"
               onClick={() => void toggleTorch()}
@@ -1095,34 +1202,31 @@ function CameraPage() {
               {torch ? <Zap className="size-5" /> : <ZapOff className="size-5" />}
             </button>
           ) : null}
+          {mirrored ? (
+            <button
+              type="button"
+              onClick={() => setGlow((g) => (g + 1) % 4)}
+              aria-label={`Selfie light: ${["off", "soft", "bright", "max"][glow]}`}
+              className={`grid size-10 place-items-center rounded-full backdrop-blur-md transition-transform active:scale-90 ${
+                glow > 0 ? "bg-white text-black shadow-[0_0_22px_rgba(255,246,235,0.65)]" : "bg-black/35 text-white"
+              }`}
+            >
+              <Sun className="size-5" />
+            </button>
+          ) : null}
+
         </div>
       </div>
 
-      {/* Zoom: a single quiet chip, with a slider only while you're using it. */}
-      {ready && !error ? (
-        <div className="absolute inset-x-0 bottom-44 flex flex-col items-center gap-3 px-10">
-          {zoomOpen ? (
-            <div className="w-full max-w-xs rounded-full bg-black/40 px-4 py-2 backdrop-blur-md">
-              <Slider
-                value={[zoomRange ? zoom : digital]}
-                min={zoomRange ? zoomRange.min : 1}
-                max={zoomRange ? zoomRange.max : maxDigital}
-                step={zoomRange ? zoomRange.step || 0.1 : 0.05}
-                onValueChange={([v]) => applyZoom(v ?? 1)}
-                aria-label="Zoom"
-              />
-            </div>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => setZoomOpen((v) => !v)}
-            onDoubleClick={() => applyZoom(zoomRange ? zoomRange.min : 1)}
-            className="data-figure rounded-full bg-black/40 px-3 py-1.5 text-[11px] tracking-[0.1em] text-white backdrop-blur-md transition-transform active:scale-95"
-          >
+      {/* Zoom is pinch-only — nothing on screen, just your fingers. */}
+      {ready && !error && (zoomRange ? zoom > (zoomRange.min || 1) * 1.02 : digital > 1.02) ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-44 flex justify-center">
+          <span className="data-figure rounded-full bg-black/35 px-3 py-1 text-[11px] tracking-[0.1em] text-white/85 backdrop-blur-md">
             {zoomLabel}
-          </button>
+          </span>
         </div>
       ) : null}
+
 
       {error ? (
         <div className="absolute inset-0 grid place-items-center bg-black/85 px-8 text-center backdrop-blur-md">
