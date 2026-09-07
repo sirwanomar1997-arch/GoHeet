@@ -71,7 +71,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
     id: "d1",
     username: "maya",
     displayName: "Maya",
-    bio: "Golden hour chaser 🌅 | Stockholm → everywhere\n📷 Capturing real life, one Heet at a time",
+    bio: "Golden hour chaser | Stockholm to everywhere\nCapturing real life, one Heet at a time",
     avatarUrl: avatar1,
     hasAvatar: true,
     hasPersonalPhoto: true,
