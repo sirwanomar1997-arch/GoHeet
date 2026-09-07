@@ -7,7 +7,9 @@
  * needing real users or media.
  */
 
+import skate from "@/assets/demo/skate-sunset.jpg";
 import sunset from "@/assets/demo/sunset.jpg";
+
 import city from "@/assets/demo/city.jpg";
 import coffee from "@/assets/demo/coffee.jpg";
 import mountain from "@/assets/demo/mountain.jpg";
@@ -50,7 +52,7 @@ const now = Date.now();
 const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
 const daysAgo = (d: number) => new Date(now - d * 86400_000).toISOString();
 
-const PHOTOS = [sunset, city, coffee, mountain, styleRef, sunset, city, coffee];
+const PHOTOS = [skate, sunset, city, coffee, mountain, styleRef, sunset, city];
 
 export const demoAuthors: Array<{
   id: string;
@@ -144,6 +146,7 @@ export const demoProfiles: Record<string, DemoProfile> = {
 };
 
 const captions = [
+  "Rolling down to the beach at golden hour 🛹🌅",
   "Golden hour at the harbour 🌅 Stockholm never disappoints",
   "City lights hit different at midnight ✨",
   "Morning ritual ☕ What's yours?",
@@ -151,8 +154,8 @@ const captions = [
   "Real moments only. This is what GoHeet is about 🔥",
   "Sunset chase never stops 🌇",
   "Late night walks > everything",
-  "Coffee + creativity = the perfect morning ☕",
 ];
+
 
 const locations = ["Stockholm", "Gothenburg", "Malmö", "Abisko", "Kiruna", "Lisbon", "Oslo", "Copenhagen"];
 
