@@ -90,7 +90,8 @@ function ProfilePage() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["profile", username, sort, demo],
-    queryFn: () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn: (): any =>
       demo
         ? getDemoProfile(username, sort)
         : fetchProfile({ data: { username, sort } }),
