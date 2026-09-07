@@ -2,56 +2,30 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { getFeed, type MomentCard } from "@/lib/reelzy.functions";
+import { getFeed } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
+import { useDemoMode } from "@/lib/use-demo-mode";
+import { getDemoFeed } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { MomentStage } from "@/components/reelzy/moment-stage";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
-
-const DEMO_FEED = new URLSearchParams(
-  typeof window === "undefined" ? "" : window.location.search,
-).has("demo");
-
-import demoPhoto from "@/assets/av2/style-reference.jpg";
-
-const demoMoment: MomentCard = {
-  id: "demo",
-  caption: "Golden hour at the harbour 🌅",
-  kind: "photo",
-  mediaUrl: demoPhoto,
-  posterUrl: null,
-  durationMs: null,
-  locationLabel: "Stockholm",
-  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  viewCount: 1284,
-  likeCount: 231,
-  commentCount: 18,
-  liked: false,
-  saved: false,
-  reposted: false,
-  styleFilter: null,
-  overlay: { text: "Real moments", font: "bungee", style: "gradient", place: "custom", color: "sunset", x: 50, y: 30, size: 34, rotate: -4 },
-  music: { id: "m1", title: "Wallpaper", artist: "Kevin MacLeod", url: null, artworkUrl: null, attributionText: null, offsetMs: 0, volume: 1 },
-  originalAudioVolume: 1,
-  author: { id: "demo", username: "goheet", displayName: "GoHeet", avatarUrl: null },
-  isOwn: false,
-};
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: FeedPage,
 });
 
 function FeedPage() {
+  const demo = useDemoMode();
   const [scope, setScope] = useState<"following" | "discover">("discover");
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { data: me, isLoading: meLoading } = useMe();
   const fetchFeed = useServerFn(getFeed);
 
-  const showProfileBanner = !meLoading && !!me && !me.profile && !bannerDismissed;
+  const showProfileBanner = !demo && !meLoading && !!me && !me.profile && !bannerDismissed;
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["feed", scope],
-    queryFn: () => fetchFeed({ data: { scope } }),
+    queryKey: ["feed", scope, demo],
+    queryFn: () => (demo ? getDemoFeed(scope) : fetchFeed({ data: { scope } })),
   });
 
   return (
