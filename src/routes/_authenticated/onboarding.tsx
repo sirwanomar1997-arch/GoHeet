@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { GoHeetWordmark } from "@/components/reelzy/logo";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { checkUsername, completeSignup } from "@/lib/reelzy.functions";
@@ -69,7 +70,8 @@ function Onboarding() {
   return (
     <main className="min-h-svh bg-background px-6 pb-16 pt-10">
       <div className="mx-auto max-w-sm">
-        <h1 className="font-display text-3xl font-extrabold tracking-[-0.04em]">
+        <GoHeetWordmark />
+        <h1 className="mt-8 font-display text-3xl font-extrabold tracking-[-0.04em]">
           Create your profile.
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
