@@ -666,10 +666,10 @@ export function MomentStage({
             />
           </button>
           <span
-            className="data-figure text-[15px] font-bold"
+            className="data-figure -mt-1.5 text-[14px] font-bold leading-none"
             style={{
-              color: "oklch(0.88 0.19 55)",
-              filter: "drop-shadow(0 0 6px oklch(0.75 0.22 40 / 85%)) drop-shadow(0 1px 2px oklch(0 0 0 / 60%))",
+              color: "oklch(0.92 0.08 75)",
+              filter: "drop-shadow(0 0 6px oklch(0.78 0.18 60 / 90%)) drop-shadow(0 1px 1.5px oklch(0 0 0 / 75%))",
             }}
           >
             {formatCount(likeCount)}
