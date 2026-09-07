@@ -220,7 +220,42 @@ export class CameraEngine {
     const stream = this.stream;
     if (!stream) return;
     this.mime = bestMimeType();
-    const rec = new MediaRecorder(stream, {
+
+    // Record a canvas rather than the raw camera track: the lens can then be
+    // swapped mid-take without the recorder ever seeing an interruption.
+    const track = this.videoTrack;
+    const settings = track?.getSettings();
+    const canvas = document.createElement("canvas");
+    canvas.width = settings?.width || 1080;
+    canvas.height = settings?.height || 1920;
+    const ctx = canvas.getContext("2d");
+
+    const mix = document.createElement("video");
+    mix.muted = true;
+    mix.playsInline = true;
+    mix.srcObject = new MediaStream(stream.getVideoTracks());
+    void mix.play().catch(() => undefined);
+
+    this.canvas = canvas;
+    this.mixVideo = mix;
+
+    const draw = () => {
+      this.raf = requestAnimationFrame(draw);
+      if (!ctx || !mix.videoWidth) return;
+      // Cover-fit so a lens with a different aspect never letterboxes the take.
+      const scale = Math.max(canvas.width / mix.videoWidth, canvas.height / mix.videoHeight);
+      const w = mix.videoWidth * scale;
+      const h = mix.videoHeight * scale;
+      ctx.drawImage(mix, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    };
+    this.raf = requestAnimationFrame(draw);
+
+    const composed = new MediaStream([
+      ...canvas.captureStream(30).getVideoTracks(),
+      ...stream.getAudioTracks(),
+    ]);
+
+    const rec = new MediaRecorder(composed, {
       ...(this.mime ? { mimeType: this.mime } : {}),
       videoBitsPerSecond: HIGH_BITRATE,
       audioBitsPerSecond: AUDIO_BITRATE,
@@ -246,16 +281,30 @@ export class CameraEngine {
     if (this.recorder?.state === "paused") this.recorder.resume();
   }
 
+  private teardownMixer() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    if (this.mixVideo) {
+      this.mixVideo.srcObject = null;
+      this.mixVideo = null;
+    }
+    this.canvas = null;
+  }
+
   stopRecording() {
     if (this.recorder && this.recorder.state !== "inactive") this.recorder.stop();
     this.recorder = null;
+    this.teardownMixer();
   }
 
   stop() {
     this.stopRecording();
     this.stream?.getTracks().forEach((t) => t.stop());
+    this.audioStream?.getTracks().forEach((t) => t.stop());
+    this.audioStream = null;
     this.stream = null;
   }
+
 
   /** Grab a still frame from a live preview element (used for posters). */
   static async grabFrame(video: HTMLVideoElement | null, mirrored = false): Promise<Blob | null> {
