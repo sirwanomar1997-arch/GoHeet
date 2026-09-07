@@ -280,8 +280,11 @@ function CameraPage() {
   const startStream = useCallback(async () => {
     const engine = engineRef.current;
     if (!engine) return;
+    // Never re-open the camera mid-take (a lens flip handles that itself).
+    if (recordingRef.current) return;
     setReady(false);
     setBooting(true);
+
     try {
       const stream = await engine.start(facing, withAudio);
       if (videoRef.current) {
