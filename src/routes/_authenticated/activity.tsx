@@ -57,8 +57,9 @@ function ActivityPage() {
     }
   }, [data, markRead, demo]);
 
-  const chats = convos?.chats ?? [];
-  const requests = convos?.requests ?? [];
+  const demoConvos = demo ? getDemoConversations() : null;
+  const chats = (demoConvos?.chats ?? convos?.chats ?? []) as typeof convos.chats;
+  const requests = (demoConvos?.requests ?? convos?.requests ?? []) as typeof convos.requests;
   const preview = [...requests, ...chats].slice(0, 3);
   const unread =
     chats.reduce((n, c) => n + (c.unread ?? 0), 0) + requests.length;
