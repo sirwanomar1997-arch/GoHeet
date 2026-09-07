@@ -989,134 +989,212 @@ function CameraPage() {
   }
 
 
+  const mirrored = facing === "user";
+  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${zoomRange ? 1 : digital})`;
+
   return (
     <main className="relative h-svh overflow-hidden bg-black">
-      <video
-        ref={videoRef}
-        className="size-full object-cover"
-        playsInline
-        muted
-        autoPlay
-      />
+      <div
+        className="absolute inset-0"
+        onTouchStart={onPreviewTouchStart}
+        onTouchMove={onPreviewTouchMove}
+        onTouchEnd={onPreviewTouchEnd}
+      >
+        <video
+          ref={videoRef}
+          className="size-full object-cover transition-[opacity,transform] duration-300 ease-out"
+          style={{ transform: previewTransform, opacity: flipping || booting ? 0 : 1 }}
+          playsInline
+          muted
+          autoPlay
+        />
+        {/* A whisper of vignette so controls read cleanly over any scene. */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_55%,rgba(0,0,0,0.45)_100%)]" />
+      </div>
 
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+      {/* Top row: leave, timer, sound. */}
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between px-4 pt-4">
         <Link
           to="/feed"
           aria-label="Close camera"
-          className="tap-target grid place-items-center rounded-full bg-background/70 backdrop-blur"
+          className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
         >
-          <X className="size-5" />
+          <X className="size-5" strokeWidth={2} />
         </Link>
-        <span className="data-figure flex items-center gap-2 rounded-full bg-background/70 px-3 py-1.5 text-[11px] backdrop-blur">
-          {recording ? (
-            <>
-              <span
-                className={`size-2 rounded-full bg-[image:var(--gradient-ember)] ${paused ? "opacity-50" : "animate-ember-pulse"}`}
-              />
-              {paused ? "Paused" : null} {formatClock(elapsed)}
-            </>
-          ) : (
-            "Reelzy camera"
-          )}
-        </span>
 
-        <button
-          type="button"
-          onClick={() => setWithAudio((a) => !a)}
-          aria-label={withAudio ? "Record without sound" : "Record with sound"}
-          className="tap-target grid place-items-center rounded-full bg-background/70 backdrop-blur"
+        <div
+          className={`flex items-center gap-2 rounded-full px-3.5 py-2 backdrop-blur-md transition-all duration-300 ${
+            recording ? "bg-black/45 opacity-100" : "bg-black/25 opacity-70"
+          }`}
         >
-          {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-        </button>
+          {recording ? (
+            <span
+              className={`size-[7px] rounded-full bg-[image:var(--gradient-ember)] ${
+                paused ? "opacity-40" : "animate-ember-pulse"
+              }`}
+              aria-hidden
+            />
+          ) : null}
+          <span className="data-figure text-[13px] font-medium tabular-nums tracking-[0.16em] text-white">
+            {recording ? formatClock(elapsed) : "00:00"}
+          </span>
+          {paused ? (
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Paused</span>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setWithAudio((a) => !a)}
+            aria-label={withAudio ? "Record without sound" : "Record with sound"}
+            className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
+          >
+            {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5 text-white/50" />}
+          </button>
+          {torchAvailable ? (
+            <button
+              type="button"
+              onClick={() => void toggleTorch()}
+              aria-label={torch ? "Turn the light off" : "Turn the light on"}
+              className={`grid size-10 place-items-center rounded-full backdrop-blur-md transition-transform active:scale-90 ${
+                torch ? "bg-white text-black" : "bg-black/35 text-white"
+              }`}
+            >
+              {torch ? <Zap className="size-5" /> : <ZapOff className="size-5" />}
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      {denied ? (
-        <div className="absolute inset-0 grid place-items-center bg-background/95 px-8 text-center">
-          <div>
-            <h1 className="font-display text-xl font-semibold">Camera blocked</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{denied}</p>
-            <p className="mt-4 text-xs text-muted-foreground">
+      {/* Zoom: a single quiet chip, with a slider only while you're using it. */}
+      {ready && !error ? (
+        <div className="absolute inset-x-0 bottom-44 flex flex-col items-center gap-3 px-10">
+          {zoomOpen ? (
+            <div className="w-full max-w-xs rounded-full bg-black/40 px-4 py-2 backdrop-blur-md">
+              <Slider
+                value={[zoomRange ? zoom : digital]}
+                min={zoomRange ? zoomRange.min : 1}
+                max={zoomRange ? zoomRange.max : maxDigital}
+                step={zoomRange ? zoomRange.step || 0.1 : 0.05}
+                onValueChange={([v]) => applyZoom(v ?? 1)}
+                aria-label="Zoom"
+              />
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setZoomOpen((v) => !v)}
+            onDoubleClick={() => applyZoom(zoomRange ? zoomRange.min : 1)}
+            className="data-figure rounded-full bg-black/40 px-3 py-1.5 text-[11px] tracking-[0.1em] text-white backdrop-blur-md transition-transform active:scale-95"
+          >
+            {zoomLabel}
+          </button>
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="absolute inset-0 grid place-items-center bg-black/85 px-8 text-center backdrop-blur-md">
+          <div className="max-w-sm">
+            <CameraIcon className="mx-auto size-8 text-white/70" />
+            <h1 className="mt-4 font-display text-xl font-semibold text-white">{error.title}</h1>
+            <p className="mt-2 text-sm text-white/70">{error.body}</p>
+            <Button
+              onClick={() => void startStream()}
+              className="ember-fill mt-6 h-11 rounded-full px-8 text-sm font-semibold text-primary-foreground"
+            >
+              Try again
+            </Button>
+            <p className="mt-4 text-xs text-white/45">
               Reelzy has no upload option by design — capture is the only way to post.
             </p>
           </div>
         </div>
       ) : null}
 
-      {/* No looks while filming — the frame stays true. Filters come after, before posting. */}
-      <div className="absolute inset-x-0 bottom-0 pb-10">
+      {/* Bottom controls. */}
+      <div className="absolute inset-x-0 bottom-0 pb-9">
+        <div className="grid grid-cols-3 items-center px-9">
+          <div className="flex justify-start">
+            {recording ? (
+              <button
+                type="button"
+                onClick={togglePause}
+                aria-label={paused ? "Resume recording" : "Pause recording"}
+                className="grid size-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
+              >
+                {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={takePhoto}
+                disabled={!ready || countdown !== null}
+                aria-label="Take a still"
+                className="grid size-12 place-items-center rounded-full bg-black/35 text-[11px] font-medium tracking-[0.08em] text-white backdrop-blur-md transition-transform active:scale-90 disabled:opacity-40"
+              >
+                Still
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center justify-around px-8">
-          {recording ? (
+          <div className="flex justify-center">
             <button
               type="button"
-              onClick={togglePause}
-              aria-label={paused ? "Resume recording" : "Pause recording"}
-              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
-            >
-              {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={takePhoto}
+              aria-label={recording ? "Finish recording" : "Record a moment"}
               disabled={!ready || countdown !== null}
-              className="tap-target rounded-full border border-white/25 px-4 text-xs font-semibold text-white"
+              onClick={() => (recording ? finishRecording() : startCountdown())}
+              className="relative grid size-[78px] place-items-center rounded-full border-[3px] border-white/85 transition-transform duration-200 active:scale-95 disabled:opacity-40"
             >
-              Still
+              <span
+                className={`bg-[image:var(--gradient-ember)] transition-all duration-300 ease-out ${
+                  recording ? "size-7 rounded-[9px]" : "size-[60px] rounded-full"
+                }`}
+              />
+              {recording && !paused ? (
+                <span className="pointer-events-none absolute inset-0 animate-ember-pulse rounded-full border-[3px] border-primary/60" />
+              ) : null}
             </button>
-          )}
+          </div>
 
-          <button
-            type="button"
-            aria-label={
-              recording ? (paused ? "Resume recording" : "Pause recording") : "Record a moment"
-            }
-            disabled={!ready || countdown !== null}
-            onClick={() => (recording ? togglePause() : startCountdown())}
-            className={`size-20 rounded-full bg-[image:var(--gradient-ember)] transition-transform active:scale-95 ${
-              recording && !paused ? "rec-live" : ""
-            }`}
-          />
-
-          {recording ? (
+          <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => recorderRef.current?.stop()}
-              aria-label="Finish recording"
-              className="tap-target grid place-items-center rounded-full border border-white/25 px-4 text-white"
-            >
-              <Check className="size-5" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+              onClick={() => void flipCamera()}
               disabled={!ready || countdown !== null}
-              aria-label="Flip camera"
-              className="tap-target grid place-items-center rounded-full border border-white/25 text-white"
+              aria-label="Switch camera"
+              className={`grid size-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform duration-300 active:scale-90 disabled:opacity-40 ${
+                flipping ? "rotate-180" : ""
+              }`}
             >
               <SwitchCamera className="size-5" />
             </button>
-          )}
+          </div>
         </div>
-        <p className="mt-4 text-center text-[11px] text-white/60">
-          {recording
-            ? "Pause any time, keep filming, then tap the check when you're done."
-            : "Captured live, up to five minutes. Nothing can be uploaded from your camera roll."}
-        </p>
+
+        {!recording ? (
+          <div className="mt-5 flex justify-center">
+            <Link
+              to="/share-later"
+              className="flex items-center gap-2 rounded-full bg-black/30 px-3.5 py-1.5 text-[11px] text-white/75 backdrop-blur-md"
+            >
+              <Bookmark className="size-3.5" />
+              Share later {savedCount}/{SHARE_LATER_LIMIT}
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {countdown !== null ? (
-        <div className="absolute inset-0 grid place-items-center bg-black/35 backdrop-blur-[2px]">
+        <div className="absolute inset-0 grid place-items-center bg-black/25 backdrop-blur-[2px]">
           <span
             key={countdown}
-            className="ember-text animate-shutter font-display text-[7rem] font-bold leading-none"
+            className="animate-shutter font-display text-[6rem] font-semibold leading-none text-white/90"
           >
             {countdown}
           </span>
         </div>
       ) : null}
-
     </main>
   );
 }
