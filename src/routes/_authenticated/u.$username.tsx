@@ -88,10 +88,10 @@ function ProfilePage() {
   const [adultLink, setAdultLink] = useState<string | null>(null);
   const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
-  const { data, isLoading, refetch } = useQuery({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, isLoading, refetch } = useQuery<any>({
     queryKey: ["profile", username, sort, demo],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryFn: (): any =>
+    queryFn: () =>
       demo
         ? getDemoProfile(username, sort)
         : fetchProfile({ data: { username, sort } }),
