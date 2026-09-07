@@ -124,7 +124,7 @@ function SupportPage() {
           inbox.isLoading ? (
             <LoadingRail />
           ) : (inbox.data ?? []).length === 0 ? (
-            <EmptyState title="Nothing here" body="No support requests yet." />
+            <EmptyState title="Nothing here" line="No support requests yet." />
           ) : (
             <div className={`${card} divide-y divide-border p-0`}>
               {(inbox.data ?? []).map((t) => (

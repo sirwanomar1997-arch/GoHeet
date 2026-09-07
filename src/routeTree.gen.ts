@@ -24,6 +24,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedShareLaterRouteImport } from './routes/_authenticated/share-later'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as ApiGenerateAvatarRouteImport } from './routes/api/generate-avatar'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
@@ -105,6 +106,11 @@ const AuthenticatedShareLaterRoute = AuthenticatedShareLaterRouteImport.update({
   path: '/share-later',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
   id: '/trash',
   path: '/trash',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/share-later': typeof AuthenticatedShareLaterRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/trash': typeof AuthenticatedTrashRoute
   '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/share-later': typeof AuthenticatedShareLaterRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/trash': typeof AuthenticatedTrashRoute
   '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/share-later': typeof AuthenticatedShareLaterRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/saved'
     | '/settings'
     | '/share-later'
+    | '/support'
     | '/trash'
     | '/api/generate-avatar'
     | '/legal/$doc'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/saved'
     | '/settings'
     | '/share-later'
+    | '/support'
     | '/trash'
     | '/api/generate-avatar'
     | '/legal/$doc'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/saved'
     | '/_authenticated/settings'
     | '/_authenticated/share-later'
+    | '/_authenticated/support'
     | '/_authenticated/trash'
     | '/api/generate-avatar'
     | '/legal/$doc'
@@ -379,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShareLaterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/trash': {
       id: '/_authenticated/trash'
       path: '/trash'
@@ -444,6 +463,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShareLaterRoute: typeof AuthenticatedShareLaterRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
 }
@@ -461,6 +481,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShareLaterRoute: AuthenticatedShareLaterRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
 }
