@@ -292,6 +292,10 @@ const socialSchema = z
       }
       url.protocol = "https:";
       out[key] = url.toString();
+      if (key === "website") {
+        const host = url.hostname.replace(/^www\./, "").toLowerCase();
+        if (ADULT_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))) out["website_adult"] = "1";
+      }
     }
     return out;
   });
