@@ -11,6 +11,7 @@ import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
 import { formatCount, dayLabel } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
+import { HeetFlame } from "@/components/reelzy/heet-flame";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
