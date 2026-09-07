@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Eye,
-  MessageSquareMore,
   Repeat,
   Bookmark,
   MoreHorizontal,
@@ -551,16 +550,16 @@ export function MomentStage({
       {/* Top rail: honest seen ticker on the left, sound on the right */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-background/75 to-transparent" aria-hidden />
 
-      {/* Views — eye symbol with neon glow, top-left */}
+      {/* Views — blue neon eye, white count + label, top-left */}
       <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
         <Eye
           className="size-4"
           strokeWidth={2.4}
-          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+          style={{ color: NEON_BLUE, filter: neonFilter(NEON_BLUE) }}
         />
         <span
-          className="data-figure text-[12px] font-bold"
-          style={{ color: NEON_CORE, filter: neonFilter(NEON_GLOW) }}
+          className="data-figure text-[12px] font-bold text-white"
+          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
         >
           {formatCount(moment.viewCount)} views
         </span>
@@ -664,13 +663,6 @@ export function MomentStage({
               glow={liked}
             />
           </button>
-          <span
-            className="data-figure -mt-1.5 text-[14px] font-bold leading-none text-white"
-            style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-          >
-            {formatCount(likeCount)}
-          </span>
-
         </div>
 
         <RailAction
@@ -679,7 +671,7 @@ export function MomentStage({
           color={NEON_BLUE}
           onClick={() => setCommentsOpen(true)}
         >
-          <MessageSquareMore className="size-[24px]" strokeWidth={2} />
+          <NeonComment />
         </RailAction>
 
         <RailAction
@@ -1004,6 +996,28 @@ const NEON_GLOW = NEON_BLUE;
 
 const neonFilter = (glow: string) =>
   `drop-shadow(0 0 6px ${glow.replace(")", " / 85%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 65%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
+
+/* Comment bubble: blue neon outline, white neon dots inside. */
+function NeonComment() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-[24px]"
+      fill="none"
+      stroke={NEON_BLUE}
+      style={{ color: NEON_BLUE, filter: neonFilter(NEON_BLUE) }}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      <circle cx="9" cy="11" r="0.9" fill="#fff" stroke="#fff" />
+      <circle cx="12" cy="11" r="0.9" fill="#fff" stroke="#fff" />
+      <circle cx="15" cy="11" r="0.9" fill="#fff" stroke="#fff" />
+    </svg>
+  );
+}
 
 function RailAction({
   label,
