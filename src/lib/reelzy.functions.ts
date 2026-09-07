@@ -260,26 +260,36 @@ const SOCIAL_DOMAINS: Record<(typeof SOCIAL_KEYS)[number], string[]> = {
   snapchat: ["snapchat.com"],
   whatsapp: ["wa.me", "whatsapp.com", "api.whatsapp.com"],
 };
+const SOCIAL_HANDLE_URL: Record<(typeof SOCIAL_KEYS)[number], (h: string) => string> = {
+  instagram: (h) => `https://instagram.com/${h}`,
+  tiktok: (h) => `https://tiktok.com/@${h}`,
+  youtube: (h) => `https://youtube.com/@${h}`,
+  twitter: (h) => `https://x.com/${h}`,
+  facebook: (h) => `https://facebook.com/${h}`,
+  snapchat: (h) => `https://snapchat.com/add/${h}`,
+  whatsapp: (h) => `https://wa.me/${h.replace(/[^\d]/g, "")}`,
+};
 const socialSchema = z
   .record(z.enum(SOCIAL_KEYS), z.string().trim().max(300))
   .transform((v) => {
     const out: Record<string, string> = {};
     for (const [k, val] of Object.entries(v)) {
+      const key = k as (typeof SOCIAL_KEYS)[number];
       const raw = (val ?? "").trim();
       if (!raw) continue;
+      // A bare handle or phone number becomes the platform's own link.
+      if (!/[./]/.test(raw) || /^[+\d\s()-]+$/.test(raw)) {
+        out[key] = SOCIAL_HANDLE_URL[key](raw.replace(/^@/, ""));
+        continue;
+      }
       let url: URL;
       try {
         url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
       } catch {
-        throw new Error(`The ${k} link isn't a valid URL.`);
-      }
-      const host = url.hostname.toLowerCase().replace(/^www\./, "");
-      const allowed = SOCIAL_DOMAINS[k as (typeof SOCIAL_KEYS)[number]];
-      if (!allowed.some((d) => host === d || host.endsWith(`.${d}`))) {
-        throw new Error(`The ${k} link must be a ${allowed[0]} URL.`);
+        throw new Error(`The ${k} link isn't a valid link.`);
       }
       url.protocol = "https:";
-      out[k] = url.toString();
+      out[key] = url.toString();
     }
     return out;
   });
