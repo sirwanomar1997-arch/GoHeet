@@ -29,3 +29,6 @@
 - [x] Refine the existing G-and-flame icon with an exclusive luminous frame
 - [x] Replace all icon, splash, and favicon sizes with the approved finish
 - [x] Verify the refined icon at full and small sizes
+- [ ] Replace the rejected glossy icon with the selected dynamic-motion direction
+- [ ] Update every app icon, splash, and favicon size
+- [ ] Verify the new mark at full and small sizes
