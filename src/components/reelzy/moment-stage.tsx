@@ -388,12 +388,16 @@ export function MomentStage({
 
   const saveMutation = useMutation({
     mutationFn: () => save({ data: { momentId: moment.id } }),
+    onMutate: () => setSaved((v) => !v),
     onSuccess: (res) => {
       setSaved(res.saved);
       toast.success(res.saved ? "Kept." : "Removed from kept.");
       void qc.invalidateQueries({ queryKey: ["feed", "saved"] });
     },
-    onError: () => toast.error("Couldn't save that moment."),
+    onError: () => {
+      setSaved(moment.saved);
+      toast.error("Couldn't save that moment.");
+    },
   });
 
   const repostMutation = useMutation({
