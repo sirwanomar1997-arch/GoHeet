@@ -304,8 +304,8 @@ export const updateProfile = createServerFn({ method: "POST" })
     profileImageType?: "avatar" | "photo";
     socialLinks?: Record<string, string>;
   }) => ({
-    displayName: z.string().trim().max(40).optional().parse(d.displayName),
-    bio: z.string().trim().max(160).optional().parse(d.bio),
+    displayName: assertSafeText(z.string().trim().max(40).optional().parse(d.displayName)),
+    bio: assertSafeText(z.string().trim().max(160).optional().parse(d.bio)),
     username: d.username ? usernameSchema.parse(d.username) : undefined,
     isPrivate: d.isPrivate,
     discoverable: d.discoverable,
