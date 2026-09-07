@@ -63,14 +63,6 @@ export function HeetFlame({
         strokeLinejoin="round"
       />
 
-      {/* Inner luminous core — shimmers so the flame feels alive */}
-      {filled ? (
-        <path
-          d="M48 38c1.6 9-1 14.5-6 21-3.4 4.3-5.6 9-5.4 15 .3 8.4 6.4 14 14 14 9.8 0 15.5-6.4 15.5-15.2 0-5.2-2.3-10.2-6.2-14.1-.7 4.6-2.6 8.9-6.4 10.6-2.5 1.2-5.6.3-6.9-2.1-1.7-3.1.1-6.7 1.6-10 3.5-7.5 1.7-14-0.2-19.2Z"
-          fill={`url(#${coreId})`}
-          className={shimmer ? "animate-heet-shimmer" : undefined}
-        />
-      ) : null}
     </svg>
   );
 }
