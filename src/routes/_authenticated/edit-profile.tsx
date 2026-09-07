@@ -95,8 +95,14 @@ function EditProfilePage() {
 
   function onPhoto(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Choose an image file.");
-    if (file.size > 8 * 1024 * 1024) return toast.error("Choose a photo smaller than 8 MB.");
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Choose a photo smaller than 8 MB.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => photoMutation.mutate(String(reader.result));
     reader.onerror = () => toast.error("Could not read that photo.");

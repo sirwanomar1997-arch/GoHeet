@@ -5,7 +5,7 @@
 - [x] Show public reposts from the profile button
 - [x] Verify profile and settings behavior
 
-- [ ] Add personal profile photos alongside avatars
-- [ ] Add avatar/photo display switch
-- [ ] Remove the orange symbol beside Out there
+- [x] Add personal profile photos alongside avatars
+- [x] Add avatar/photo display switch
+- [x] Remove the orange symbol beside Out there
 - [ ] Verify profile and homepage changes
