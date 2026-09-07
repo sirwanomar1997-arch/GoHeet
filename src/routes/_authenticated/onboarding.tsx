@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { checkUsername, completeSignup } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
-import { ReelzyMark } from "@/components/reelzy/logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -70,12 +69,11 @@ function Onboarding() {
   return (
     <main className="min-h-svh bg-background px-6 pb-16 pt-10">
       <div className="mx-auto max-w-sm">
-        <ReelzyMark className="size-9" />
-        <h1 className="mt-8 font-display text-3xl font-extrabold tracking-[-0.04em]">
-          Claim your name.
+        <h1 className="font-display text-3xl font-extrabold tracking-[-0.04em]">
+          Create your profile.
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This is how people will find you on Reelzy. It can be changed later, but not often.
+          This is how people will find you on GoHeet. It can be changed later, but not often.
         </p>
 
         <form
@@ -134,7 +132,7 @@ function Onboarding() {
             />
             <p className="mt-1.5 text-xs text-muted-foreground">
               {tooYoung
-                ? "You need to be 13 or older to use Reelzy."
+                ? "You need to be 13 or older to use GoHeet."
                 : "Only used for age verification. Never shown on your profile."}
             </p>
           </div>
@@ -144,7 +142,7 @@ function Onboarding() {
             disabled={status !== "free" || !birthDate || tooYoung || submit.isPending}
             className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
           >
-            {submit.isPending ? "Setting up…" : "Enter Reelzy"}
+            {submit.isPending ? "Setting up…" : "Enter GoHeet"}
           </Button>
         </form>
 
