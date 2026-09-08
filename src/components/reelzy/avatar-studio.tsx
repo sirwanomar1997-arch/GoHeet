@@ -299,11 +299,10 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const renderedRef = useRef<Traits | null>(null);
 
   const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
-  const hairSheet = useMemo(() => hairSheetFor(traits.gender), [traits.gender]);
   const outfits = useMemo(() => outfitsFor(traits.gender), [traits.gender]);
-  const outfitSheet = useMemo(() => outfitSheetFor(traits.gender), [traits.gender]);
   const accessories = useMemo(() => accessoriesFor(traits.gender), [traits.gender]);
-  const accessorySheet = useMemo(() => accessorySheetFor(traits.gender), [traits.gender]);
+  const piercings = useMemo(() => piercingsFor(traits.gender), [traits.gender]);
+
 
   const generate = useCallback(
     async (prompt: string, reference: string | null, visualReference: string | null = null) => {
