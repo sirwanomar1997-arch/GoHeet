@@ -532,7 +532,7 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Support and feedback</h2>
           <div className="mt-2 divide-y divide-border">
-            <Link to="/support" search={{}} className={row}>
+            <Link to="/support" search={{ topic: undefined }} className={row}>
               <span className="flex items-center gap-3">
                 <LifeBuoy className="size-4 text-primary" /> Support
               </span>
