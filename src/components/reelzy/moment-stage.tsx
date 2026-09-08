@@ -604,6 +604,7 @@ export function MomentStage({
               to="/u/$username"
               params={{ username: moment.author.username }}
               className="block truncate font-display text-base font-semibold"
+              data-no-translate
             >
               @{moment.author.username}
             </Link>
@@ -616,7 +617,7 @@ export function MomentStage({
 
 
         {moment.caption ? (
-          <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95">
+          <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95" data-no-translate>
             {moment.caption}
           </p>
 
