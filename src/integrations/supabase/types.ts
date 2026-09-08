@@ -312,7 +312,7 @@ export type Database = {
       moderation_actions: {
         Row: {
           action: string
-          actor_id: string
+          actor_id: string | null
           created_at: string
           id: string
           reason: string | null
@@ -322,7 +322,7 @@ export type Database = {
         }
         Insert: {
           action: string
-          actor_id: string
+          actor_id?: string | null
           created_at?: string
           id?: string
           reason?: string | null
@@ -332,7 +332,7 @@ export type Database = {
         }
         Update: {
           action?: string
-          actor_id?: string
+          actor_id?: string | null
           created_at?: string
           id?: string
           reason?: string | null
@@ -901,6 +901,8 @@ export type Database = {
         Row: {
           app_version: string | null
           category: string
+          contact_email: string | null
+          contact_name: string | null
           created_at: string
           id: string
           last_activity_at: string
@@ -911,6 +913,8 @@ export type Database = {
         Insert: {
           app_version?: string | null
           category?: string
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
           id?: string
           last_activity_at?: string
@@ -921,6 +925,8 @@ export type Database = {
         Update: {
           app_version?: string | null
           category?: string
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
           id?: string
           last_activity_at?: string
