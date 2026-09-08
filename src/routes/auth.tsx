@@ -17,6 +17,22 @@ const searchSchema = z.object({
   redirect: z.string().optional(),
 });
 
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
+  { label: "One capital letter", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "One number", test: (v: string) => /\d/.test(v) },
+  {
+    label: "One special character",
+    test: (v: string) => /[^A-Za-z0-9]/.test(v),
+  },
+] as const;
+
+function passwordProblem(value: string): string | null {
+  const failed = PASSWORD_RULES.filter((r) => !r.test(value));
+  if (failed.length === 0) return null;
+  return `Password needs: ${failed.map((r) => r.label.toLowerCase()).join(", ")}.`;
+}
+
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
