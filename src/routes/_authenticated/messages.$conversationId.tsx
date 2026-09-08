@@ -95,20 +95,30 @@ function ThreadPage() {
 
       <div className="flex-1 space-y-2 px-4 py-4">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : (
-          data?.messages.map((m) => (
-            <div
-              key={m.id}
-              className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm ${
-                m.mine
-                  ? "ember-fill ml-auto text-primary-foreground"
-                  : "border border-border bg-surface"
-              }`}
-            >
-              {m.body}
-            </div>
-          ))
+          data?.messages.map((m, i) => {
+            const lastMine =
+              m.mine && !data.messages.slice(i + 1).some((n) => n.mine);
+            return (
+              <div key={m.id} className={m.mine ? "flex flex-col items-end" : ""}>
+                <div
+                  className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                    m.mine
+                      ? "ember-fill text-primary-foreground"
+                      : "border border-border bg-surface"
+                  }`}
+                >
+                  {m.body}
+                </div>
+                {lastMine ? (
+                  <span className="mt-1 pe-1 text-[11px] text-muted-foreground">
+                    {m.readByThem ? t("msg.read") : t("msg.sent")}
+                  </span>
+                ) : null}
+              </div>
+            );
+          })
         )}
         <div ref={endRef} />
       </div>
@@ -116,7 +126,7 @@ function ThreadPage() {
       {pending && data && !data.isRequester ? (
         <div className="border-t border-border bg-surface p-4">
           <p className="text-sm">
-            {data.person.displayName} wants to message you. Accept to start chatting.
+            {t("msg.wantsToMessage", { name: data.person.displayName })}
           </p>
           <div className="mt-3 flex gap-2">
             <button
@@ -125,7 +135,7 @@ function ThreadPage() {
               onClick={() => answer.mutate(true)}
               className="ember-fill tap-target flex-1 rounded-2xl text-sm font-semibold text-primary-foreground"
             >
-              <Check className="mr-1 inline size-4" /> Accept
+              <Check className="mr-1 inline size-4" /> {t("common.accept")}
             </button>
             <button
               type="button"
@@ -133,13 +143,13 @@ function ThreadPage() {
               onClick={() => answer.mutate(false)}
               className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
             >
-              <X className="mr-1 inline size-4" /> Decline
+              <X className="mr-1 inline size-4" /> {t("common.decline")}
             </button>
           </div>
         </div>
       ) : rejected ? (
         <p className="border-t border-border bg-surface p-4 text-center text-sm text-muted-foreground">
-          This request was declined.
+          {t("msg.wasDeclined")}
         </p>
       ) : (
         <form
@@ -155,13 +165,15 @@ function ThreadPage() {
             disabled={!canWrite || send.isPending}
             onChange={(e) => setBody(e.target.value)}
             placeholder={
-              pending ? "Waiting to be accepted…" : `Message @${data?.person.username ?? ""}`
+              pending
+                ? t("msg.waitingAccept")
+                : t("msg.placeholder", { username: data?.person.username ?? "" })
             }
             className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none"
           />
           <button
             type="submit"
-            aria-label="Send message"
+            aria-label={t("common.send")}
             disabled={!canWrite || !body.trim() || send.isPending}
             className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
           >
@@ -171,10 +183,10 @@ function ThreadPage() {
       )}
       {pending && data?.isRequester ? (
         <p className="px-4 pb-4 text-center text-xs text-muted-foreground">
-          This is a message request — they&apos;ll see it once, and you can send a few lines until
-          they accept.
+          {t("msg.requestNote")}
         </p>
       ) : null}
+
     </div>
   );
 }
