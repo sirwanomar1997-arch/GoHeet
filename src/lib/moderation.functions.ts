@@ -185,3 +185,33 @@ export const adminModerationLog = createServerFn({ method: "POST" })
       .limit(50);
     return { actions: data ?? [] };
   });
+
+/** Posts the automatic safety review could not clear on its own. */
+export const adminReviewQueue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireStaff(context as never);
+    const sb = await admin();
+    const { data: moments } = await sb
+      .from("moments")
+      .select("id, caption, kind, thumbnail_path, media_path, created_at, author_id")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    const items = await Promise.all(
+      (moments ?? []).map(async (m) => {
+        const path = m.kind === "photo" ? m.media_path : (m.thumbnail_path ?? m.media_path);
+        const { data: signed } = await sb.storage.from("moments").createSignedUrl(path, 600);
+        const { data: p } = await sb.from("profiles").select("username").eq("id", m.author_id).maybeSingle();
+        return {
+          id: m.id as string,
+          caption: m.caption,
+          createdAt: m.created_at as string,
+          username: p?.username ?? "unknown",
+          previewUrl: signed?.signedUrl ?? null,
+        };
+      }),
+    );
+    return { items };
+  });
