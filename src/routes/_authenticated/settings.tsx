@@ -57,6 +57,8 @@ function SettingsPage() {
   const saveBirthDate = useServerFn(updateBirthDate);
 
   const [email, setEmail] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [sendingVerify, setSendingVerify] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -76,8 +78,29 @@ function SettingsPage() {
   const [showBlocked, setShowBlocked] = useState(false);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+    void supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? "");
+      setEmailVerified(Boolean(data.user?.email_confirmed_at));
+    });
   }, []);
+
+  async function sendVerification() {
+    if (!email) return;
+    setSendingVerify(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/settings` },
+      });
+      if (error) throw error;
+      toast.success("Verification email sent. Tap the link in your inbox.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't send the email.");
+    } finally {
+      setSendingVerify(false);
+    }
+  }
 
   useEffect(() => {
     const p = me?.profile;
