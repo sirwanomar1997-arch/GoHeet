@@ -83,18 +83,30 @@ function SupportPage() {
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]["value"]>(initialCategory);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
 
   const create = useMutation({
-    mutationFn: () => createFn({ data: { category, subject, body } }),
+    mutationFn: () =>
+      createFn({
+        data: {
+          category,
+          subject,
+          body,
+          contactName: contactName.trim(),
+          contactEmail: contactEmail.trim(),
+        },
+      }),
     onSuccess: (res) => {
       setSubject("");
       setBody("");
-      toast.success("Sent — we'll reply here in the app");
+      toast.success("Sent — we'll reply here in the app and by email");
       qc.invalidateQueries({ queryKey: ["support"] });
       setOpenTicket(res.id);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   if (openTicket) {
     return <TicketThread id={openTicket} onBack={() => setOpenTicket(null)} staff={staff} />;
