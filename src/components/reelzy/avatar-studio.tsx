@@ -50,6 +50,8 @@ function describe(t: Traits) {
       ? "smooth youthful skin with no wrinkles"
       : `visibly aged skin with ${t.wrinkles}`,
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
+    t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
+
     `wearing a ${t.outfit}`,
     t.accessories.length ? `wearing ${t.accessories.join(" and ")}` : "no accessories at all",
   ];
@@ -78,6 +80,13 @@ function changeLabels(prev: Traits, next: Traits): string[] {
       next.beard === "clean shaven"
         ? "face is now clean shaven, all facial hair removed"
         : `facial hair is now a ${next.beard}, clearly visible`,
+    );
+  if (prev.piercing !== next.piercing)
+    out.push(
+      next.piercing === "no piercings"
+        ? "all piercings removed from the face and ears"
+        : `now wearing a ${next.piercing}, clearly visible`,
+
     );
   if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit}`);
   if (prev.accessories.join("|") !== next.accessories.join("|")) {
