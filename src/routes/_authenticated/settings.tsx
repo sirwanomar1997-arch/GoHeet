@@ -16,6 +16,7 @@ import {
   LifeBuoy,
   MessageCircle,
   Pencil,
+  Trash2,
   UserPlus,
 } from "lucide-react";
 import {
