@@ -139,7 +139,62 @@ function AdminPage() {
       </header>
 
       <div className="px-5 pb-12">
+        {tab === "review" ? (
+          review.isLoading ? (
+            <LoadingRail />
+          ) : (review.data?.items.length ?? 0) === 0 ? (
+            <EmptyState
+              title="Nothing waiting."
+              line="Every post passed the automatic safety check."
+            />
+          ) : (
+            <ul className="space-y-3">
+              {review.data?.items.map((m) => (
+                <li key={m.id} className="rounded-2xl border border-border bg-surface p-4">
+                  <div className="flex gap-3">
+                    {m.previewUrl ? (
+                      <img
+                        src={m.previewUrl}
+                        alt=""
+                        className="h-24 w-16 shrink-0 rounded-lg object-cover"
+                        loading="lazy"
+                      />
+                    ) : null}
+                    <div className="min-w-0">
+                      <p className="data-figure text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        @{m.username} · {timeAgo(m.createdAt)}
+                      </p>
+                      <p className="mt-1 text-sm">{m.caption || "No caption"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        act.mutate({ action: "restore_content", targetType: "moment", targetId: m.id })
+                      }
+                      className="rounded-full border border-border px-3 py-1.5 text-xs"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        act.mutate({ action: "remove_content", targetType: "moment", targetId: m.id })
+                      }
+                      className="rounded-full border border-destructive/50 px-3 py-1.5 text-xs text-destructive"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : null}
+
         {tab === "queue" ? (
+
           queue.isLoading ? (
             <LoadingRail />
           ) : (queue.data?.reports.length ?? 0) === 0 ? (
