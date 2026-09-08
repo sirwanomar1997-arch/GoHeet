@@ -8,5 +8,8 @@ export function useMe() {
     queryKey: ["me"],
     queryFn: () => fetchMe({ data: undefined as never }),
     staleTime: 30_000,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(400 * 2 ** attempt, 2_000),
+    refetchOnMount: "always",
   });
 }

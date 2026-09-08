@@ -58,15 +58,41 @@ function AuthPage() {
     window.location.replace(to);
   }, []);
 
+  const goToExistingProfileOrSetup = useCallback(
+    async (fallback: string) => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        goAuthed(fallback);
+        return;
+      }
+
+      // A missing row means this is a genuinely new account. A temporary
+      // request failure must never send an established user through setup.
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+      if (profileError) {
+        goAuthed(fallback);
+        return;
+      }
+      goAuthed(profile?.username ? fallback : "/onboarding");
+    },
+    [goAuthed],
+  );
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         const savedDestination = window.sessionStorage.getItem("goheet.auth.destination");
         window.sessionStorage.removeItem("goheet.auth.destination");
-        goAuthed(savedDestination?.startsWith("/") ? savedDestination : dest);
+        void goToExistingProfileOrSetup(
+          savedDestination?.startsWith("/") ? savedDestination : dest,
+        );
       }
     });
-  }, [goAuthed, dest]);
+  }, [goToExistingProfileOrSetup, dest]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -104,7 +130,7 @@ function AuthPage() {
           type: "sms",
         });
         if (error) throw error;
-         goAuthed(dest);
+         await goToExistingProfileOrSetup(dest);
         return;
       }
 
@@ -117,7 +143,7 @@ function AuthPage() {
         refresh_token: res.refreshToken,
       });
       if (error) throw error;
-       goAuthed(dest);
+       await goToExistingProfileOrSetup(dest);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -135,7 +161,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    goAuthed(dest);
+    await goToExistingProfileOrSetup(dest);
   }
 
   if (sent) {

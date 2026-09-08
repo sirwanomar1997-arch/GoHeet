@@ -39,7 +39,7 @@ function ProfileIcon({ className }: { className?: string }) {
  */
 export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data } = useMe();
+  const { data, isLoading, isError } = useMe();
   const username = data?.profile?.username;
 
   const fetchNotifications = useServerFn(listNotifications);
@@ -125,7 +125,7 @@ export function GoHeetNav() {
             <ProfileIcon className="size-8" />
             <span className={spark(pathname.startsWith("/u/"))} />
           </Link>
-        ) : (
+        ) : !isLoading && !isError ? (
           <Link
             to="/onboarding"
             className={item(pathname === "/onboarding", "text-nav-profile", "nav-glow-profile")}
@@ -134,6 +134,13 @@ export function GoHeetNav() {
             <ProfileIcon className="size-8" />
             <span className={spark(pathname === "/onboarding")} />
           </Link>
+        ) : (
+          <span
+            className={item(false, "text-nav-profile", "nav-glow-profile")}
+            aria-label="Loading your profile"
+          >
+            <ProfileIcon className="size-8 animate-pulse" />
+          </span>
         )}
       </div>
     </nav>
