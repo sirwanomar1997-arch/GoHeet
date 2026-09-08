@@ -8,7 +8,10 @@ const createSchema = z.object({
   category: z.enum(CATEGORIES),
   subject: z.string().trim().min(3).max(120),
   body: z.string().trim().min(10).max(4000),
+  contactName: z.string().trim().min(2).max(80),
+  contactEmail: z.string().trim().email().max(120),
 });
+
 
 const replySchema = z.object({
   ticketId: z.string().uuid(),
