@@ -160,7 +160,7 @@ function CameraPage() {
   const { edit: editId } = Route.useSearch();
   const editingId = editId;
 
-  const [filterCat, setFilterCat] = useState<string>("Natural");
+  const [filterCat, setFilterCat] = useState<string>("Signature");
   const [savedCount, setSavedCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [recording, setRecording] = useState(false);
