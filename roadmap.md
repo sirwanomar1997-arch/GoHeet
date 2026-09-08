@@ -44,7 +44,8 @@
 
 - [x] Show Sent / Read status on messages
 - [x] Auto app language from phone settings (en, sv, ar RTL, es, fr, de, tr) with Settings override
-- [ ] Extend translations to remaining screens as new copy is finalised
+- [x] Translate the whole app automatically in every supported language
+- [x] Expand language list to 39 languages incl. Japanese, Chinese, Korean, Hindi
 
 - [x] Show profile setup only for genuinely new accounts
 - [x] Recognize existing Apple/Google/email/phone profiles without refresh
