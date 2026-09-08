@@ -47,6 +47,8 @@ import {
 import { formatCount, timeAgo } from "./format";
 import { HeetFlame } from "./heet-flame";
 import { ShareSheet } from "./share-sheet";
+import { GradeLayers } from "./grade";
+
 import {
   filterCss,
   overlayFontStyle,
