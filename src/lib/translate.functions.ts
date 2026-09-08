@@ -78,14 +78,48 @@ async function admin() {
   return supabaseAdmin as unknown as {
     from: (t: string) => {
       select: (c: string) => {
-        eq: (c: string, v: string) => {
+        eq: (
+          c: string,
+          v: string,
+        ) => {
           in: (c: string, v: string[]) => Promise<{ data: { source: string; translated: string }[] | null }>;
+          limit: (n: number) => Promise<{ data: { source: string; translated: string }[] | null }>;
         };
       };
       upsert: (rows: unknown[], opts: Record<string, unknown>) => Promise<{ error: unknown }>;
     };
   };
 }
+
+/**
+ * The entire known dictionary for one language, in a single request.
+ *
+ * Switching language then only has to read what is already on the device, so
+ * the whole interface changes in the same instant instead of trickling in.
+ */
+export const uiBundle = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        locale: z
+          .string()
+          .trim()
+          .min(2)
+          .max(8)
+          .regex(/^[a-zA-Z-]+$/),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<{ translations: Record<string, string> }> => {
+    const locale = data.locale.toLowerCase().split("-")[0] as string;
+    if (!locale || locale === "en" || !LANGUAGE_NAMES[locale]) return { translations: {} };
+    const sb = await admin();
+    const { data: rows } = await sb.from("ui_translations").select("source, translated").eq("locale", locale).limit(5000);
+    const translations: Record<string, string> = {};
+    for (const row of rows ?? []) translations[row.source] = row.translated;
+    return { translations };
+  });
+
 
 async function machineTranslate(language: string, texts: string[]): Promise<Record<string, string>> {
   const apiKey = process.env["LOVABLE_API_KEY"];

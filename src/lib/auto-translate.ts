@@ -15,14 +15,18 @@
  * Anything marked with `data-no-translate` is left exactly as written — that is
  * where people's own content lives (posts, names, messages).
  */
-import { translateUi } from "./translate.functions";
+import { translateUi, uiBundle } from "./translate.functions";
 
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA", "SVG", "PATH"]);
 const ATTRS = ["placeholder", "aria-label", "title", "alt"] as const;
 const HAS_LETTER = /\p{L}{2,}/u;
 const MAX_LEN = 300;
-const BATCH = 60;
-const PARALLEL = 4;
+const BATCH = 80;
+const PARALLEL = 8;
+
+/** Languages whose full dictionary has already been pulled this session. */
+const bundled = new Set<string>();
+
 
 type Job = { apply: (value: string) => void };
 
@@ -277,6 +281,33 @@ export function startAutoTranslate(locale: string): () => void {
   scan(document.body);
   applying = false;
   pump();
+
+  // Pull the whole known dictionary for this language once, so every later
+  // screen — settings, profile, menus — is already translated before it opens.
+  if (!englishMode && !bundled.has(locale)) {
+    bundled.add(locale);
+    void uiBundle({ data: { locale } })
+      .then((res) => {
+        if (stopped) return;
+        const all = res.translations ?? {};
+        let added = 0;
+        for (const [source, value] of Object.entries(all)) {
+          if (cache[source] !== value) added++;
+          cache[source] = value;
+          globalReverse.set(value, source);
+        }
+        if (!added) return;
+        saveCache(locale, cache);
+        applying = true;
+        scan(document.body);
+        applying = false;
+        pump();
+      })
+      .catch(() => {
+        bundled.delete(locale);
+      });
+  }
+
 
   observer.observe(document.body, {
     childList: true,
