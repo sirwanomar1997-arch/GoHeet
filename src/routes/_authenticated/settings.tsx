@@ -13,6 +13,7 @@ import {
   Download,
   FileText,
   History,
+  Languages,
   LifeBuoy,
   MessageCircle,
   Pencil,
@@ -37,6 +38,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
