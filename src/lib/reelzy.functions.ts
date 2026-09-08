@@ -576,7 +576,7 @@ export const publishMoment = createServerFn({ method: "POST" })
         target_id: moment.id,
         reason: `Automatic safety review: ${verdict.reason}`.slice(0, 300),
       });
-      await sb.rpc("enforce_author_strikes" as never, { _author: context.userId } as never).catch?.(() => {});
+      await enforceAuthorStrikes(context.userId);
       await track(context.userId, "moment_auto_rejected", { reason: verdict.reason });
       throw new Error(
         "This post breaks the GoHeet Community Guidelines, so it was not published. Sexual content, violence and illegal activity are never allowed.",
