@@ -123,7 +123,7 @@ function AdminPage() {
           ))}
         </div>
         <div className="mt-4 flex gap-1 rounded-full border border-border p-1">
-          {(["queue", "people", "log"] as const).map((t) => (
+          {(["review", "queue", "people", "log"] as const).map((t) => (
             <button
               key={t}
               type="button"
