@@ -1195,11 +1195,17 @@ function CameraPage() {
         <video
           ref={videoRef}
           className="size-full object-cover transition-[opacity,transform] duration-300 ease-out"
-          style={{ transform: previewTransform, opacity: flipping || booting ? 0 : 1 }}
+          style={{
+            transform: previewTransform,
+            opacity: flipping || booting ? 0 : 1,
+            ...(filterCss(look) ? { filter: filterCss(look) } : {}),
+          }}
           playsInline
           muted
           autoPlay
         />
+        <GradeLayers filterId={look} />
+
         {/* A whisper of vignette so controls read cleanly over any scene. */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_55%,rgba(0,0,0,0.45)_100%)]" />
         {/* Selfie glow: the screen edges become a soft ring light on your face. */}
