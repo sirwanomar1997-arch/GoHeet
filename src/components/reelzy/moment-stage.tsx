@@ -47,6 +47,8 @@ import {
 import { formatCount, timeAgo } from "./format";
 import { HeetFlame } from "./heet-flame";
 import { ShareSheet } from "./share-sheet";
+import { GradeLayers } from "./grade";
+
 import {
   filterCss,
   overlayFontStyle,
@@ -485,7 +487,9 @@ export function MomentStage({
             This moment is unavailable.
           </div>
         )}
+        <GradeLayers filterId={moment.styleFilter} />
       </div>
+
 
       {zoom > 1 ? (
         <button
