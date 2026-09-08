@@ -39,8 +39,12 @@ function saveCache(locale: string, cache: Record<string, string>) {
   }
 }
 
+// Brand words and the official brand line always stay exactly as written.
+const BRAND = /^(goheet|go\s*heet|heet|heets|reelz|reelzy|go)$/i;
+
 function translatable(text: string) {
   const trimmed = text.trim();
+  if (BRAND.test(trimmed)) return false;
   return trimmed.length > 0 && trimmed.length <= MAX_LEN && HAS_LETTER.test(trimmed);
 }
 
