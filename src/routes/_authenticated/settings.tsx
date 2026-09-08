@@ -32,6 +32,7 @@ import { useMe } from "@/lib/use-me";
 import { useDemoMode, setDemoMode } from "@/lib/use-demo-mode";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/reelzy/nav";
+import { LOCALES, useI18n } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
+  const { t: tr, locale, auto, setLocale } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const demoMode = useDemoMode();
@@ -247,6 +249,37 @@ function SettingsPage() {
         </Link>
 
 
+
+        <section className={section}>
+          <h2 className="font-display text-base font-semibold">{tr("lang.title")}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">{tr("lang.line")}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setLocale("auto")}
+              className={`col-span-2 rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                auto ? "border-primary text-primary" : "border-border text-muted-foreground"
+              }`}
+            >
+              {tr("lang.auto")}
+            </button>
+            {LOCALES.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLocale(l.code)}
+                className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                  !auto && locale === l.code
+                    ? "border-primary text-primary"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {l.native}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">{tr("lang.note")}</p>
+        </section>
 
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Your activity</h2>

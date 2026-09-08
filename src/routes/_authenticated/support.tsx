@@ -119,6 +119,10 @@ function SupportPage() {
         <p className="text-sm text-muted-foreground">
           Write to the GoHeet team. Safety reports are actioned within 24 hours.
         </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Please write in English using Latin letters so our team can read and action your request
+          quickly.
+        </p>
       </header>
 
       {staff ? (
