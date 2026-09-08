@@ -51,7 +51,7 @@ function skipped(node: Node | null): boolean {
     if (SKIP_TAGS.has(el.tagName)) return true;
     if (el.hasAttribute?.("data-no-translate")) return true;
     if (el.getAttribute?.("translate") === "no") return true;
-    if (el.isContentEditable) return true;
+    if ((el as HTMLElement).isContentEditable) return true;
     el = el.parentElement;
   }
   return false;
