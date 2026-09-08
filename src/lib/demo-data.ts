@@ -8,6 +8,8 @@
  */
 
 import skate from "@/assets/demo/skate-sunset.jpg";
+import skateBowl from "@/assets/demo/skate-bowl.jpg";
+import dogFrisbee from "@/assets/demo/dog-frisbee.jpg";
 import sunset from "@/assets/demo/sunset.jpg";
 
 import city from "@/assets/demo/city.jpg";
