@@ -15,14 +15,18 @@
  * Anything marked with `data-no-translate` is left exactly as written — that is
  * where people's own content lives (posts, names, messages).
  */
-import { translateUi } from "./translate.functions";
+import { translateUi, uiBundle } from "./translate.functions";
 
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA", "SVG", "PATH"]);
 const ATTRS = ["placeholder", "aria-label", "title", "alt"] as const;
 const HAS_LETTER = /\p{L}{2,}/u;
 const MAX_LEN = 300;
-const BATCH = 60;
-const PARALLEL = 4;
+const BATCH = 80;
+const PARALLEL = 8;
+
+/** Languages whose full dictionary has already been pulled this session. */
+const bundled = new Set<string>();
+
 
 type Job = { apply: (value: string) => void };
 
