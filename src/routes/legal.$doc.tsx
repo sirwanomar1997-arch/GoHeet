@@ -3,8 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 type Doc = { title: string; summary: string; sections: Array<{ h: string; p: string[] }> };
 
 const UPDATED = "September 2026";
-export const SUPPORT_EMAIL = "sirwanomar@hotmail.com";
-export const SAFETY_EMAIL = "sirwanomar@hotmail.com";
+export const SUPPORT_CHANNEL = "Settings \u2192 Help & support in the app";
 
 const DOCS: Record<string, Doc> = {
   terms: {
@@ -62,7 +61,7 @@ const DOCS: Record<string, Doc> = {
       },
       {
         h: "Contact",
-        p: [`Questions about these terms: ${SUPPORT_EMAIL}.`],
+        p: [`Questions about these terms: ${SUPPORT_CHANNEL}.`],
       },
       {
         h: "Changes",
@@ -123,7 +122,7 @@ const DOCS: Record<string, Doc> = {
       },
       {
         h: "Contact",
-        p: [`Privacy questions: ${SUPPORT_EMAIL}.`],
+        p: [`Privacy questions: ${SUPPORT_CHANNEL}.`],
       },
     ],
   },
@@ -179,7 +178,7 @@ const DOCS: Record<string, Doc> = {
         h: "Reporting",
         p: [
           "You can report a post, a comment or a person from the ••• menu on their content. Reports go to a review queue handled by our safety team.",
-          `Urgent safety concerns can also be emailed to ${SAFETY_EMAIL}.`,
+          "Urgent safety concerns can also be sent through Settings \u2192 Help & support, choosing \"Safety or abuse\". These are actioned within 24 hours.",
         ],
       },
       {
@@ -210,8 +209,7 @@ const DOCS: Record<string, Doc> = {
         h: "Contact us",
         p: [
           "Fastest way: open the app and go to Settings → Help & support. You can write to us there and read our reply inside the app.",
-          `General help and account questions by mail: ${SUPPORT_EMAIL}.`,
-          `Safety, abuse and urgent reports: ${SAFETY_EMAIL}.`,
+          "Every request goes straight to the GoHeet support team. You give your name and an email address in the form, so we can also answer you by email.",
           "We reply to support mail within two business days, and to safety reports within 24 hours.",
         ],
       },
@@ -250,8 +248,8 @@ const DOCS: Record<string, Doc> = {
       {
         h: "Notices",
         p: [
-          "If you believe content on GoHeet infringes your copyright, submit a report through the ••• menu on that content, or email us, including enough detail to identify the work and your rights in it.",
-          `Copyright notices: ${SUPPORT_EMAIL}.`,
+          "If you believe content on GoHeet infringes your copyright, submit a report through the ••• menu on that content, or send us a request from Settings \u2192 Help & support, including enough detail to identify the work and your rights in it.",
+          "Copyright notices: Settings \u2192 Help & support, choosing \"Other\".",
         ],
       },
       {
