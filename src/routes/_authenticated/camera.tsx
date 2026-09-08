@@ -751,17 +751,22 @@ function CameraPage() {
   );
 
   if (captured) {
-    const media =
-      captured.kind === "video" ? (
-        <ReviewVideo src={captured.url} filter={filterCss(look) || undefined} />
-      ) : (
-        <img
-          src={captured.url}
-          alt="Your capture"
-          className="size-full object-cover"
-          style={filterCss(look) ? { filter: filterCss(look) } : undefined}
-        />
-      );
+    const media = (
+      <>
+        {captured.kind === "video" ? (
+          <ReviewVideo src={captured.url} filter={filterCss(look) || undefined} />
+        ) : (
+          <img
+            src={captured.url}
+            alt="Your capture"
+            className="size-full object-cover"
+            style={filterCss(look) ? { filter: filterCss(look) } : undefined}
+          />
+        )}
+        <GradeLayers filterId={look} />
+      </>
+    );
+
 
 
     if (stage === "details") {
