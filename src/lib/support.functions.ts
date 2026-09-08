@@ -54,7 +54,10 @@ export const createSupportTicket = createServerFn({ method: "POST" })
         category: data.category,
         subject: data.subject,
         status: "open",
+        contact_name: data.contactName,
+        contact_email: data.contactEmail,
       })
+
       .select("id")
       .single();
     if (error || !ticket) throw new Error(error?.message ?? "Could not open the request");
