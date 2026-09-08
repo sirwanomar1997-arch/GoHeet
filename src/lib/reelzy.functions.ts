@@ -2034,7 +2034,7 @@ export const getConversation = createServerFn({ method: "POST" })
 
     const { data: msgs } = await sb
       .from("messages")
-      .select("id, body, sender_id, created_at")
+      .select("id, body, sender_id, created_at, read_at")
       .eq("conversation_id", convo.id)
       .order("created_at", { ascending: true })
       .limit(300);
@@ -2061,8 +2061,10 @@ export const getConversation = createServerFn({ method: "POST" })
         body: m.body,
         createdAt: m.created_at,
         mine: m.sender_id === me,
+        readByThem: m.sender_id === me ? !!m.read_at : false,
       })),
     };
+
   });
 
 export const respondToMessageRequest = createServerFn({ method: "POST" })
