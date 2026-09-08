@@ -25,14 +25,16 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminPage() {
   const { data: me, isLoading: meLoading } = useMe();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"queue" | "people" | "log">("queue");
+  const [tab, setTab] = useState<"review" | "queue" | "people" | "log">("review");
   const [q, setQ] = useState("");
 
   const overviewFn = useServerFn(adminOverview);
   const queueFn = useServerFn(adminReportQueue);
+  const reviewFn = useServerFn(adminReviewQueue);
   const peopleFn = useServerFn(adminSearchPeople);
   const logFn = useServerFn(adminModerationLog);
   const actionFn = useServerFn(adminAction);
+
 
   const staff = !!me?.isStaff;
 
