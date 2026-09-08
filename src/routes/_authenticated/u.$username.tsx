@@ -388,9 +388,6 @@ function ProfilePage() {
                         glow={activeTab}
                       />
                     )}
-                    <span className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
-                      {label}
-                    </span>
                     <span
                       aria-hidden
                       className="absolute inset-x-3 bottom-1 h-[3px] rounded-full transition-opacity"
