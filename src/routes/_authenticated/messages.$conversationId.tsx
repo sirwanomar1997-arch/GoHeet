@@ -90,7 +90,7 @@ function ThreadPage() {
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold">{data.person.displayName}</span>
               <span className="block truncate text-xs text-muted-foreground">
-                @{data.person.username}
+                <span data-no-translate>@{data.person.username}</span>
               </span>
             </span>
           </Link>
@@ -112,6 +112,7 @@ function ThreadPage() {
                       ? "ember-fill text-primary-foreground"
                       : "border border-border bg-surface"
                   }`}
+                  data-no-translate
                 >
                   {m.body}
                 </div>

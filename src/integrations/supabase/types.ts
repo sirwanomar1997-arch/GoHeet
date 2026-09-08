@@ -936,6 +936,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_translations: {
+        Row: {
+          created_at: string
+          id: string
+          locale: string
+          source: string
+          source_hash: string
+          translated: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale: string
+          source: string
+          source_hash: string
+          translated: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: string
+          source?: string
+          source_hash?: string
+          translated?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

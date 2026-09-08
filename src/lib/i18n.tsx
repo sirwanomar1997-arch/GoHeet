@@ -25,11 +25,44 @@ export const LOCALES = [
   { code: "fr", label: "French", native: "Français" },
   { code: "de", label: "German", native: "Deutsch" },
   { code: "tr", label: "Turkish", native: "Türkçe" },
+  { code: "ja", label: "Japanese", native: "日本語" },
+  { code: "zh", label: "Chinese", native: "中文" },
+  { code: "ko", label: "Korean", native: "한국어" },
+  { code: "hi", label: "Hindi", native: "हिन्दी" },
+  { code: "bn", label: "Bengali", native: "বাংলা" },
+  { code: "ur", label: "Urdu", native: "اردو" },
+  { code: "fa", label: "Persian", native: "فارسی" },
+  { code: "he", label: "Hebrew", native: "עברית" },
+  { code: "ku", label: "Kurdish", native: "کوردی" },
+  { code: "pt", label: "Portuguese", native: "Português" },
+  { code: "it", label: "Italian", native: "Italiano" },
+  { code: "ru", label: "Russian", native: "Русский" },
+  { code: "uk", label: "Ukrainian", native: "Українська" },
+  { code: "pl", label: "Polish", native: "Polski" },
+  { code: "nl", label: "Dutch", native: "Nederlands" },
+  { code: "da", label: "Danish", native: "Dansk" },
+  { code: "no", label: "Norwegian", native: "Norsk" },
+  { code: "fi", label: "Finnish", native: "Suomi" },
+  { code: "cs", label: "Czech", native: "Čeština" },
+  { code: "ro", label: "Romanian", native: "Română" },
+  { code: "el", label: "Greek", native: "Ελληνικά" },
+  { code: "hu", label: "Hungarian", native: "Magyar" },
+  { code: "id", label: "Indonesian", native: "Bahasa Indonesia" },
+  { code: "ms", label: "Malay", native: "Bahasa Melayu" },
+  { code: "vi", label: "Vietnamese", native: "Tiếng Việt" },
+  { code: "th", label: "Thai", native: "ไทย" },
+  { code: "tl", label: "Filipino", native: "Filipino" },
+  { code: "sw", label: "Swahili", native: "Kiswahili" },
+  { code: "so", label: "Somali", native: "Soomaali" },
+  { code: "am", label: "Amharic", native: "አማርኛ" },
+  { code: "af", label: "Afrikaans", native: "Afrikaans" },
 ] as const;
 
 export type Locale = (typeof LOCALES)[number]["code"];
 
-const RTL: Locale[] = ["ar"];
+const SUPPORTED = new Set<string>(LOCALES.map((l) => l.code));
+
+const RTL: Locale[] = ["ar", "he", "fa", "ur", "ku"];
 const STORAGE_KEY = "goheet.language";
 
 type Dict = Record<string, string>;
@@ -295,14 +328,16 @@ const tr: Dict = {
     "Lütfen isteğini Latin harfleriyle İngilizce yaz ki ekibimiz 24 saat içinde işleme alsın.",
 };
 
-const DICTS: Record<Locale, Dict> = { en, sv, ar, es, fr, de, tr };
+// Hand-written translations for the most-used screens. Every other language —
+// and every screen not listed here — is translated automatically at runtime.
+const DICTS: Partial<Record<Locale, Dict>> = { en, sv, ar, es, fr, de, tr };
 
 export function detectLocale(): Locale {
   if (typeof navigator === "undefined") return "en";
   const codes = navigator.languages?.length ? navigator.languages : [navigator.language ?? "en"];
   for (const raw of codes) {
-    const base = raw.toLowerCase().split("-")[0] as Locale;
-    if (base && base in DICTS) return base;
+    const base = raw.toLowerCase().split("-")[0];
+    if (base && SUPPORTED.has(base)) return base as Locale;
   }
   return "en";
 }
@@ -330,7 +365,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {
       stored = null;
     }
-    if (stored && stored !== "auto" && stored in DICTS) {
+    if (stored && stored !== "auto" && SUPPORTED.has(stored)) {
       setAuto(false);
       setLocaleState(stored as Locale);
     } else {
@@ -343,6 +378,20 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const dir = RTL.includes(locale) ? "rtl" : "ltr";
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;
+  }, [locale]);
+
+  // Translates every screen — including ones without a hand-written dictionary.
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import("./auto-translate").then(({ startAutoTranslate }) => {
+      if (cancelled) return;
+      stop = startAutoTranslate(locale);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
   }, [locale]);
 
   const setLocale = useCallback((next: Locale | "auto") => {

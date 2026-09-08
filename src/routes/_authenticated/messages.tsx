@@ -123,10 +123,10 @@ function MessagesPage() {
                   params={{ conversationId: c.id }}
                   className="block"
                 >
-                  <p className="text-sm font-semibold">{c.person.displayName}</p>
-                  <p className="text-xs text-muted-foreground">@{c.person.username}</p>
+                  <p className="text-sm font-semibold" data-no-translate>{c.person.displayName}</p>
+                  <p className="text-xs text-muted-foreground" data-no-translate>@{c.person.username}</p>
                   {c.lastMessage ? (
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground" data-no-translate>
                       {c.lastMessage.body}
                     </p>
                   ) : null}
@@ -191,7 +191,7 @@ function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) 
             {pendingLabel ?? timeAgo(chat.lastMessageAt)}
           </span>
         </span>
-        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground" data-no-translate>
           {chat.lastMessage?.body ?? `@${chat.person.username}`}
         </span>
       </span>

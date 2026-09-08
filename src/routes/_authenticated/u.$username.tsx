@@ -254,17 +254,17 @@ function ProfilePage() {
           ) : null}
 
           {/* nickname + username — compact, tight under the avatar button */}
-          <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground">
+          <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground" data-no-translate>
             {p.displayName || p.username}
           </h2>
 
-          <p className="data-figure mt-0.5 text-center text-[11px] font-normal tracking-normal text-muted-foreground">
+          <p className="data-figure mt-0.5 text-center text-[11px] font-normal tracking-normal text-muted-foreground" data-no-translate>
             @{p.username}
           </p>
 
           {/* bio lives under the username, only when the user adds one */}
           {p.bio ? (
-            <p className="mt-5 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85">
+            <p className="mt-5 max-w-[19rem] text-center text-sm leading-relaxed text-foreground/85" data-no-translate>
               {p.bio}
             </p>
           ) : null}
@@ -593,7 +593,7 @@ function ProfilePage() {
                         ) : null}
                         <span className="absolute inset-x-0 bottom-0 p-2.5">
                           {m.caption ? (
-                            <span className="line-clamp-1 block font-display text-[13px] font-semibold leading-snug tracking-tight">
+                            <span className="line-clamp-1 block font-display text-[13px] font-semibold leading-snug tracking-tight" data-no-translate>
                               {m.caption}
                             </span>
                           ) : null}
