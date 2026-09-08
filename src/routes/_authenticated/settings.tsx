@@ -281,34 +281,62 @@ function SettingsPage() {
 
 
         <section className={section}>
-          <h2 className="font-display text-base font-semibold">{tr("lang.title")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">{tr("lang.line")}</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setLocale("auto")}
-              className={`col-span-2 rounded-xl border px-3 py-2.5 text-sm font-medium ${
-                auto ? "border-primary text-primary" : "border-border text-muted-foreground"
-              }`}
-            >
-              {tr("lang.auto")}
-            </button>
-            {LOCALES.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => setLocale(l.code)}
-                className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${
-                  !auto && locale === l.code
-                    ? "border-primary text-primary"
-                    : "border-border text-muted-foreground"
-                }`}
-              >
-                {l.native}
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">{tr("lang.note")}</p>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between"
+            onClick={() => setLangOpen(true)}
+          >
+            <span className="flex items-center gap-3 text-sm font-medium">
+              <Languages className="size-4 text-primary" /> {tr("lang.title")}
+            </span>
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              {auto
+                ? tr("lang.auto")
+                : (LOCALES.find((l) => l.code === locale)?.native ?? locale)}
+              <ChevronRight className="size-4" />
+            </span>
+          </button>
+
+          <Sheet open={langOpen} onOpenChange={setLangOpen}>
+            <SheetContent side="bottom" className="max-h-[80dvh] rounded-t-3xl">
+              <SheetHeader>
+                <SheetTitle>{tr("lang.title")}</SheetTitle>
+              </SheetHeader>
+              <p className="mt-1 text-xs text-muted-foreground">{tr("lang.line")}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2 overflow-y-auto pb-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocale("auto");
+                    setLangOpen(false);
+                  }}
+                  className={`col-span-2 rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                    auto ? "border-primary text-primary" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {tr("lang.auto")}
+                </button>
+                {LOCALES.map((l) => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => {
+                      setLocale(l.code);
+                      setLangOpen(false);
+                    }}
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                      !auto && locale === l.code
+                        ? "border-primary text-primary"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {l.native}
+                  </button>
+                ))}
+              </div>
+              <p className="pb-4 text-xs text-muted-foreground">{tr("lang.note")}</p>
+            </SheetContent>
+          </Sheet>
         </section>
 
         <section className={section}>
