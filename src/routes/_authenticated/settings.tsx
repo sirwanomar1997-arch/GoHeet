@@ -7,7 +7,7 @@ import {
   Ban,
   Bookmark,
   BookOpen,
-  Bug,
+  
   Camera,
   ChevronRight,
   Download,
@@ -16,8 +16,6 @@ import {
   LifeBuoy,
   MessageCircle,
   Pencil,
-  ShieldCheck,
-  Trash2,
   UserPlus,
 } from "lucide-react";
 import {
