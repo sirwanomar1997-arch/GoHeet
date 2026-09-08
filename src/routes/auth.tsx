@@ -334,6 +334,28 @@ function AuthPage() {
                       {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
+                  {mode === "signup" && password.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {PASSWORD_RULES.map((rule) => {
+                        const ok = rule.test(password);
+                        return (
+                          <li
+                            key={rule.label}
+                            className={`flex items-center gap-1.5 text-xs ${
+                              ok ? "text-green-500" : "text-muted-foreground"
+                            }`}
+                          >
+                            {ok ? (
+                              <Check className="size-3.5" />
+                            ) : (
+                              <span className="size-3.5 rounded-full border border-current opacity-50" />
+                            )}
+                            {rule.label}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
               )}
             </>
