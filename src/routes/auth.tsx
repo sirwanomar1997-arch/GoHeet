@@ -426,13 +426,27 @@ function AuthPage() {
             {busy
               ? "One moment…"
               : mode === "signup"
-                ? "Create account"
+                ? isPhone
+                  ? otpSent
+                    ? "Verify & continue"
+                    : "Send code"
+                  : "Create account"
                 : isPhone
                   ? otpSent
                     ? "Verify & log in"
                     : "Send code"
                   : "Log in"}
           </Button>
+          {mode === "signin" && !isPhone && (
+            <button
+              type="button"
+              onClick={sendReset}
+              disabled={busy}
+              className="w-full text-center text-sm text-muted-foreground underline"
+            >
+              Forgot password?
+            </button>
+          )}
         </form>
 
         <button
