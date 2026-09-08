@@ -282,6 +282,33 @@ export function startAutoTranslate(locale: string): () => void {
   applying = false;
   pump();
 
+  // Pull the whole known dictionary for this language once, so every later
+  // screen — settings, profile, menus — is already translated before it opens.
+  if (!englishMode && !bundled.has(locale)) {
+    bundled.add(locale);
+    void uiBundle({ data: { locale } })
+      .then((res) => {
+        if (stopped) return;
+        const all = res.translations ?? {};
+        let added = 0;
+        for (const [source, value] of Object.entries(all)) {
+          if (cache[source] !== value) added++;
+          cache[source] = value;
+          globalReverse.set(value, source);
+        }
+        if (!added) return;
+        saveCache(locale, cache);
+        applying = true;
+        scan(document.body);
+        applying = false;
+        pump();
+      })
+      .catch(() => {
+        bundled.delete(locale);
+      });
+  }
+
+
   observer.observe(document.body, {
     childList: true,
     subtree: true,
