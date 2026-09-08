@@ -43,11 +43,17 @@ function AdminPage() {
     queryFn: () => overviewFn({ data: undefined as never }),
     enabled: staff,
   });
+  const review = useQuery({
+    queryKey: ["admin", "review"],
+    queryFn: () => reviewFn({ data: undefined as never }),
+    enabled: staff && tab === "review",
+  });
   const queue = useQuery({
     queryKey: ["admin", "queue"],
     queryFn: () => queueFn({ data: { status: "open" } }),
     enabled: staff && tab === "queue",
   });
+
   const people = useQuery({
     queryKey: ["admin", "people", q],
     queryFn: () => peopleFn({ data: { q } }),
