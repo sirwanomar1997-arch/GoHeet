@@ -424,7 +424,110 @@ export const startCapture = createServerFn({ method: "POST" })
     };
   });
 
+/* ------------------------------------------------------------------ */
+/* Automatic safety review                                             */
+/* ------------------------------------------------------------------ */
+
+type SafetyVerdict = { decision: "approve" | "reject" | "hold"; reason: string };
+
+const SAFETY_RULES = `You are the automated content-safety reviewer for GoHeet, a short-video app rated 17+.
+Decide whether this post may be published to a public global feed.
+
+REJECT when the image or the text shows or promotes any of:
+- nudity, sexual acts, sexualised posing, or anything sexual involving a minor (zero tolerance)
+- real violence, assault, gore, self-harm, suicide, or threats
+- illegal activity: drug sales, weapons sales, trafficking, theft, terrorism, extremist propaganda
+- hate speech, slurs, or harassment of a person or group
+- scams, fraud, or clearly deceptive content
+- content that appears to sexualise or endanger a child in any way
+
+APPROVE ordinary everyday life: people, faces, selfies, sport, food, pets, travel, dancing, music,
+beaches and swimwear in a normal non-sexual context, humour, art, work, city scenes.
+
+Use HOLD only when the image is genuinely ambiguous and a human should look.
+
+Answer with JSON only: {"decision":"approve"|"reject"|"hold","reason":"short reason"}`;
+
+/** Reviews a post before it goes public. Fails closed: on error the post is held, never published. */
+async function reviewForSafety(input: { imagePath: string | null; text: string }): Promise<SafetyVerdict> {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) return { decision: "hold", reason: "Safety review unavailable" };
+
+  const content: Array<Record<string, unknown>> = [
+    { type: "text", text: `Caption / on-screen text: ${input.text || "(none)"}` },
+  ];
+
+  if (input.imagePath) {
+    const sb = await admin();
+    const { data: signed } = await sb.storage.from("moments").createSignedUrl(input.imagePath, 300);
+    if (signed?.signedUrl) content.push({ type: "image_url", image_url: { url: signed.signedUrl } });
+  }
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.8-flash",
+        messages: [
+          { role: "system", content: SAFETY_RULES },
+          { role: "user", content },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) {
+      console.error("[safety-review] gateway", res.status, await res.text());
+      return { decision: "hold", reason: "Safety review unavailable" };
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const raw = json.choices?.[0]?.message?.content ?? "";
+    const parsed = JSON.parse(raw.replace(/^```json|```$/g, "").trim()) as SafetyVerdict;
+    if (parsed.decision === "approve" || parsed.decision === "reject" || parsed.decision === "hold") {
+      return { decision: parsed.decision, reason: String(parsed.reason ?? "").slice(0, 200) };
+    }
+    return { decision: "hold", reason: "Unclear review result" };
+  } catch (err) {
+    console.error("[safety-review]", err);
+    return { decision: "hold", reason: "Safety review failed" };
+  }
+}
+
+/** Suspends after 2 removed posts, bans after 3. Mirrors the database trigger for report-driven removals. */
+async function enforceAuthorStrikes(authorId: string) {
+  const sb = await admin();
+  const { count } = await sb
+    .from("moments")
+    .select("id", { count: "exact", head: true })
+    .eq("author_id", authorId)
+    .in("moderation_state", ["auto_removed", "removed"]);
+  const strikes = count ?? 0;
+  if (strikes >= 3) {
+    await sb.from("profiles").update({ banned_at: new Date().toISOString() }).eq("id", authorId);
+    await sb.from("moderation_actions").insert({
+      actor_id: null,
+      action: "ban_user",
+      target_type: "user",
+      target_id: authorId,
+      reason: "Automatic: 3 removed posts",
+    });
+  } else if (strikes >= 2) {
+    await sb
+      .from("profiles")
+      .update({ suspended_until: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() })
+      .eq("id", authorId);
+    await sb.from("moderation_actions").insert({
+      actor_id: null,
+      action: "suspend_user",
+      target_type: "user",
+      target_id: authorId,
+      reason: "Automatic: 2 removed posts",
+    });
+  }
+}
+
 export const publishMoment = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((d: {
     sessionId: string;
@@ -470,6 +573,19 @@ export const publishMoment = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
+
+    // 0. Banned or suspended accounts cannot publish.
+    const { data: authorProfile } = await sb
+      .from("profiles")
+      .select("banned_at, suspended_until")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (authorProfile?.banned_at) throw new Error("This account has been banned for breaking the Community Guidelines.");
+    if (authorProfile?.suspended_until && new Date(authorProfile.suspended_until) > new Date()) {
+      throw new Error("This account is suspended and cannot post right now.");
+    }
+
+
 
     // 1. The capture session must exist, belong to the caller and be unused.
     const { data: session } = await sb
@@ -546,6 +662,8 @@ export const publishMoment = createServerFn({ method: "POST" })
         music_offset_ms: data.musicTrackId ? (data.musicOffsetMs ?? 0) : 0,
         music_volume: data.musicTrackId ? (data.musicVolume ?? 0.75) : 0,
         original_audio_volume: data.originalAudioVolume ?? 1,
+        status: "pending",
+        moderation_state: "pending",
       })
       .select("id")
       .single();
@@ -556,9 +674,41 @@ export const publishMoment = createServerFn({ method: "POST" })
       .update({ status: "consumed", consumed_at: new Date().toISOString(), storage_path: data.mediaPath })
       .eq("id", session.id);
 
+    // Automatic safety review — nothing is visible to other people until it passes.
+    const verdict = await reviewForSafety({
+      imagePath: data.kind === "photo" ? data.mediaPath : (data.thumbnailPath ?? null),
+      text: [data.caption, data.overlay?.text].filter(Boolean).join(" \n "),
+    });
+
+    if (verdict.decision === "reject") {
+      await sb
+        .from("moments")
+        .update({ status: "removed", moderation_state: "auto_removed", deleted_at: new Date().toISOString() })
+        .eq("id", moment.id);
+      await sb.from("moderation_actions").insert({
+        actor_id: null,
+        action: "remove_content",
+        target_type: "moment",
+        target_id: moment.id,
+        reason: `Automatic safety review: ${verdict.reason}`.slice(0, 300),
+      });
+      await enforceAuthorStrikes(context.userId);
+      await track(context.userId, "moment_auto_rejected", { reason: verdict.reason });
+      throw new Error(
+        "This post breaks the GoHeet Community Guidelines, so it was not published. Sexual content, violence and illegal activity are never allowed.",
+      );
+    }
+
+    if (verdict.decision === "hold") {
+      await track(context.userId, "moment_held_for_review", {});
+      return { id: moment.id, review: "pending" as const };
+    }
+
+    await sb.from("moments").update({ status: "published", moderation_state: "clean" }).eq("id", moment.id);
     await track(context.userId, "moment_published", { kind: data.kind });
-    return { id: moment.id };
+    return { id: moment.id, review: "published" as const };
   });
+
 
 const TRASH_DAYS = 30;
 

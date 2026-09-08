@@ -66,7 +66,7 @@ Live and publicly reachable:
 
 - `/legal/terms`, `/legal/privacy`, `/legal/guidelines`, `/legal/safety`,
   `/legal/support`, `/legal/cookies`, `/legal/copyright`
-- Support contact: sirwanomar@hotmail.com (swap to a business address whenever you want)
+- Support contact: handled in-app via Settings → Help & support (requests reach the support inbox privately; no personal address is shown to users)
 
 Paste the `/legal/privacy` and `/legal/support` URLs into both store listings.
 

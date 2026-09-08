@@ -8,7 +8,10 @@ const createSchema = z.object({
   category: z.enum(CATEGORIES),
   subject: z.string().trim().min(3).max(120),
   body: z.string().trim().min(10).max(4000),
+  contactName: z.string().trim().min(2).max(80),
+  contactEmail: z.string().trim().email().max(120),
 });
+
 
 const replySchema = z.object({
   ticketId: z.string().uuid(),
@@ -51,7 +54,10 @@ export const createSupportTicket = createServerFn({ method: "POST" })
         category: data.category,
         subject: data.subject,
         status: "open",
+        contact_name: data.contactName,
+        contact_email: data.contactEmail,
       })
+
       .select("id")
       .single();
     if (error || !ticket) throw new Error(error?.message ?? "Could not open the request");
@@ -134,7 +140,7 @@ export const staffListSupportTickets = createServerFn({ method: "POST" })
     const sb = await admin();
     let query = sb
       .from("support_tickets")
-      .select("id, subject, category, status, created_at, last_activity_at, user_id")
+      .select("id, subject, category, status, created_at, last_activity_at, user_id, contact_name, contact_email")
       .order("last_activity_at", { ascending: false })
       .limit(100);
     if (data.status !== "all") query = query.eq("status", data.status);

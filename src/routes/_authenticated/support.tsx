@@ -83,18 +83,30 @@ function SupportPage() {
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]["value"]>(initialCategory);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
 
   const create = useMutation({
-    mutationFn: () => createFn({ data: { category, subject, body } }),
+    mutationFn: () =>
+      createFn({
+        data: {
+          category,
+          subject,
+          body,
+          contactName: contactName.trim(),
+          contactEmail: contactEmail.trim(),
+        },
+      }),
     onSuccess: (res) => {
       setSubject("");
       setBody("");
-      toast.success("Sent — we'll reply here in the app");
+      toast.success("Sent — we'll reply here in the app and by email");
       qc.invalidateQueries({ queryKey: ["support"] });
       setOpenTicket(res.id);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   if (openTicket) {
     return <TicketThread id={openTicket} onBack={() => setOpenTicket(null)} staff={staff} />;
@@ -178,6 +190,19 @@ function SupportPage() {
                   ))}
                 </div>
                 <Input
+                  value={contactName}
+                  maxLength={80}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Your name"
+                />
+                <Input
+                  value={contactEmail}
+                  type="email"
+                  maxLength={120}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="Your email (we reply here)"
+                />
+                <Input
                   value={subject}
                   maxLength={120}
                   onChange={(e) => setSubject(e.target.value)}
@@ -188,14 +213,25 @@ function SupportPage() {
                   maxLength={4000}
                   rows={5}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="Tell us what happened, and what you expected instead."
+                  placeholder="Describe the situation: what happened, when, and who was involved."
                 />
                 <Button
                   onClick={() => create.mutate()}
-                  disabled={create.isPending || subject.trim().length < 3 || body.trim().length < 10}
+                  disabled={
+                    create.isPending ||
+                    contactName.trim().length < 2 ||
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim()) ||
+                    subject.trim().length < 3 ||
+                    body.trim().length < 10
+                  }
                 >
                   {create.isPending ? "Sending…" : "Send to support"}
                 </Button>
+                <p className="text-[11px] text-muted-foreground">
+                  The GoHeet support team reads every request. We answer inside the app and by email to the
+                  address you give here.
+                </p>
+
               </div>
             </section>
 
