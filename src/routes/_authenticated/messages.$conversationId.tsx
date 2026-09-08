@@ -9,6 +9,8 @@ import {
   respondToMessageRequest,
   sendMessage,
 } from "@/lib/reelzy.functions";
+import { useI18n } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/_authenticated/messages/$conversationId")({
   component: ThreadPage,
@@ -26,7 +28,9 @@ export const Route = createFileRoute("/_authenticated/messages/$conversationId")
 
 function ThreadPage() {
   const { conversationId } = useParams({ from: "/_authenticated/messages/$conversationId" });
+  const { t } = useI18n();
   const qc = useQueryClient();
+
   const load = useServerFn(getConversation);
   const post = useServerFn(sendMessage);
   const respond = useServerFn(respondToMessageRequest);
