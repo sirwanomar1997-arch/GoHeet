@@ -382,6 +382,29 @@ function SettingsPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             Email on this account: {email || "—"}
           </p>
+          {email && (
+            <div className="mt-3 rounded-2xl border border-border bg-surface-raised p-3">
+              <p className="text-xs font-medium">
+                {emailVerified ? "Email verified" : "Email not verified yet"}
+              </p>
+              {!emailVerified && (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Verify your email so you can reset your password and reach support if you ever
+                    lose access to your account.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    disabled={sendingVerify}
+                    onClick={() => void sendVerification()}
+                    className="mt-3 h-10 w-full rounded-2xl"
+                  >
+                    {sendingVerify ? "Sending…" : "Send verification email"}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
           <div className="mt-4 space-y-4">
             <div>
               <Label htmlFor="cur">Current password</Label>
