@@ -365,7 +365,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {
       stored = null;
     }
-    if (stored && stored !== "auto" && stored in DICTS) {
+    if (stored && stored !== "auto" && SUPPORTED.has(stored)) {
       setAuto(false);
       setLocaleState(stored as Locale);
     } else {
