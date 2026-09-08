@@ -574,6 +574,19 @@ export const publishMoment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = await admin();
 
+    // 0. Banned or suspended accounts cannot publish.
+    const { data: authorProfile } = await sb
+      .from("profiles")
+      .select("banned_at, suspended_until")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (authorProfile?.banned_at) throw new Error("This account has been banned for breaking the Community Guidelines.");
+    if (authorProfile?.suspended_until && new Date(authorProfile.suspended_until) > new Date()) {
+      throw new Error("This account is suspended and cannot post right now.");
+    }
+
+
+
     // 1. The capture session must exist, belong to the caller and be unused.
     const { data: session } = await sb
       .from("capture_sessions")
