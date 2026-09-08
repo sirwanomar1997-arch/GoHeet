@@ -41,3 +41,7 @@
 - [x] Update every icon and launch-screen size with the corrected flame-only mark
 - [x] Replace the icon mark with the exact single-flame Heet symbol used inside GoHeet
 - [x] Update and verify every app icon and launch-screen size
+
+- [x] Show Sent / Read status on messages
+- [x] Auto app language from phone settings (en, sv, ar RTL, es, fr, de, tr) with Settings override
+- [ ] Extend translations to remaining screens as new copy is finalised
