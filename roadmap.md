@@ -39,3 +39,5 @@
 - [x] Update all app icon, splash, and favicon sizes and verify small-size clarity
 - [x] Remove the G while preserving the exact original two-part flame shape
 - [x] Update every icon and launch-screen size with the corrected flame-only mark
+- [ ] Replace the icon mark with the exact single-flame Heet symbol used inside GoHeet
+- [ ] Update and verify every app icon and launch-screen size
