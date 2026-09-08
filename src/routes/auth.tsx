@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -37,8 +37,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
-  const router = useRouter();
   const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -54,19 +52,19 @@ function AuthPage() {
 
   const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
 
-  // Clears any stale route data so the destination renders immediately
-  // instead of showing a blank screen until a manual refresh.
-  const goAuthed = useCallback(
-    async (to: string) => {
-      await router.invalidate();
-      await navigate({ to });
-    },
-    [router, navigate],
-  );
+  // Complete authentication with a fresh document navigation. This avoids a
+  // race between the auth-state listener and the protected route guard on iOS.
+  const goAuthed = useCallback((to: string) => {
+    window.location.replace(to);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) void goAuthed(dest);
+      if (data.session) {
+        const savedDestination = window.sessionStorage.getItem("goheet.auth.destination");
+        window.sessionStorage.removeItem("goheet.auth.destination");
+        goAuthed(savedDestination?.startsWith("/") ? savedDestination : dest);
+      }
     });
   }, [goAuthed, dest]);
 
@@ -85,7 +83,7 @@ function AuthPage() {
           setSent(true);
           return;
         }
-        await goAuthed("/onboarding");
+         goAuthed("/onboarding");
         return;
       }
 
@@ -106,7 +104,7 @@ function AuthPage() {
           type: "sms",
         });
         if (error) throw error;
-        await goAuthed(dest);
+         goAuthed(dest);
         return;
       }
 
@@ -119,7 +117,7 @@ function AuthPage() {
         refresh_token: res.refreshToken,
       });
       if (error) throw error;
-      await goAuthed(dest);
+       goAuthed(dest);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -128,15 +126,16 @@ function AuthPage() {
   }
 
   async function oauth(provider: "google" | "apple") {
+    window.sessionStorage.setItem("goheet.auth.destination", dest);
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth`,
     });
     if (result.error) {
       toast.error("Sign-in didn't work. Try email instead.");
       return;
     }
     if (result.redirected) return;
-    await goAuthed(dest);
+    goAuthed(dest);
   }
 
   if (sent) {
