@@ -8,6 +8,8 @@
  */
 
 import skate from "@/assets/demo/skate-sunset.jpg";
+import skateBowl from "@/assets/demo/skate-bowl.jpg";
+import dogFrisbee from "@/assets/demo/dog-frisbee.jpg";
 import sunset from "@/assets/demo/sunset.jpg";
 
 import city from "@/assets/demo/city.jpg";
@@ -173,7 +175,54 @@ const overlays = [
   null,
 ];
 
-export const demoMoments: MomentCard[] = PHOTOS.map((photo, i) => ({
+const newMoments: MomentCard[] = [
+  {
+    id: "demo-new-1",
+    caption: "Golden hour at the skatepark",
+    kind: "photo",
+    mediaUrl: skateBowl,
+    posterUrl: null,
+    durationMs: null,
+    locationLabel: "Stockholm",
+    createdAt: hoursAgo(1),
+    viewCount: 2841,
+    likeCount: 512,
+    commentCount: 34,
+    liked: false,
+    saved: false,
+    reposted: false,
+    styleFilter: null,
+    overlay: null,
+    music: { id: "m1", title: "Wallpaper", artist: "Kevin MacLeod", url: null, artworkUrl: null, attributionText: "CC-BY-4.0", offsetMs: 0, volume: 0.6 },
+    originalAudioVolume: 1,
+    author: demoAuthors[0]!,
+    isOwn: false,
+  },
+  {
+    id: "demo-new-2",
+    caption: "Catching air in the park",
+    kind: "photo",
+    mediaUrl: dogFrisbee,
+    posterUrl: null,
+    durationMs: null,
+    locationLabel: "Gothenburg",
+    createdAt: hoursAgo(4),
+    viewCount: 1932,
+    likeCount: 423,
+    commentCount: 28,
+    liked: false,
+    saved: false,
+    reposted: false,
+    styleFilter: null,
+    overlay: null,
+    music: null,
+    originalAudioVolume: 1,
+    author: demoAuthors[2]!,
+    isOwn: false,
+  },
+];
+
+export const demoMoments: MomentCard[] = [...newMoments, ...PHOTOS.map((photo, i) => ({
   id: `demo-${i + 1}`,
   caption: captions[i] ?? "Real moment",
   kind: "photo",
@@ -196,7 +245,7 @@ export const demoMoments: MomentCard[] = PHOTOS.map((photo, i) => ({
   originalAudioVolume: 1,
   author: demoAuthors[i % demoAuthors.length]!,
   isOwn: false,
-}));
+}))];
 
 export const demoComments: Record<string, Array<{
   id: string;
