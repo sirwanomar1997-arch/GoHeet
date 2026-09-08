@@ -8,7 +8,7 @@ import { signInWithIdentifier } from "@/lib/reelzy.functions";
 import { GoHeetMark, GoHeetWordmark } from "@/components/reelzy/logo";
 import { HeetFlame } from "@/components/reelzy/heet-flame";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
