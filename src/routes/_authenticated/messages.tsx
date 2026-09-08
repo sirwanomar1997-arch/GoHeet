@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, MailQuestion, MessageCircle, X } from "lucide-react";
 import { listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   component: MessagesPage,
@@ -39,6 +40,7 @@ function timeAgo(iso: string) {
 }
 
 function MessagesPage() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const fetchChats = useServerFn(listConversations);
   const respond = useServerFn(respondToMessageRequest);
@@ -53,7 +55,7 @@ function MessagesPage() {
   const answer = useMutation({
     mutationFn: (v: { conversationId: string; accept: boolean }) => respond({ data: v }),
     onSuccess: (_r, v) => {
-      toast.success(v.accept ? "Request accepted." : "Request declined.");
+      toast.success(v.accept ? t("msg.accepted") : t("msg.declined"));
       void qc.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -66,17 +68,15 @@ function MessagesPage() {
   return (
     <AppShell>
       <header className="px-5 pb-2 pt-6">
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Messages</h1>
-        <p className="text-sm text-muted-foreground">
-          People you don&apos;t follow back have to ask first.
-        </p>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">{t("msg.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("msg.subtitle")}</p>
       </header>
 
       <div className="grid grid-cols-2 gap-2 px-5">
         {(
           [
-            ["chats", "Chats", chats.length],
-            ["requests", "Requests", requests.length],
+            ["chats", t("msg.chats"), chats.length],
+            ["requests", t("msg.requests"), requests.length],
           ] as const
         ).map(([id, label, count]) => (
           <button
@@ -97,13 +97,13 @@ function MessagesPage() {
 
       <div className="space-y-2 px-5 pb-12 pt-4">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : tab === "chats" ? (
           chats.length === 0 ? (
             <EmptyState
               icon={<MessageCircle className="size-5 text-amber-400" />}
-              title="No chats yet"
-              line="Start one from someone's profile."
+              title={t("msg.noChats")}
+              line={t("msg.noChatsLine")}
             />
           ) : (
             chats.map((c) => <ChatRow key={c.id} chat={c} />)
@@ -111,8 +111,8 @@ function MessagesPage() {
         ) : requests.length === 0 && sent.length === 0 ? (
           <EmptyState
             icon={<MailQuestion className="size-5 text-sky-400" />}
-            title="No requests"
-            line="Messages from people you don't follow land here first."
+            title={t("msg.noRequests")}
+            line={t("msg.noRequestsLine")}
           />
         ) : (
           <>
@@ -138,7 +138,7 @@ function MessagesPage() {
                     onClick={() => answer.mutate({ conversationId: c.id, accept: true })}
                     className="ember-fill tap-target flex-1 rounded-2xl text-sm font-semibold text-primary-foreground"
                   >
-                    <Check className="mr-1 inline size-4" /> Accept
+                    <Check className="mr-1 inline size-4" /> {t("common.accept")}
                   </button>
                   <button
                     type="button"
@@ -146,7 +146,7 @@ function MessagesPage() {
                     onClick={() => answer.mutate({ conversationId: c.id, accept: false })}
                     className="tap-target flex-1 rounded-2xl border border-border text-sm font-semibold"
                   >
-                    <X className="mr-1 inline size-4" /> Decline
+                    <X className="mr-1 inline size-4" /> {t("common.decline")}
                   </button>
                 </div>
               </div>
@@ -154,10 +154,10 @@ function MessagesPage() {
             {sent.length > 0 ? (
               <>
                 <p className="pt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  Waiting for a reply
+                  {t("msg.waiting")}
                 </p>
                 {sent.map((c) => (
-                  <ChatRow key={c.id} chat={c} pendingLabel="Request sent" />
+                  <ChatRow key={c.id} chat={c} pendingLabel={t("msg.requestSent")} />
                 ))}
               </>
             ) : null}
