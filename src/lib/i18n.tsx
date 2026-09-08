@@ -328,14 +328,16 @@ const tr: Dict = {
     "Lütfen isteğini Latin harfleriyle İngilizce yaz ki ekibimiz 24 saat içinde işleme alsın.",
 };
 
-const DICTS: Record<Locale, Dict> = { en, sv, ar, es, fr, de, tr };
+// Hand-written translations for the most-used screens. Every other language —
+// and every screen not listed here — is translated automatically at runtime.
+const DICTS: Partial<Record<Locale, Dict>> = { en, sv, ar, es, fr, de, tr };
 
 export function detectLocale(): Locale {
   if (typeof navigator === "undefined") return "en";
   const codes = navigator.languages?.length ? navigator.languages : [navigator.language ?? "en"];
   for (const raw of codes) {
-    const base = raw.toLowerCase().split("-")[0] as Locale;
-    if (base && base in DICTS) return base;
+    const base = raw.toLowerCase().split("-")[0];
+    if (base && SUPPORTED.has(base)) return base as Locale;
   }
   return "en";
 }
