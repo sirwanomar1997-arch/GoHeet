@@ -532,21 +532,9 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Support and feedback</h2>
           <div className="mt-2 divide-y divide-border">
-            <Link to="/support" search={{ topic: "bug" }} className={row}>
+            <Link to="/support" className={row}>
               <span className="flex items-center gap-3">
-                <Bug className="size-4 text-emerald-400" /> Bugs and suggestions
-              </span>
-              <ChevronRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link to="/support" search={{ topic: "safety" }} className={row}>
-              <span className="flex items-center gap-3">
-                <ShieldCheck className="size-4 text-sky-400" /> Safety and privacy
-              </span>
-              <ChevronRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link to="/support" search={{ topic: "account" }} className={row}>
-              <span className="flex items-center gap-3">
-                <LifeBuoy className="size-4 text-primary" /> Help with my account
+                <LifeBuoy className="size-4 text-primary" /> Support
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
