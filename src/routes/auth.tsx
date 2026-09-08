@@ -254,14 +254,17 @@ function AuthPage() {
         </Link>
 
         <div className="mt-12 grid grid-cols-[minmax(0,1fr)_5.5rem] items-center gap-3">
-          <h1 className="font-brand text-[2.5rem] uppercase leading-[1.08] tracking-normal">
+          <h1
+            className="font-brand text-[2.5rem] uppercase leading-[1.08] tracking-normal"
+            data-no-translate
+          >
             <span className="ember-text">Heet</span> your
             <br />
             moment
           </h1>
           <HeetFlame className="size-[5.5rem] justify-self-end" />
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground" data-no-translate>
           Capture your moment, right as it happens.
           <br />
           Just life, pressed into a reality frame.
