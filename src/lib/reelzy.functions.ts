@@ -546,6 +546,8 @@ export const publishMoment = createServerFn({ method: "POST" })
         music_offset_ms: data.musicTrackId ? (data.musicOffsetMs ?? 0) : 0,
         music_volume: data.musicTrackId ? (data.musicVolume ?? 0.75) : 0,
         original_audio_volume: data.originalAudioVolume ?? 1,
+        status: "pending",
+        moderation_state: "pending",
       })
       .select("id")
       .single();
@@ -556,9 +558,41 @@ export const publishMoment = createServerFn({ method: "POST" })
       .update({ status: "consumed", consumed_at: new Date().toISOString(), storage_path: data.mediaPath })
       .eq("id", session.id);
 
+    // Automatic safety review — nothing is visible to other people until it passes.
+    const verdict = await reviewForSafety({
+      imagePath: data.kind === "photo" ? data.mediaPath : (data.thumbnailPath ?? null),
+      text: [data.caption, data.overlay?.text].filter(Boolean).join(" \n "),
+    });
+
+    if (verdict.decision === "reject") {
+      await sb
+        .from("moments")
+        .update({ status: "removed", moderation_state: "auto_removed", deleted_at: new Date().toISOString() })
+        .eq("id", moment.id);
+      await sb.from("moderation_actions").insert({
+        actor_id: null,
+        action: "remove_content",
+        target_type: "moment",
+        target_id: moment.id,
+        reason: `Automatic safety review: ${verdict.reason}`.slice(0, 300),
+      });
+      await sb.rpc("enforce_author_strikes" as never, { _author: context.userId } as never).catch?.(() => {});
+      await track(context.userId, "moment_auto_rejected", { reason: verdict.reason });
+      throw new Error(
+        "This post breaks the GoHeet Community Guidelines, so it was not published. Sexual content, violence and illegal activity are never allowed.",
+      );
+    }
+
+    if (verdict.decision === "hold") {
+      await track(context.userId, "moment_held_for_review", {});
+      return { id: moment.id, review: "pending" as const };
+    }
+
+    await sb.from("moments").update({ status: "published", moderation_state: "clean" }).eq("id", moment.id);
     await track(context.userId, "moment_published", { kind: data.kind });
-    return { id: moment.id };
+    return { id: moment.id, review: "published" as const };
   });
+
 
 const TRASH_DAYS = 30;
 
