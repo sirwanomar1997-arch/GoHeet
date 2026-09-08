@@ -245,7 +245,7 @@ export const demoMoments: MomentCard[] = [...newMoments, ...PHOTOS.map((photo, i
   originalAudioVolume: 1,
   author: demoAuthors[i % demoAuthors.length]!,
   isOwn: false,
-}));
+}))];
 
 export const demoComments: Record<string, Array<{
   id: string;
