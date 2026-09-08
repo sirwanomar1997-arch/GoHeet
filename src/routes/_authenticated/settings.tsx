@@ -43,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
+  const { t: tr, locale, auto, setLocale } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const demoMode = useDemoMode();
