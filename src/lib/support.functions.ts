@@ -140,7 +140,7 @@ export const staffListSupportTickets = createServerFn({ method: "POST" })
     const sb = await admin();
     let query = sb
       .from("support_tickets")
-      .select("id, subject, category, status, created_at, last_activity_at, user_id")
+      .select("id, subject, category, status, created_at, last_activity_at, user_id, contact_name, contact_email")
       .order("last_activity_at", { ascending: false })
       .limit(100);
     if (data.status !== "all") query = query.eq("status", data.status);
