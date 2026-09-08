@@ -9,25 +9,23 @@ import { useMe } from "@/lib/use-me";
 import { streamAvatar } from "@/lib/stream-avatar";
 import {
   accessoriesFor,
-  accessorySheetFor,
   BASE_AVATARS,
   BEARDS,
   EYE_COLORS,
   HAIR_COLORS,
-  SHEETS,
   WRINKLES,
   SKINS,
   STYLE_REFERENCE,
   defaultTraits,
   hairFor,
-  hairSheetFor,
-  outfitSheetFor,
   outfitsFor,
-  type Cell,
+  piercingsFor,
+  type Pic,
   type Sheet,
   type Swatch,
   type Traits,
 } from "@/components/reelzy/avatar-catalog";
+
 
 /* ------------------------------------------------------------------ */
 /* Prompt                                                              */
@@ -52,6 +50,8 @@ function describe(t: Traits) {
       ? "smooth youthful skin with no wrinkles"
       : `visibly aged skin with ${t.wrinkles}`,
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
+    t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
+
     `wearing a ${t.outfit}`,
     t.accessories.length ? `wearing ${t.accessories.join(" and ")}` : "no accessories at all",
   ];
@@ -80,6 +80,13 @@ function changeLabels(prev: Traits, next: Traits): string[] {
       next.beard === "clean shaven"
         ? "face is now clean shaven, all facial hair removed"
         : `facial hair is now a ${next.beard}, clearly visible`,
+    );
+  if (prev.piercing !== next.piercing)
+    out.push(
+      next.piercing === "no piercings"
+        ? "all piercings removed from the face and ears"
+        : `now wearing a ${next.piercing}, clearly visible`,
+
     );
   if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit}`);
   if (prev.accessories.join("|") !== next.accessories.join("|")) {
@@ -186,15 +193,13 @@ function SpriteTile({ sheet, index }: { sheet: Sheet; index: number }) {
 }
 
 function PictureGrid({
-  sheet,
   opts,
   value,
   onPick,
 }: {
-  sheet: Sheet;
-  opts: Cell[];
+  opts: Pic[];
   value: string | string[];
-  onPick: (name: string, index: number) => void;
+  onPick: (opt: Pic) => void;
 }) {
   const isOn = (n: string) => (Array.isArray(value) ? value.includes(n) : value === n);
   return (
@@ -207,19 +212,20 @@ function PictureGrid({
           title={o.name}
           aria-label={o.name}
           aria-pressed={isOn(o.name)}
-          onClick={() => onPick(o.name, o.index)}
+          onClick={() => onPick(o)}
           className={`h-auto min-w-0 overflow-hidden rounded-2xl border-2 bg-surface p-0 transition-transform active:scale-95 ${
             isOn(o.name)
               ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
               : "border-border"
           }`}
         >
-          <SpriteTile sheet={sheet} index={o.index} />
+          <SpriteTile sheet={o.sheet} index={o.index} />
         </Button>
       ))}
     </div>
   );
 }
+
 
 function SwatchGrid({
   opts,
@@ -253,8 +259,26 @@ function SwatchGrid({
   );
 }
 
-type StudioCategory = "Skin" | "Eyes" | "Hair" | "Wrinkles" | "Beard" | "Outfits" | "Extras";
-const CATEGORIES: StudioCategory[] = ["Skin", "Eyes", "Hair", "Wrinkles", "Beard", "Outfits", "Extras"];
+type StudioCategory =
+  | "Skin"
+  | "Eyes"
+  | "Hair"
+  | "Wrinkles"
+  | "Beard"
+  | "Piercings"
+  | "Outfits"
+  | "Extras";
+const CATEGORIES: StudioCategory[] = [
+  "Skin",
+  "Eyes",
+  "Hair",
+  "Wrinkles",
+  "Beard",
+  "Piercings",
+  "Outfits",
+  "Extras",
+];
+
 
 /* ------------------------------------------------------------------ */
 /* Studio                                                              */
@@ -284,11 +308,10 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   const renderedRef = useRef<Traits | null>(null);
 
   const hair = useMemo(() => hairFor(traits.gender), [traits.gender]);
-  const hairSheet = useMemo(() => hairSheetFor(traits.gender), [traits.gender]);
   const outfits = useMemo(() => outfitsFor(traits.gender), [traits.gender]);
-  const outfitSheet = useMemo(() => outfitSheetFor(traits.gender), [traits.gender]);
   const accessories = useMemo(() => accessoriesFor(traits.gender), [traits.gender]);
-  const accessorySheet = useMemo(() => accessorySheetFor(traits.gender), [traits.gender]);
+  const piercings = useMemo(() => piercingsFor(traits.gender), [traits.gender]);
+
 
   const generate = useCallback(
     async (prompt: string, reference: string | null, visualReference: string | null = null) => {
@@ -396,7 +419,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     });
   }
 
-  function toggleAccessory(name: string, index: number) {
+  function toggleAccessory(opt: Pic) {
+    const name = opt.name;
     setTraits((t) => {
       if (name === "no accessories") {
         if (!t.accessories.length) return t;
@@ -408,10 +432,11 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       const list = on ? t.accessories.filter((a) => a !== name) : [...t.accessories, name].slice(-3);
       const next = { ...t, accessories: list };
       if (on) queueRender(next);
-      else void cellDataUrl(accessorySheetFor(t.gender), index).then((picture) => queueRender(next, false, picture));
+      else void cellDataUrl(opt.sheet, opt.index).then((picture) => queueRender(next, false, picture));
       return next;
     });
   }
+
 
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
@@ -630,49 +655,53 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
           <div className="space-y-5">
             <SwatchGrid opts={HAIR_COLORS} value={traits.hairColor} onPick={(v) => update({ hairColor: v })} />
             <PictureGrid
-              sheet={hairSheet}
               opts={hair}
               value={traits.hair}
-              onPick={(name, index) => updateFromPicture({ hair: name }, hairSheet, index)}
+              onPick={(o) => updateFromPicture({ hair: o.name }, o.sheet, o.index)}
             />
           </div>
         ) : null}
 
         {category === "Wrinkles" ? (
           <PictureGrid
-            sheet={SHEETS.wrinkles}
             opts={WRINKLES}
             value={traits.wrinkles}
-            onPick={(name, index) => updateFromPicture({ wrinkles: name }, SHEETS.wrinkles, index)}
+            onPick={(o) => updateFromPicture({ wrinkles: o.name }, o.sheet, o.index)}
           />
         ) : null}
 
         {category === "Beard" && gender === "Male" ? (
           <PictureGrid
-            sheet={SHEETS.beards}
             opts={BEARDS}
             value={traits.beard}
-            onPick={(name, index) => updateFromPicture({ beard: name }, SHEETS.beards, index)}
+            onPick={(o) => updateFromPicture({ beard: o.name }, o.sheet, o.index)}
+          />
+        ) : null}
+
+        {category === "Piercings" ? (
+          <PictureGrid
+            opts={piercings}
+            value={traits.piercing}
+            onPick={(o) => updateFromPicture({ piercing: o.name }, o.sheet, o.index)}
           />
         ) : null}
 
         {category === "Outfits" ? (
           <PictureGrid
-            sheet={outfitSheet}
             opts={outfits}
             value={traits.outfit}
-            onPick={(name, index) => updateFromPicture({ outfit: name }, outfitSheet, index)}
+            onPick={(o) => updateFromPicture({ outfit: o.name }, o.sheet, o.index)}
           />
         ) : null}
 
         {category === "Extras" ? (
           <PictureGrid
-            sheet={accessorySheet}
             opts={accessories}
             value={traits.accessories.length ? traits.accessories : ["no accessories"]}
-            onPick={(name, index) => toggleAccessory(name, index)}
+            onPick={(o) => toggleAccessory(o)}
           />
         ) : null}
+
       </div>
 
       {selfieOpen ? (
