@@ -410,7 +410,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
     });
   }
 
-  function toggleAccessory(name: string, index: number) {
+  function toggleAccessory(opt: Pic) {
+    const name = opt.name;
     setTraits((t) => {
       if (name === "no accessories") {
         if (!t.accessories.length) return t;
@@ -422,10 +423,11 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       const list = on ? t.accessories.filter((a) => a !== name) : [...t.accessories, name].slice(-3);
       const next = { ...t, accessories: list };
       if (on) queueRender(next);
-      else void cellDataUrl(accessorySheetFor(t.gender), index).then((picture) => queueRender(next, false, picture));
+      else void cellDataUrl(opt.sheet, opt.index).then((picture) => queueRender(next, false, picture));
       return next;
     });
   }
+
 
   function chooseGender(g: "Male" | "Female") {
     const next = defaultTraits(g);
