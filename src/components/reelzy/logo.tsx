@@ -39,6 +39,8 @@ export function GoHeetWordmark({ className = "" }: { className?: string }) {
   return (
     <span
       className={`font-display text-xl font-extrabold tracking-[-0.04em] ${className}`}
+      data-no-translate
+      translate="no"
     >
       <span className="ember-text">Go</span>
       <span className="text-foreground">Heet</span>
