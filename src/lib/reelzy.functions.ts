@@ -218,14 +218,64 @@ export const completeSignup = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * First sign-in with a social provider (Apple/Google) has no onboarding step,
+ * so we mint a profile automatically from whatever the provider gave us.
+ * People can rename themselves later in Edit profile.
+ */
+async function autoCreateProfile(userId: string, claims: Record<string, unknown>) {
+  const sb = await admin();
+  const email = typeof claims["email"] === "string" ? (claims["email"] as string) : "";
+  const meta = (claims["user_metadata"] ?? {}) as Record<string, unknown>;
+  const rawName =
+    (typeof meta["name"] === "string" && meta["name"]) ||
+    (typeof meta["full_name"] === "string" && meta["full_name"]) ||
+    (typeof meta["preferred_username"] === "string" && meta["preferred_username"]) ||
+    email.split("@")[0] ||
+    "";
+  const base =
+    String(rawName)
+      .toLowerCase()
+      .replace(/[^a-z0-9_.]/g, "")
+      .slice(0, 16) || "heet";
+  const seed = base.length < 3 ? `${base}user` : base;
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const username =
+      attempt === 0 ? seed : `${seed}${Math.floor(1000 + Math.random() * 9000)}`.slice(0, 24);
+    const { data: taken } = await sb.rpc("username_taken", { _username: username });
+    if (taken) continue;
+    const { data: created, error } = await sb
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          username,
+          display_name: String(rawName).trim().slice(0, 40) || username,
+        },
+        { onConflict: "id" },
+      )
+      .select("*")
+      .maybeSingle();
+    if (!error && created) return created;
+  }
+  return null;
+}
+
 export const getMe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    let { data } = await context.supabase
       .from("profiles")
       .select("*")
       .eq("id", context.userId)
       .maybeSingle();
+    if (!data) {
+      data = await autoCreateProfile(
+        context.userId,
+        context.claims as unknown as Record<string, unknown>,
+      );
+    }
     if (!data) return { profile: null, isStaff: false };
     const { data: roles } = await context.supabase
       .from("user_roles")
