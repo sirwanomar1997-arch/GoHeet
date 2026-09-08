@@ -27,7 +27,7 @@ function ageFrom(dob: string) {
 function Onboarding() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: me } = useMe();
+  const { data: me, isLoading, isError, refetch } = useMe();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -37,7 +37,9 @@ function Onboarding() {
   const finish = useServerFn(completeSignup);
 
   useEffect(() => {
-    if (me?.profile?.username) void navigate({ to: "/feed" });
+    if (me?.profile?.username) {
+      void navigate({ to: "/u/$username", params: { username: me.profile.username }, replace: true });
+    }
   }, [me, navigate]);
 
   useEffect(() => {
@@ -66,6 +68,25 @@ function Onboarding() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  if (isLoading || me?.profile?.username) {
+    return (
+      <main className="grid min-h-svh place-items-center bg-background px-6">
+        <p className="text-sm text-muted-foreground">Opening your profile…</p>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="grid min-h-svh place-items-center bg-background px-6 text-center">
+        <div>
+          <p className="text-sm text-muted-foreground">We couldn’t load your profile.</p>
+          <Button className="mt-4" onClick={() => void refetch()}>Try again</Button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-svh bg-background px-6 pb-16 pt-10">
