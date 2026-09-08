@@ -307,7 +307,7 @@ function AuthPage() {
         )}
 
         <form onSubmit={submit} className="space-y-4">
-          {mode === "signin" && isPhone && otpSent ? (
+          {isPhone && otpSent ? (
             <div>
               <Label htmlFor="code">Enter the code</Label>
               <Input
@@ -338,11 +338,17 @@ function AuthPage() {
             <>
               <div>
                 <Label htmlFor="identifier">
-                  {mode === "signin" ? (isPhone ? "Phone number" : "Email or username") : "Email"}
+                  {mode === "signin"
+                    ? isPhone
+                      ? "Phone number"
+                      : "Email or username"
+                    : isPhone
+                      ? "Phone number"
+                      : "Email or phone number"}
                 </Label>
                 <Input
                   id="identifier"
-                  type={mode === "signup" ? "email" : "text"}
+                  type="text"
                   inputMode={isPhone ? "tel" : undefined}
                   autoComplete={mode === "signup" ? "email" : isPhone ? "tel" : "username"}
                   required
@@ -353,7 +359,15 @@ function AuthPage() {
                   }}
                   className="mt-1.5 h-12 bg-surface-raised"
                 />
+                {mode === "signup" && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {isPhone
+                      ? "We'll text you a code to confirm this number."
+                      : "Start with + to use a phone number instead."}
+                  </p>
+                )}
               </div>
+
               {(mode === "signup" || (mode === "signin" && !isPhone)) && (
                 <div>
                   <Label htmlFor="password">Password</Label>
