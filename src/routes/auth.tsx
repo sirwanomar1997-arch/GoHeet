@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const router = useRouter();
   const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -53,11 +54,21 @@ function AuthPage() {
 
   const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
 
+  // Clears any stale route data so the destination renders immediately
+  // instead of showing a blank screen until a manual refresh.
+  const goAuthed = useCallback(
+    async (to: string) => {
+      await router.invalidate();
+      await navigate({ to });
+    },
+    [router, navigate],
+  );
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) void navigate({ to: dest });
+      if (data.session) void goAuthed(dest);
     });
-  }, [navigate, dest]);
+  }, [goAuthed, dest]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +85,7 @@ function AuthPage() {
           setSent(true);
           return;
         }
-        await navigate({ to: "/onboarding" });
+        await goAuthed("/onboarding");
         return;
       }
 
@@ -95,7 +106,7 @@ function AuthPage() {
           type: "sms",
         });
         if (error) throw error;
-        await navigate({ to: dest });
+        await goAuthed(dest);
         return;
       }
 
@@ -108,7 +119,7 @@ function AuthPage() {
         refresh_token: res.refreshToken,
       });
       if (error) throw error;
-      await navigate({ to: dest });
+      await goAuthed(dest);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -125,7 +136,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    await navigate({ to: dest });
+    await goAuthed(dest);
   }
 
   if (sent) {
