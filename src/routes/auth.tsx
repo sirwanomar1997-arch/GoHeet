@@ -110,9 +110,29 @@ function AuthPage() {
     });
   }, [goToExistingProfileOrSetup, dest]);
 
+  async function sendReset() {
+    const id = identifier.trim();
+    if (!id || !id.includes("@")) {
+      toast.error("Enter the email address on your account first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(id, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Check your email for a link to set a new password.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === "signup") {
+    if (mode === "signup" && !otpSent) {
       const problem = passwordProblem(password);
       if (problem) {
         toast.error(problem);
@@ -122,8 +142,32 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const id = identifier.trim();
+
+        // Phone sign-up must be verified with an SMS code before the account
+        // can continue. Email sign-up goes straight through; verifying the
+        // address later in Settings is the person's own responsibility.
+        if (id.startsWith("+")) {
+          const phone = "+" + id.replace(/[^\d]/g, "");
+          if (!otpSent) {
+            const { error } = await supabase.auth.signUp({ phone, password });
+            if (error) throw error;
+            setOtpSent(true);
+            toast("We sent a code to your phone.");
+            return;
+          }
+          const { error } = await supabase.auth.verifyOtp({
+            phone,
+            token: code.trim(),
+            type: "sms",
+          });
+          if (error) throw error;
+          goAuthed("/onboarding");
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
-          email: identifier.trim(),
+          email: id,
           password,
           options: { emailRedirectTo: `${window.location.origin}${dest}` },
         });
@@ -263,7 +307,7 @@ function AuthPage() {
         )}
 
         <form onSubmit={submit} className="space-y-4">
-          {mode === "signin" && isPhone && otpSent ? (
+          {isPhone && otpSent ? (
             <div>
               <Label htmlFor="code">Enter the code</Label>
               <Input
@@ -294,11 +338,17 @@ function AuthPage() {
             <>
               <div>
                 <Label htmlFor="identifier">
-                  {mode === "signin" ? (isPhone ? "Phone number" : "Email or username") : "Email"}
+                  {mode === "signin"
+                    ? isPhone
+                      ? "Phone number"
+                      : "Email or username"
+                    : isPhone
+                      ? "Phone number"
+                      : "Email or phone number"}
                 </Label>
                 <Input
                   id="identifier"
-                  type={mode === "signup" ? "email" : "text"}
+                  type="text"
                   inputMode={isPhone ? "tel" : undefined}
                   autoComplete={mode === "signup" ? "email" : isPhone ? "tel" : "username"}
                   required
@@ -309,7 +359,15 @@ function AuthPage() {
                   }}
                   className="mt-1.5 h-12 bg-surface-raised"
                 />
+                {mode === "signup" && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {isPhone
+                      ? "We'll text you a code to confirm this number."
+                      : "Start with + to use a phone number instead."}
+                  </p>
+                )}
               </div>
+
               {(mode === "signup" || (mode === "signin" && !isPhone)) && (
                 <div>
                   <Label htmlFor="password">Password</Label>
@@ -368,13 +426,27 @@ function AuthPage() {
             {busy
               ? "One moment…"
               : mode === "signup"
-                ? "Create account"
+                ? isPhone
+                  ? otpSent
+                    ? "Verify & continue"
+                    : "Send code"
+                  : "Create account"
                 : isPhone
                   ? otpSent
                     ? "Verify & log in"
                     : "Send code"
                   : "Log in"}
           </Button>
+          {mode === "signin" && !isPhone && (
+            <button
+              type="button"
+              onClick={sendReset}
+              disabled={busy}
+              className="w-full text-center text-sm text-muted-foreground underline"
+            >
+              Forgot password?
+            </button>
+          )}
         </form>
 
         <button
