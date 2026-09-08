@@ -5,9 +5,12 @@
  * the chosen language. Translations are fetched once, cached in the browser and
  * on the server, and reused instantly afterwards.
  *
- * Important: anything already known is applied *synchronously*, in the same
- * frame the text appears. Screens re-render constantly (feed, counters, tabs),
- * and any delay there makes text visibly flip between languages.
+ * Two rules keep language switching instant and stable:
+ *  - The original English text of every node is remembered *globally*, so
+ *    switching from Swedish to German never sends Swedish text off to be
+ *    translated (that was the cause of mixed-language screens and long waits).
+ *  - Anything already known is applied synchronously in the same frame, so text
+ *    never flips between languages between renders.
  *
  * Anything marked with `data-no-translate` is left exactly as written — that is
  * where people's own content lives (posts, names, messages).
@@ -19,8 +22,11 @@ const ATTRS = ["placeholder", "aria-label", "title", "alt"] as const;
 const HAS_LETTER = /\p{L}{2,}/u;
 const MAX_LEN = 300;
 const BATCH = 60;
+const PARALLEL = 4;
 
 type Job = { apply: (value: string) => void };
+
+/* ---------------------------------------------------------------- caching */
 
 function cacheKey(locale: string) {
   return `goheet.tr.${locale}`;
@@ -42,6 +48,35 @@ function saveCache(locale: string, cache: Record<string, string>) {
     /* storage full or blocked — translations simply refetch next time */
   }
 }
+
+/**
+ * Translated text (any language) → original English.
+ * Shared across every language, so text already on screen in Swedish is
+ * recognised the moment someone switches to German.
+ */
+const globalReverse = new Map<string, string>();
+let reverseLoaded = false;
+
+function loadGlobalReverse() {
+  if (reverseLoaded) return;
+  reverseLoaded = true;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith("goheet.tr.")) continue;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const entries = JSON.parse(raw) as Record<string, string>;
+      for (const [source, value] of Object.entries(entries)) globalReverse.set(value, source);
+    }
+  } catch {
+    /* unreadable storage — we simply have no back-references yet */
+  }
+}
+
+/** Original English per node, kept across language switches. */
+const originalsText = new WeakMap<Text, string>();
+const originalsAttr = new WeakMap<Element, Record<string, string>>();
 
 // Brand words and the official brand line always stay exactly as written.
 const BRAND = /^(goheet|go\s*heet|heet|heets|reelz|reelzy|go)$/i;
@@ -65,32 +100,34 @@ function skipped(node: Node | null): boolean {
   return false;
 }
 
+/* --------------------------------------------------------------- runtime */
+
 export function startAutoTranslate(locale: string): () => void {
   const englishMode = locale === "en";
 
-  // Original English text per node, so switching language again works.
-  const originalsText = new WeakMap<Text, string>();
-  const originalsAttr = new WeakMap<Element, Record<string, string>>();
+  loadGlobalReverse();
+
   // What we last wrote, so re-scans recognise our own output instantly.
   const written = new WeakMap<Text, string>();
 
   const cache = loadCache(locale);
-  const reverse = new Map<string, string>();
-  for (const [source, value] of Object.entries(cache)) reverse.set(value, source);
+  for (const [source, value] of Object.entries(cache)) globalReverse.set(value, source);
 
   const pending = new Set<string>();
   const jobs = new Map<string, Job[]>();
   let applying = false;
   let stopped = false;
-  let fetchTimer: ReturnType<typeof setTimeout> | null = null;
+  let running = 0;
 
-  function scheduleFetch() {
-    if (stopped || englishMode || pending.size === 0) return;
-    if (fetchTimer) return;
-    fetchTimer = setTimeout(() => {
-      fetchTimer = null;
-      void flush();
-    }, 150);
+  function pump() {
+    if (stopped || englishMode) return;
+    while (running < PARALLEL && pending.size > 0) {
+      running++;
+      void flush().finally(() => {
+        running--;
+        if (pending.size > 0) pump();
+      });
+    }
   }
 
   function queue(source: string, apply: (value: string) => void) {
@@ -105,7 +142,13 @@ export function startAutoTranslate(locale: string): () => void {
     list.push({ apply });
     jobs.set(source, list);
     pending.add(source);
-    scheduleFetch();
+  }
+
+  /** Best guess at the English source behind whatever is currently on screen. */
+  function englishOf(current: string): string {
+    const trimmed = current.trim();
+    const back = globalReverse.get(trimmed);
+    return back ? current.replace(trimmed, back) : current;
   }
 
   function handleText(textNode: Text) {
@@ -113,13 +156,8 @@ export function startAutoTranslate(locale: string): () => void {
     // Text we wrote ourselves — nothing to do.
     if (written.get(textNode) === current) return;
 
-    // Recover the English source: remembered, or reverse-looked-up when React
-    // handed us a fresh node that already contains a translation.
     let original = originalsText.get(textNode);
-    if (original === undefined) {
-      const back = reverse.get(current.trim());
-      original = back ? current.replace(current.trim(), back) : current;
-    }
+    if (original === undefined) original = englishOf(current);
 
     if (!translatable(original) || skipped(textNode)) return;
 
@@ -129,6 +167,7 @@ export function startAutoTranslate(locale: string): () => void {
         textNode.nodeValue = original;
         applying = false;
       }
+      originalsText.set(textNode, original);
       return;
     }
 
@@ -149,17 +188,17 @@ export function startAutoTranslate(locale: string): () => void {
       const stored = originalsAttr.get(el)?.[attr];
       const currentValue = el.getAttribute(attr);
       if (currentValue === null) continue;
-      const original = stored ?? reverse.get(currentValue.trim()) ?? currentValue;
+      const original = stored ?? englishOf(currentValue);
       if (!translatable(original)) continue;
+      originalsAttr.set(el, { ...(originalsAttr.get(el) ?? {}), [attr]: original });
       if (englishMode) {
-        if (stored && currentValue !== stored) {
+        if (currentValue !== original) {
           applying = true;
-          el.setAttribute(attr, stored);
+          el.setAttribute(attr, original);
           applying = false;
         }
         continue;
       }
-      originalsAttr.set(el, { ...(originalsAttr.get(el) ?? {}), [attr]: original });
       queue(original.trim(), (value) => {
         if (el.getAttribute(attr) !== value) el.setAttribute(attr, value);
       });
@@ -194,6 +233,7 @@ export function startAutoTranslate(locale: string): () => void {
       translations = res.translations ?? {};
     } catch {
       // Offline or rate limited — English stays visible, we retry on next scan.
+      for (const text of batch) pending.add(text);
       return;
     }
     if (stopped) return;
@@ -201,7 +241,7 @@ export function startAutoTranslate(locale: string): () => void {
     applying = true;
     for (const [source, value] of Object.entries(translations)) {
       cache[source] = value;
-      reverse.set(value, source);
+      globalReverse.set(value, source);
       for (const job of jobs.get(source) ?? []) {
         try {
           job.apply(value);
@@ -213,8 +253,6 @@ export function startAutoTranslate(locale: string): () => void {
     }
     applying = false;
     saveCache(locale, cache);
-
-    if (pending.size > 0) void flush();
   }
 
   // Applied immediately, in the same frame the DOM changes, so cached text
@@ -232,13 +270,13 @@ export function startAutoTranslate(locale: string): () => void {
       }
     }
     applying = false;
-    scheduleFetch();
+    pump();
   });
 
   applying = true;
   scan(document.body);
   applying = false;
-  void flush();
+  pump();
 
   observer.observe(document.body, {
     childList: true,
@@ -250,7 +288,6 @@ export function startAutoTranslate(locale: string): () => void {
 
   return () => {
     stopped = true;
-    if (fetchTimer) clearTimeout(fetchTimer);
     observer.disconnect();
   };
 }
