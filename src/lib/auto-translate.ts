@@ -5,6 +5,10 @@
  * the chosen language. Translations are fetched once, cached in the browser and
  * on the server, and reused instantly afterwards.
  *
+ * Important: anything already known is applied *synchronously*, in the same
+ * frame the text appears. Screens re-render constantly (feed, counters, tabs),
+ * and any delay there makes text visibly flip between languages.
+ *
  * Anything marked with `data-no-translate` is left exactly as written — that is
  * where people's own content lives (posts, names, messages).
  */
@@ -16,7 +20,7 @@ const HAS_LETTER = /\p{L}{2,}/u;
 const MAX_LEN = 300;
 const BATCH = 60;
 
-type Job = { apply: (value: string) => void; original: string };
+type Job = { apply: (value: string) => void };
 
 function cacheKey(locale: string) {
   return `goheet.tr.${locale}`;
@@ -62,81 +66,120 @@ function skipped(node: Node | null): boolean {
 }
 
 export function startAutoTranslate(locale: string): () => void {
+  const englishMode = locale === "en";
+
   // Original English text per node, so switching language again works.
   const originalsText = new WeakMap<Text, string>();
   const originalsAttr = new WeakMap<Element, Record<string, string>>();
+  // What we last wrote, so re-scans recognise our own output instantly.
+  const written = new WeakMap<Text, string>();
+
   const cache = loadCache(locale);
+  const reverse = new Map<string, string>();
+  for (const [source, value] of Object.entries(cache)) reverse.set(value, source);
+
   const pending = new Set<string>();
   const jobs = new Map<string, Job[]>();
   let applying = false;
   let stopped = false;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let fetchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const englishMode = locale === "en";
+  function scheduleFetch() {
+    if (stopped || englishMode || pending.size === 0) return;
+    if (fetchTimer) return;
+    fetchTimer = setTimeout(() => {
+      fetchTimer = null;
+      void flush();
+    }, 150);
+  }
 
-  function queue(original: string, apply: (value: string) => void) {
-    const hit = cache[original];
+  function queue(source: string, apply: (value: string) => void) {
+    const hit = cache[source];
     if (hit) {
       applying = true;
       apply(hit);
       applying = false;
       return;
     }
-    const list = jobs.get(original) ?? [];
-    list.push({ apply, original });
-    jobs.set(original, list);
-    pending.add(original);
+    const list = jobs.get(source) ?? [];
+    list.push({ apply });
+    jobs.set(source, list);
+    pending.add(source);
+    scheduleFetch();
+  }
+
+  function handleText(textNode: Text) {
+    const current = textNode.nodeValue ?? "";
+    // Text we wrote ourselves — nothing to do.
+    if (written.get(textNode) === current) return;
+
+    // Recover the English source: remembered, or reverse-looked-up when React
+    // handed us a fresh node that already contains a translation.
+    let original = originalsText.get(textNode);
+    if (original === undefined) {
+      const back = reverse.get(current.trim());
+      original = back ? current.replace(current.trim(), back) : current;
+    }
+
+    if (!translatable(original) || skipped(textNode)) return;
+
+    if (englishMode) {
+      if (textNode.nodeValue !== original) {
+        applying = true;
+        textNode.nodeValue = original;
+        applying = false;
+      }
+      return;
+    }
+
+    originalsText.set(textNode, original);
+    const leading = original.match(/^\s*/)?.[0] ?? "";
+    const trailing = original.match(/\s*$/)?.[0] ?? "";
+    queue(original.trim(), (value) => {
+      const next = leading + value + trailing;
+      if (textNode.nodeValue === next) return;
+      textNode.nodeValue = next;
+      written.set(textNode, next);
+    });
+  }
+
+  function handleElement(el: Element) {
+    if (skipped(el)) return;
+    for (const attr of ATTRS) {
+      const stored = originalsAttr.get(el)?.[attr];
+      const currentValue = el.getAttribute(attr);
+      if (currentValue === null) continue;
+      const original = stored ?? reverse.get(currentValue.trim()) ?? currentValue;
+      if (!translatable(original)) continue;
+      if (englishMode) {
+        if (stored && currentValue !== stored) {
+          applying = true;
+          el.setAttribute(attr, stored);
+          applying = false;
+        }
+        continue;
+      }
+      originalsAttr.set(el, { ...(originalsAttr.get(el) ?? {}), [attr]: original });
+      queue(original.trim(), (value) => {
+        if (el.getAttribute(attr) !== value) el.setAttribute(attr, value);
+      });
+    }
   }
 
   function scan(root: Node) {
+    if (root.nodeType === Node.TEXT_NODE) {
+      handleText(root as Text);
+      return;
+    }
+    if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) return;
+    if (root.nodeType === Node.ELEMENT_NODE) handleElement(root as Element);
+
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-    const nodes: Node[] = [];
-    if (root.nodeType === Node.TEXT_NODE || root.nodeType === Node.ELEMENT_NODE) nodes.push(root);
     let current = walker.nextNode();
     while (current) {
-      nodes.push(current);
+      if (current.nodeType === Node.TEXT_NODE) handleText(current as Text);
+      else handleElement(current as Element);
       current = walker.nextNode();
-    }
-
-    for (const node of nodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const textNode = node as Text;
-        const original = originalsText.get(textNode) ?? textNode.nodeValue ?? "";
-        if (!translatable(original) || skipped(textNode)) continue;
-        if (englishMode) {
-          if (originalsText.has(textNode) && textNode.nodeValue !== original) {
-            applying = true;
-            textNode.nodeValue = original;
-            applying = false;
-          }
-          continue;
-        }
-        originalsText.set(textNode, original);
-        const leading = original.match(/^\s*/)?.[0] ?? "";
-        const trailing = original.match(/\s*$/)?.[0] ?? "";
-        queue(original.trim(), (value) => {
-          textNode.nodeValue = leading + value + trailing;
-        });
-        continue;
-      }
-
-      const el = node as Element;
-      if (skipped(el)) continue;
-      for (const attr of ATTRS) {
-        const stored = originalsAttr.get(el)?.[attr];
-        const original = stored ?? el.getAttribute(attr) ?? "";
-        if (!translatable(original)) continue;
-        if (englishMode) {
-          if (stored && el.getAttribute(attr) !== stored) {
-            applying = true;
-            el.setAttribute(attr, stored);
-            applying = false;
-          }
-          continue;
-        }
-        originalsAttr.set(el, { ...(originalsAttr.get(el) ?? {}), [attr]: original });
-        queue(original.trim(), (value) => el.setAttribute(attr, value));
-      }
     }
   }
 
@@ -158,6 +201,7 @@ export function startAutoTranslate(locale: string): () => void {
     applying = true;
     for (const [source, value] of Object.entries(translations)) {
       cache[source] = value;
+      reverse.set(value, source);
       for (const job of jobs.get(source) ?? []) {
         try {
           job.apply(value);
@@ -173,34 +217,29 @@ export function startAutoTranslate(locale: string): () => void {
     if (pending.size > 0) void flush();
   }
 
-  function run() {
-    if (stopped) return;
-    applying = true;
-    scan(document.body);
-    applying = false;
-    void flush();
-  }
-
-  const schedule = () => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(run, 200);
-  };
-
+  // Applied immediately, in the same frame the DOM changes, so cached text
+  // never flashes back to English between renders.
   const observer = new MutationObserver((records) => {
     if (applying) return;
+    applying = true;
     for (const record of records) {
-      if (record.type === "characterData" || record.addedNodes.length > 0) {
-        schedule();
-        return;
-      }
-      if (record.type === "attributes") {
-        schedule();
-        return;
+      if (record.type === "characterData") {
+        handleText(record.target as Text);
+      } else if (record.type === "attributes") {
+        handleElement(record.target as Element);
+      } else {
+        for (const node of Array.from(record.addedNodes)) scan(node);
       }
     }
+    applying = false;
+    scheduleFetch();
   });
 
-  run();
+  applying = true;
+  scan(document.body);
+  applying = false;
+  void flush();
+
   observer.observe(document.body, {
     childList: true,
     subtree: true,
@@ -211,7 +250,7 @@ export function startAutoTranslate(locale: string): () => void {
 
   return () => {
     stopped = true;
-    if (timer) clearTimeout(timer);
+    if (fetchTimer) clearTimeout(fetchTimer);
     observer.disconnect();
   };
 }
