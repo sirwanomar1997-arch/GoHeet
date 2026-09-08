@@ -380,6 +380,20 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = dir;
   }, [locale]);
 
+  // Translates every screen — including ones without a hand-written dictionary.
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import("./auto-translate").then(({ startAutoTranslate }) => {
+      if (cancelled) return;
+      stop = startAutoTranslate(locale);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [locale]);
+
   const setLocale = useCallback((next: Locale | "auto") => {
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
