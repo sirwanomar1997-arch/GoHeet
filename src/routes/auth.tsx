@@ -8,7 +8,7 @@ import { signInWithIdentifier } from "@/lib/reelzy.functions";
 import { GoHeetMark, GoHeetWordmark } from "@/components/reelzy/logo";
 import { HeetFlame } from "@/components/reelzy/heet-flame";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,22 @@ const searchSchema = z.object({
   mode: z.enum(["signup", "signin"]).optional(),
   redirect: z.string().optional(),
 });
+
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
+  { label: "One capital letter", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "One number", test: (v: string) => /\d/.test(v) },
+  {
+    label: "One special character",
+    test: (v: string) => /[^A-Za-z0-9]/.test(v),
+  },
+] as const;
+
+function passwordProblem(value: string): string | null {
+  const failed = PASSWORD_RULES.filter((r) => !r.test(value));
+  if (failed.length === 0) return null;
+  return `Password needs: ${failed.map((r) => r.label.toLowerCase()).join(", ")}.`;
+}
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
@@ -96,6 +112,13 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "signup") {
+      const problem = passwordProblem(password);
+      if (problem) {
+        toast.error(problem);
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -311,6 +334,28 @@ function AuthPage() {
                       {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
+                  {mode === "signup" && password.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {PASSWORD_RULES.map((rule) => {
+                        const ok = rule.test(password);
+                        return (
+                          <li
+                            key={rule.label}
+                            className={`flex items-center gap-1.5 text-xs ${
+                              ok ? "text-green-500" : "text-muted-foreground"
+                            }`}
+                          >
+                            {ok ? (
+                              <Check className="size-3.5" />
+                            ) : (
+                              <span className="size-3.5 rounded-full border border-current opacity-50" />
+                            )}
+                            {rule.label}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
               )}
             </>
