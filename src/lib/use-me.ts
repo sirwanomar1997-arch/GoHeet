@@ -7,9 +7,11 @@ export function useMe() {
   return useQuery({
     queryKey: ["me"],
     queryFn: () => fetchMe({ data: undefined as never }),
-    staleTime: 30_000,
-    retry: 3,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    retry: 2,
     retryDelay: (attempt) => Math.min(400 * 2 ** attempt, 2_000),
-    refetchOnMount: "always",
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }

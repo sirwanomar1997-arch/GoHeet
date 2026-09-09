@@ -58,10 +58,11 @@ function EditProfilePage() {
   const mutation = useMutation({
     mutationFn: () =>
       save({ data: { username, displayName, bio, socialLinks: links } }),
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Profile updated.");
-      await qc.invalidateQueries({ queryKey: ["me"] });
-      await navigate({ to: "/u/$username", params: { username } });
+      void navigate({ to: "/u/$username", params: { username } });
+      void qc.invalidateQueries({ queryKey: ["me"] });
+      void qc.invalidateQueries({ queryKey: ["profile", username] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -117,8 +118,9 @@ function EditProfilePage() {
         <Link
           to="/u/$username"
           params={{ username: me?.profile?.username ?? "" }}
+          preload="intent"
           aria-label="Back to profile"
-          className="grid size-9 place-items-center rounded-full border border-border bg-surface text-muted-foreground"
+          className="tap-target grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground active:scale-95"
         >
           <ArrowLeft className="size-4" />
         </Link>
@@ -302,7 +304,8 @@ function EditProfilePage() {
 
         <Link
           to="/settings"
-          className="block rounded-2xl border border-border p-4 text-sm font-medium"
+          preload="intent"
+          className="block touch-manipulation rounded-2xl border border-border p-4 text-sm font-medium active:scale-[0.99]"
         >
           Looking for privacy, password or account settings? →
         </Link>

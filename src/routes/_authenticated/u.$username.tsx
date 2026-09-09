@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,6 +83,7 @@ function ProfilePage() {
   const [sending, setSending] = useState(false);
   const postMessage = useServerFn(sendMessage);
   const navigate = useNavigate();
+  const router = useRouter();
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [adultLink, setAdultLink] = useState<string | null>(null);
@@ -95,7 +96,18 @@ function ProfilePage() {
       demo
         ? getDemoProfile(username, sort)
         : fetchProfile({ data: { username, sort } }),
+    staleTime: 30_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (!data?.isSelf) return;
+    void Promise.all([
+      router.preloadRoute({ to: "/edit-profile" }),
+      router.preloadRoute({ to: "/settings" }),
+    ]);
+  }, [data?.isSelf, router]);
 
   // Opening a shared reel link (?r=<id>) lands straight on that reel.
   useEffect(() => {
@@ -150,30 +162,30 @@ function ProfilePage() {
 
 
   return (
-    <AppShell hideNav>
+    <AppShell>
       {/* --- Profile image stage --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
         <div
           aria-hidden
-          className="ember-fill absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
+          className="ember-fill pointer-events-none absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
         />
         {data.isSelf ? (
-          <div className="absolute right-5 top-5 flex gap-2">
+          <div className="absolute right-4 top-4 z-20 flex gap-2">
             <Link
               to="/edit-profile"
-              preload="render"
+              preload="intent"
               aria-label="Edit profile"
-              className="grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-95"
+              className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
-              <Pencil className="size-4" />
+              <Pencil className="pointer-events-none size-5" />
             </Link>
             <Link
               to="/settings"
-              preload="render"
+              preload="intent"
               aria-label="Settings"
-              className="grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-95"
+              className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
-              <Settings className="size-4" />
+              <Settings className="pointer-events-none size-5" />
             </Link>
           </div>
         ) : (
