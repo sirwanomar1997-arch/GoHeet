@@ -136,6 +136,8 @@ function CameraPage() {
 
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
+  // The flip owns lens changes, so the boot effect reads facing from here.
+  const facingRef = useRef<"user" | "environment">("environment");
   const withAudio = true;
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(true);
