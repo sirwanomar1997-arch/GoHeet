@@ -263,6 +263,7 @@ function ProfilePage() {
           {data.isSelf ? (
             <Link
               to="/edit-profile"
+              replace
               className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               <Sparkles className="size-3" /> Manage profile picture
