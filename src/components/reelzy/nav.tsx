@@ -176,8 +176,11 @@ function useSwipeNav() {
       const dx = t.clientX - start.x;
       const dy = t.clientY - start.y;
       if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      const next = dx < 0 ? routes[index + 1] : routes[index - 1];
-      if (next) void navigate({ to: next });
+      // Circular: swipe left past the last page wraps to the home feed,
+      // swipe right past the first wraps to the profile.
+      const len = routes.length;
+      const next = dx < 0 ? routes[(index + 1) % len] : routes[(index - 1 + len) % len];
+      if (next && next !== routes[index]) void navigate({ to: next });
     },
   };
 }
