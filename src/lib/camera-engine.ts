@@ -401,6 +401,9 @@ export class CameraEngine {
       this.mixVideo = null;
     }
     this.canvas = null;
+    this.freeze = null;
+    this.fadeFrom = 0;
+    this.swapping = false;
   }
 
   stopRecording() {
