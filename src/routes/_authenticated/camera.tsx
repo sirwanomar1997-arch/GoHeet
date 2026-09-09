@@ -136,7 +136,7 @@ function CameraPage() {
 
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
-  const [withAudio, setWithAudio] = useState(true);
+  const withAudio = true;
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(true);
   const [error, setError] = useState<EngineError | null>(null);
