@@ -18,7 +18,7 @@ function waitForSessionFromUrl(timeoutMs = 4000): Promise<boolean> {
     const cleanup = () => {
       clearTimeout(timer);
       try {
-        subscription.unsubscribe();
+        subscription.data.subscription.unsubscribe();
       } catch {
         /* noop */
       }
