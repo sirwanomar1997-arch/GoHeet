@@ -588,7 +588,7 @@ export function MomentStage({
 
 
         {moment.caption ? (
-          <p className="mt-3 font-display text-[17px] leading-snug tracking-tight text-foreground/95" data-no-translate>
+          <p className="mt-2.5 max-w-[82%] text-sm font-normal leading-relaxed text-foreground/90" data-no-translate>
             {moment.caption}
           </p>
 
