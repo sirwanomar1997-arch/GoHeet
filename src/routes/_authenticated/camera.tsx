@@ -1082,13 +1082,26 @@ function CameraPage() {
           className="size-full object-cover transition-[opacity,transform] duration-300 ease-out"
           style={{
             transform: previewTransform,
-            opacity: flipping || booting ? 0 : 1,
+            opacity: booting ? 0 : 1,
             ...(filterCss(look) ? { filter: filterCss(look) } : {}),
           }}
           playsInline
           muted
           autoPlay
         />
+        {/* Held still from the outgoing lens — dissolves away once the new one is live. */}
+        {flipHold ? (
+          <img
+            src={flipHold}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-300 ease-out"
+            style={{
+              opacity: flipping ? 1 : 0,
+              ...(filterCss(look) ? { filter: filterCss(look) } : {}),
+            }}
+          />
+        ) : null}
         <GradeLayers filterId={look} />
 
         {/* A whisper of vignette so controls read cleanly over any scene. */}
