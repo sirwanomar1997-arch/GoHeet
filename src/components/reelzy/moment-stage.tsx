@@ -65,6 +65,7 @@ const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "dangerous", label: "Dangerous behaviour" },
   { value: "spam", label: "Spam" },
   { value: "impersonation", label: "Impersonation" },
+  { value: "ai_generated", label: "AI-generated / not real" },
   { value: "illegal", label: "Illegal content" },
   { value: "self_harm", label: "Self-harm" },
   { value: "other", label: "Something else" },

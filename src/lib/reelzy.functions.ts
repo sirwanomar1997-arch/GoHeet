@@ -1547,6 +1547,7 @@ export const submitReport = createServerFn({ method: "POST" })
         "impersonation",
         "illegal",
         "self_harm",
+        "ai_generated",
         "other",
       ])
       .parse(d.category),
@@ -1564,6 +1565,49 @@ export const submitReport = createServerFn({ method: "POST" })
     if (data.targetType === "moment") {
       const sb = await admin();
       await sb.from("moments").update({ moderation_state: "flagged" }).eq("id", data.targetId);
+
+      // "Not real" reports re-run the AI check straight away and take the post
+      // down the second it is confirmed — no waiting for a human.
+      if (data.category === "ai_generated") {
+        const { data: m } = await sb
+          .from("moments")
+          .select("id, kind, media_path, thumbnail_path, caption, author_id, status")
+          .eq("id", data.targetId)
+          .maybeSingle();
+        if (m && m.status === "published") {
+          const framePath = m.kind === "photo" ? m.media_path : (m.thumbnail_path ?? m.media_path);
+          const { data: signed } = await sb.storage.from("moments").createSignedUrl(framePath, 300);
+          const { detectSyntheticFrame } = await import("@/lib/ai-detect.server");
+          const ai = await detectSyntheticFrame({
+            imageUrl: signed?.signedUrl ?? null,
+            caption: m.caption ?? "",
+          });
+          await sb
+            .from("moments")
+            .update({ ai_score: ai.score, ai_reason: ai.reason, ai_checked_at: new Date().toISOString() })
+            .eq("id", m.id);
+          if (ai.synthetic) {
+            await sb
+              .from("moments")
+              .update({ status: "removed", moderation_state: "auto_removed", deleted_at: new Date().toISOString() })
+              .eq("id", m.id);
+            await sb.from("moderation_actions").insert({
+              actor_id: null,
+              action: "remove_content",
+              target_type: "moment",
+              target_id: m.id,
+              reason: `Reported as AI — confirmed (${ai.score}/100): ${ai.reason}`.slice(0, 300),
+            });
+            await sb
+              .from("reports")
+              .update({ status: "actioned", resolved_at: new Date().toISOString() })
+              .eq("target_id", m.id)
+              .eq("category", "ai_generated")
+              .eq("status", "open");
+            await enforceAuthorStrikes(m.author_id as string);
+          }
+        }
+      }
     }
     await track(context.userId, "report_submitted", { type: data.targetType });
     return { ok: true };
