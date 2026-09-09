@@ -272,7 +272,11 @@ function SettingsPage() {
       </header>
 
       <div className="space-y-4 px-5 pb-12">
-        <Link to="/edit-profile" className={`${section} flex items-center justify-between`}>
+        <Link
+          to="/edit-profile"
+          preload="intent"
+          className={`${section} flex touch-manipulation items-center justify-between active:scale-[0.99]`}
+        >
           <span className="flex items-center gap-3 text-sm font-medium">
             <Pencil className="size-4 text-muted-foreground" /> Edit profile & platform links
           </span>

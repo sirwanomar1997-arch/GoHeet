@@ -52,3 +52,8 @@
 
 - [x] Remove music information from the scrolling feed
 - [x] Make video descriptions smaller and lighter
+
+- [x] Make profile Edit and Settings controls respond on the first tap
+- [x] Remove blocking profile-save navigation waits
+- [x] Preserve Home/Profile-only swipe navigation
+- [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)
