@@ -162,7 +162,7 @@ function ProfilePage() {
 
 
   return (
-    <AppShell>
+    <AppShell hideNav>
       {/* --- Profile image stage --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
         <div
