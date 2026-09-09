@@ -220,8 +220,12 @@ function AuthPage() {
 
   async function oauth(provider: "google" | "apple") {
     window.sessionStorage.setItem("goheet.auth.destination", dest);
+    // Return to the origin root (a public route), not /auth. The broker redirects
+    // here with the session, the root guard detects it and sends the user to
+    // /feed (or /onboarding). Pointing the return at /auth itself can leave the
+    // browser stuck on the Lovable broker page after Apple/Google sign-in.
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}/auth`,
+      redirect_uri: window.location.origin,
     });
     if (result.error) {
       toast.error("Sign-in didn't work. Try email instead.");
