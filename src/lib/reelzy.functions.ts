@@ -647,6 +647,9 @@ export const publishMoment = createServerFn({ method: "POST" })
       })
       .eq("id", session.id);
 
+    const { AI_HOLD_THRESHOLD, AI_REJECTION_MESSAGE, checkProvenance, detectSyntheticFrame } = await import(
+      "@/lib/ai-detect.server"
+    );
     const reviewText = [data.caption, data.overlay?.text].filter(Boolean).join(" \n ");
     const framePath = data.kind === "photo" ? data.mediaPath : (data.thumbnailPath ?? null);
 
