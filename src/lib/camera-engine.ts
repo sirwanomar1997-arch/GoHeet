@@ -323,14 +323,42 @@ export class CameraEngine {
     this.canvas = canvas;
     this.mixVideo = mix;
 
+    const FADE_MS = 260;
+    const drawCover = (source: CanvasImageSource, sw: number, sh: number) => {
+      // Cover-fit so a lens with a different aspect never letterboxes the take.
+      const scale = Math.max(canvas.width / sw, canvas.height / sh);
+      const w = sw * scale;
+      const h = sh * scale;
+      ctx?.drawImage(source, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    };
+
     const draw = () => {
       this.raf = requestAnimationFrame(draw);
-      if (!ctx || !mix.videoWidth) return;
-      // Cover-fit so a lens with a different aspect never letterboxes the take.
-      const scale = Math.max(canvas.width / mix.videoWidth, canvas.height / mix.videoHeight);
-      const w = mix.videoWidth * scale;
-      const h = mix.videoHeight * scale;
-      ctx.drawImage(mix, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+      if (!ctx) return;
+      const live = mix.videoWidth > 0 && mix.readyState >= 2 && !this.swapping;
+      const held = this.freeze;
+
+      // Lens is waking up: keep the last good frame on screen instead of black.
+      if (!live) {
+        if (held) drawCover(held, held.width, held.height);
+        return;
+      }
+
+      // New lens is live: dissolve out of the held frame so the cut feels soft.
+      const t = held && this.fadeFrom ? Math.min(1, (performance.now() - this.fadeFrom) / FADE_MS) : 1;
+      if (held && t < 1) {
+        drawCover(held, held.width, held.height);
+        ctx.save();
+        ctx.globalAlpha = t;
+        drawCover(mix, mix.videoWidth, mix.videoHeight);
+        ctx.restore();
+        return;
+      }
+      if (held && t >= 1) {
+        this.freeze = null;
+        this.fadeFrom = 0;
+      }
+      drawCover(mix, mix.videoWidth, mix.videoHeight);
     };
     this.raf = requestAnimationFrame(draw);
 
