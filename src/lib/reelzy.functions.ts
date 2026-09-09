@@ -531,6 +531,8 @@ export const publishMoment = createServerFn({ method: "POST" })
     styleFilter?: string;
     overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number };
     originalAudioVolume?: number;
+    liveCapture?: boolean;
+    cameraLabel?: string;
   }) => ({
     sessionId: z.string().uuid().parse(d.sessionId),
     mediaPath: z.string().max(300).parse(d.mediaPath),
