@@ -248,7 +248,8 @@ function CameraPage() {
         await videoRef.current.play().catch(() => undefined);
       }
       setZoomRange(engine.state.zoomRange);
-      setZoom(engine.state.zoomRange?.min ?? 1);
+      // Every take opens at the natural 1× view, never at the widest lens.
+      setZoom(await engine.setZoom(1).catch(() => 1));
       setDigital(1);
       setTorchAvailable(engine.state.torchAvailable);
       setTorch(false);
@@ -444,7 +445,16 @@ function CameraPage() {
 
   /** Zoom: real lens zoom where the device offers it, gentle digital zoom otherwise. */
   const maxDigital = 4;
-  const zoomLabel = zoomRange ? `${(zoom / (zoomRange.min || 1)).toFixed(1)}×` : `${digital.toFixed(1)}×`;
+  /** Current view in the familiar phone-camera numbers (.5× / 1× / 2× / 3×). */
+  const zoomFactor = zoomRange ? zoom : digital;
+  const zoomLabel = `${zoomFactor < 1 ? zoomFactor.toFixed(1).replace(/^0/, "") : zoomFactor.toFixed(1)}×`;
+
+  /** The steps offered on screen, trimmed to what this lens can actually do. */
+  const zoomSteps = (() => {
+    const min = zoomRange?.min ?? 1;
+    const max = zoomRange?.max ?? maxDigital;
+    return [0.5, 1, 2, 3].filter((step) => step >= min - 0.001 && step <= max + 0.001);
+  })();
 
   const applyZoom = useCallback(
     (next: number) => {
@@ -523,7 +533,7 @@ function CameraPage() {
           await videoRef.current.play().catch(() => undefined);
         }
         setZoomRange(engine.state.zoomRange);
-        setZoom(engine.state.zoomRange?.min ?? 1);
+        setZoom(await engine.setZoom(1).catch(() => 1));
         setDigital(1);
         setTorchAvailable(engine.state.torchAvailable);
         setTorch(false);
@@ -1149,12 +1159,29 @@ function CameraPage() {
         </div>
       </div>
 
-      {/* Zoom is pinch-only — nothing on screen, just your fingers. */}
-      {ready && !error && (zoomRange ? zoom > (zoomRange.min || 1) * 1.02 : digital > 1.02) ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-44 flex justify-center">
-          <span className="data-figure rounded-full bg-black/35 px-3 py-1 text-[11px] tracking-[0.1em] text-white/85 backdrop-blur-md">
-            {zoomLabel}
-          </span>
+      {/* Familiar phone-camera steps — tap one, or pinch for anything between. */}
+      {ready && !error ? (
+        <div className="absolute inset-x-0 bottom-44 flex justify-center">
+          <div className="flex items-center gap-1 rounded-full bg-black/35 p-1 backdrop-blur-md">
+            {zoomSteps.map((step) => {
+              const active = Math.abs(zoomFactor - step) < 0.12;
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  onClick={() => applyZoom(step)}
+                  aria-label={`Zoom ${step}×`}
+                  className={`data-figure grid h-9 min-w-9 touch-manipulation place-items-center rounded-full px-2.5 text-[12px] font-semibold transition-transform active:scale-90 ${
+                    active ? "bg-white text-black" : "text-white/85"
+                  }`}
+                >
+                  {active
+                    ? zoomLabel
+                    : `${step < 1 ? String(step).replace(/^0/, "") : step}×`}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 

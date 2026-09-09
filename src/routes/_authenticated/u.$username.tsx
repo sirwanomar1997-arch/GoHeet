@@ -161,15 +161,17 @@ function ProfilePage() {
           <div className="absolute right-5 top-5 flex gap-2">
             <Link
               to="/edit-profile"
+              preload="render"
               aria-label="Edit profile"
-              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              className="grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-95"
             >
               <Pencil className="size-4" />
             </Link>
             <Link
               to="/settings"
+              preload="render"
               aria-label="Settings"
-              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
+              className="grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-95"
             >
               <Settings className="size-4" />
             </Link>
