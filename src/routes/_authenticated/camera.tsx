@@ -526,6 +526,20 @@ function CameraPage() {
     if (!engine || flipping) return;
     setFlipping(true);
     const next = facing === "user" ? "environment" : "user";
+
+    // Freeze the current view first: the screen holds this still while the other
+    // lens wakes up, so the flip reads as a soft dissolve instead of a blackout.
+    let holdUrl: string | null = null;
+    try {
+      const still = await CameraEngine.grabFrame(videoRef.current, facing === "user");
+      if (still) {
+        holdUrl = URL.createObjectURL(still);
+        setFlipHold(holdUrl);
+      }
+    } catch {
+      /* a held frame is a nicety, never a requirement */
+    }
+
     if (recordingRef.current) {
       // Keep the take running — only the lens changes.
       try {
@@ -546,7 +560,12 @@ function CameraPage() {
     } else {
       setFacing(next);
     }
-    window.setTimeout(() => setFlipping(false), 420);
+    setFlipping(false);
+    // Let the new lens settle for a beat, then dissolve the held frame away.
+    window.setTimeout(() => {
+      setFlipHold(null);
+      if (holdUrl) URL.revokeObjectURL(holdUrl);
+    }, 260);
   }
 
 
