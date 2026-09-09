@@ -264,7 +264,7 @@ function SettingsPage() {
     "flex w-full items-center justify-between gap-3 rounded-xl px-1 py-3 text-left text-sm";
 
   return (
-    <AppShell>
+    <AppShell hideNav>
       <header className="flex items-center gap-3 px-5 pb-2 pt-6">
         <Link
           to="/u/$username"
