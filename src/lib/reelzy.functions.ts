@@ -147,16 +147,6 @@ export type MomentCard = {
   reposted: boolean;
   styleFilter: string | null;
   overlay: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number } | null;
-  music: {
-    id: string;
-    title: string;
-    artist: string;
-    url: string | null;
-    artworkUrl: string | null;
-    attributionText: string | null;
-    offsetMs: number;
-    volume: number;
-  } | null;
   originalAudioVolume: number;
   author: {
     id: string;
@@ -540,9 +530,6 @@ export const publishMoment = createServerFn({ method: "POST" })
     locationLabel?: string;
     styleFilter?: string;
     overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number };
-    musicTrackId?: string;
-    musicOffsetMs?: number;
-    musicVolume?: number;
     originalAudioVolume?: number;
   }) => ({
     sessionId: z.string().uuid().parse(d.sessionId),
@@ -567,9 +554,6 @@ export const publishMoment = createServerFn({ method: "POST" })
       })
       .optional()
       .parse(d.overlay),
-    musicTrackId: z.string().uuid().optional().parse(d.musicTrackId),
-    musicOffsetMs: z.number().int().min(0).max(3_600_000).optional().parse(d.musicOffsetMs),
-    musicVolume: z.number().min(0).max(1).optional().parse(d.musicVolume),
     originalAudioVolume: z.number().min(0).max(1).optional().parse(d.originalAudioVolume),
   }))
   .handler(async ({ data, context }) => {
@@ -627,25 +611,6 @@ export const publishMoment = createServerFn({ method: "POST" })
       .gt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
     if ((count ?? 0) >= 20) throw new Error("You are posting too fast. Try again later.");
 
-    if (data.musicTrackId) {
-      const now = new Date().toISOString();
-      const { data: licensedTrack } = await sb
-        .from("music_tracks")
-        .select("id, duration_ms")
-        .eq("id", data.musicTrackId)
-        .eq("active", true)
-        .eq("status", "licensed")
-        .not("license_id", "is", null)
-        .not("license_scope", "is", null)
-        .or(`license_starts_at.is.null,license_starts_at.lte.${now}`)
-        .or(`license_ends_at.is.null,license_ends_at.gt.${now}`)
-        .maybeSingle();
-      if (!licensedTrack) throw new Error("That track is no longer available for Reelz.");
-      if (licensedTrack.duration_ms && (data.musicOffsetMs ?? 0) >= licensedTrack.duration_ms) {
-        throw new Error("Choose an earlier part of this track.");
-      }
-    }
-
     const { data: moment, error } = await sb
       .from("moments")
       .insert({
@@ -659,9 +624,6 @@ export const publishMoment = createServerFn({ method: "POST" })
         location_label: data.locationLabel ?? null,
         style_filter: data.styleFilter ?? null,
         overlay: data.overlay ?? null,
-        music_track_id: data.musicTrackId ?? null,
-        music_offset_ms: data.musicTrackId ? (data.musicOffsetMs ?? 0) : 0,
-        music_volume: data.musicTrackId ? (data.musicVolume ?? 0.75) : 0,
         original_audio_volume: data.originalAudioVolume ?? 1,
         status: "pending",
         moderation_state: "pending",
@@ -892,17 +854,7 @@ type FeedRow = {
   author_id: string;
   style_filter?: string | null;
   overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number } | null;
-  music_offset_ms?: number;
-  music_volume?: number;
   original_audio_volume?: number;
-  music_tracks?: {
-    id: string;
-    title: string;
-    artist: string;
-    audio_path: string;
-    artwork_url: string | null;
-    attribution_text: string | null;
-  } | null;
   profiles?: { id: string; username: string; display_name: string | null; avatar_url: string | null; personal_photo_url: string | null; profile_image_type: string } | null;
 };
 
@@ -915,8 +867,6 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
         : (r.profiles?.avatar_url ?? null),
     ),
   );
-
-  const musicUrls = await signMusic(rows.map((r) => r.music_tracks?.audio_path ?? null));
 
   let liked = new Set<string>();
   let saved = new Set<string>();
@@ -952,18 +902,6 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
     styleFilter: r.style_filter ?? null,
     overlay: (r.overlay as MomentCard["overlay"]) ?? null,
     originalAudioVolume: Number(r.original_audio_volume ?? 1),
-    music: r.music_tracks
-      ? {
-          id: r.music_tracks.id,
-          title: r.music_tracks.title,
-          artist: r.music_tracks.artist,
-          url: musicUrls[r.music_tracks.audio_path] ?? null,
-          artworkUrl: r.music_tracks.artwork_url,
-          attributionText: r.music_tracks.attribution_text,
-          offsetMs: r.music_offset_ms ?? 0,
-          volume: Number(r.music_volume ?? 0.75),
-        }
-      : null,
     isOwn: viewerId === r.author_id,
     author: {
       id: r.profiles?.id ?? r.author_id,
@@ -980,47 +918,7 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
 }
 
 const MOMENT_SELECT =
-  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, music_offset_ms, music_volume, original_audio_volume, music_tracks(id, title, artist, audio_path, artwork_url, attribution_text), profiles!moments_author_profile_fkey(id, username, display_name, avatar_url, personal_photo_url, profile_image_type)";
-
-/** Music lives in a private bucket; playback uses short-lived signed URLs. */
-async function signMusic(paths: Array<string | null>): Promise<Record<string, string>> {
-  const unique = [...new Set(paths.filter(Boolean) as string[])];
-  if (!unique.length) return {};
-  const sb = await admin();
-  const { data } = await sb.storage.from("music").createSignedUrls(unique, 60 * 60);
-  const out: Record<string, string> = {};
-  for (const row of data ?? []) if (row.path && row.signedUrl) out[row.path] = row.signedUrl;
-  return out;
-}
-
-/** The GoHeet music library. Only licensed tracks loaded by staff appear here. */
-export const listMusicTracks = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const sb = await admin();
-    const { data } = await sb
-      .from("music_tracks")
-      .select("id, title, artist, audio_path, artwork_url, duration_ms, mood, genres, attribution_text, provider")
-      .eq("active", true)
-      .eq("status", "licensed")
-      .order("title");
-    const rows = data ?? [];
-    const urls = await signMusic(rows.map((r) => r.audio_path));
-    return {
-      tracks: rows.map((r) => ({
-        id: r.id,
-        title: r.title,
-        artist: r.artist,
-        artworkUrl: r.artwork_url,
-        mood: r.mood,
-        genres: r.genres,
-        durationMs: r.duration_ms,
-        attributionText: r.attribution_text,
-        provider: r.provider,
-        url: urls[r.audio_path] ?? null,
-      })),
-    };
-  });
+  "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, original_audio_volume, profiles!moments_author_profile_fkey(id, username, display_name, avatar_url, personal_photo_url, profile_image_type)";
 
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
