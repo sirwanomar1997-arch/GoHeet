@@ -265,11 +265,22 @@ function SettingsPage() {
 
   return (
     <AppShell>
-      <header className="px-5 pb-2 pt-6">
-        <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Signed in as @{me?.profile?.username ?? "…"}
-        </p>
+      <header className="flex items-center gap-3 px-5 pb-2 pt-6">
+        <Link
+          to="/u/$username"
+          params={{ username: me?.profile?.username ?? "" }}
+          preload="intent"
+          aria-label="Back"
+          className="tap-target grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-90"
+        >
+          <ArrowLeft className="size-5" />
+        </Link>
+        <div>
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Settings</h1>
+          <p className="text-sm text-muted-foreground">
+            Signed in as @{me?.profile?.username ?? "…"}
+          </p>
+        </div>
       </header>
 
       <div className="space-y-4 px-5 pb-12">
