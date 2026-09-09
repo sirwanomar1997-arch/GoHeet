@@ -1067,7 +1067,7 @@ function CameraPage() {
 
 
   const mirrored = facing === "user";
-  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${zoomRange ? 1 : digital})`;
+  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${(zoomRange ? 1 : digital) * (flipping ? 1.04 : 1)})`;
 
   return (
     <main className="relative h-svh overflow-hidden bg-black">
