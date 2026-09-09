@@ -82,6 +82,11 @@ export class CameraEngine {
   private canvas: HTMLCanvasElement | null = null;
   private mixVideo: HTMLVideoElement | null = null;
   private raf = 0;
+  /** Last good frame, held on screen while the other lens wakes up. */
+  private freeze: HTMLCanvasElement | null = null;
+  /** Timestamp the crossfade from the frozen frame to the new lens began. */
+  private fadeFrom = 0;
+  private swapping = false;
 
   state: EngineState = {
     facing: "user",
@@ -150,9 +155,12 @@ export class CameraEngine {
    * pipeline simply starts drawing the new lens — the take keeps running.
    */
   async switchFacing(facing: Facing): Promise<MediaStream> {
+    if (this.swapping) return this.stream ?? new MediaStream();
+    this.swapping = true;
     // iOS only allows one active capture at a time, so release the current lens
-    // first. The recorder keeps running because it records the canvas, not this
-    // track — the canvas simply holds the last frame for a moment.
+    // first. The recorder keeps running because it records the canvas: we hold
+    // the last good frame on it, then crossfade into the new lens.
+    this.captureFreeze();
     const previous = this.stream?.getVideoTracks() ?? [];
     previous.forEach((t) => {
       t.stop();
@@ -167,13 +175,11 @@ export class CameraEngine {
       try {
         const back = await this.openVideo(this.state.facing);
         back.getVideoTracks().forEach((t) => this.stream?.addTrack(t));
-        if (this.mixVideo && this.stream) {
-          this.mixVideo.srcObject = new MediaStream(this.stream.getVideoTracks());
-          await this.mixVideo.play().catch(() => undefined);
-        }
+        await this.attachMixSource();
       } catch {
         /* nothing more we can do */
       }
+      this.swapping = false;
       throw err;
     }
 
@@ -182,11 +188,61 @@ export class CameraEngine {
     this.state.facing = facing;
     this.readCapabilities();
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
-    if (this.mixVideo) {
-      this.mixVideo.srcObject = new MediaStream(this.stream.getVideoTracks());
-      await this.mixVideo.play().catch(() => undefined);
-    }
+    await this.attachMixSource();
+    this.swapping = false;
     return this.stream;
+  }
+
+  /** Point the recording mixer at the current lens and wait for a real frame. */
+  private async attachMixSource() {
+    const mix = this.mixVideo;
+    if (!mix || !this.stream) return;
+    mix.srcObject = new MediaStream(this.stream.getVideoTracks());
+    await mix.play().catch(() => undefined);
+    await this.firstFrame(mix);
+    // Only now let the canvas leave the frozen frame — no black flash, ever.
+    this.fadeFrom = performance.now();
+  }
+
+  /** Resolve once the element is actually painting pixels (or after a safety timeout). */
+  private firstFrame(video: HTMLVideoElement): Promise<void> {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      const timer = window.setTimeout(finish, 1200);
+      const settle = () => {
+        window.clearTimeout(timer);
+        finish();
+      };
+      type WithRVFC = HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number };
+      const el = video as WithRVFC;
+      if (typeof el.requestVideoFrameCallback === "function") {
+        el.requestVideoFrameCallback(() => settle());
+      } else {
+        const poll = () => {
+          if (done) return;
+          if (video.videoWidth > 0 && video.readyState >= 2) settle();
+          else requestAnimationFrame(poll);
+        };
+        poll();
+      }
+    });
+  }
+
+  /** Snapshot the canvas so the take can hold this frame while lenses change. */
+  private captureFreeze() {
+    const canvas = this.canvas;
+    if (!canvas) return;
+    const hold = this.freeze ?? document.createElement("canvas");
+    hold.width = canvas.width;
+    hold.height = canvas.height;
+    hold.getContext("2d")?.drawImage(canvas, 0, 0);
+    this.freeze = hold;
+    this.fadeFrom = 0;
   }
 
 
@@ -267,14 +323,42 @@ export class CameraEngine {
     this.canvas = canvas;
     this.mixVideo = mix;
 
+    const FADE_MS = 260;
+    const drawCover = (source: CanvasImageSource, sw: number, sh: number) => {
+      // Cover-fit so a lens with a different aspect never letterboxes the take.
+      const scale = Math.max(canvas.width / sw, canvas.height / sh);
+      const w = sw * scale;
+      const h = sh * scale;
+      ctx?.drawImage(source, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    };
+
     const draw = () => {
       this.raf = requestAnimationFrame(draw);
-      if (!ctx || !mix.videoWidth) return;
-      // Cover-fit so a lens with a different aspect never letterboxes the take.
-      const scale = Math.max(canvas.width / mix.videoWidth, canvas.height / mix.videoHeight);
-      const w = mix.videoWidth * scale;
-      const h = mix.videoHeight * scale;
-      ctx.drawImage(mix, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+      if (!ctx) return;
+      const live = mix.videoWidth > 0 && mix.readyState >= 2 && !this.swapping;
+      const held = this.freeze;
+
+      // Lens is waking up: keep the last good frame on screen instead of black.
+      if (!live) {
+        if (held) drawCover(held, held.width, held.height);
+        return;
+      }
+
+      // New lens is live: dissolve out of the held frame so the cut feels soft.
+      const t = held && this.fadeFrom ? Math.min(1, (performance.now() - this.fadeFrom) / FADE_MS) : 1;
+      if (held && t < 1) {
+        drawCover(held, held.width, held.height);
+        ctx.save();
+        ctx.globalAlpha = t;
+        drawCover(mix, mix.videoWidth, mix.videoHeight);
+        ctx.restore();
+        return;
+      }
+      if (held && t >= 1) {
+        this.freeze = null;
+        this.fadeFrom = 0;
+      }
+      drawCover(mix, mix.videoWidth, mix.videoHeight);
     };
     this.raf = requestAnimationFrame(draw);
 
@@ -317,6 +401,9 @@ export class CameraEngine {
       this.mixVideo = null;
     }
     this.canvas = null;
+    this.freeze = null;
+    this.fadeFrom = 0;
+    this.swapping = false;
   }
 
   stopRecording() {

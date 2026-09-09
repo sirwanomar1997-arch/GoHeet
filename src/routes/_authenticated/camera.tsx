@@ -146,6 +146,8 @@ function CameraPage() {
   const [torch, setTorch] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [flipping, setFlipping] = useState(false);
+  // The last frame of the outgoing lens, held on screen so a flip never flashes black.
+  const [flipHold, setFlipHold] = useState<string | null>(null);
   // Front-camera glow: the screen itself becomes a soft ring light.
   const [glow, setGlow] = useState(0);
   const [textTab, setTextTab] = useState<"font" | "colour" | "finish" | "size">("font");
@@ -524,6 +526,20 @@ function CameraPage() {
     if (!engine || flipping) return;
     setFlipping(true);
     const next = facing === "user" ? "environment" : "user";
+
+    // Freeze the current view first: the screen holds this still while the other
+    // lens wakes up, so the flip reads as a soft dissolve instead of a blackout.
+    let holdUrl: string | null = null;
+    try {
+      const still = await CameraEngine.grabFrame(videoRef.current, facing === "user");
+      if (still) {
+        holdUrl = URL.createObjectURL(still);
+        setFlipHold(holdUrl);
+      }
+    } catch {
+      /* a held frame is a nicety, never a requirement */
+    }
+
     if (recordingRef.current) {
       // Keep the take running — only the lens changes.
       try {
@@ -544,7 +560,12 @@ function CameraPage() {
     } else {
       setFacing(next);
     }
-    window.setTimeout(() => setFlipping(false), 420);
+    setFlipping(false);
+    // Let the new lens settle for a beat, then dissolve the held frame away.
+    window.setTimeout(() => {
+      setFlipHold(null);
+      if (holdUrl) URL.revokeObjectURL(holdUrl);
+    }, 260);
   }
 
 
@@ -1061,13 +1082,26 @@ function CameraPage() {
           className="size-full object-cover transition-[opacity,transform] duration-300 ease-out"
           style={{
             transform: previewTransform,
-            opacity: flipping || booting ? 0 : 1,
+            opacity: booting ? 0 : 1,
             ...(filterCss(look) ? { filter: filterCss(look) } : {}),
           }}
           playsInline
           muted
           autoPlay
         />
+        {/* Held still from the outgoing lens — dissolves away once the new one is live. */}
+        {flipHold ? (
+          <img
+            src={flipHold}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-300 ease-out"
+            style={{
+              opacity: flipping ? 1 : 0,
+              ...(filterCss(look) ? { filter: filterCss(look) } : {}),
+            }}
+          />
+        ) : null}
         <GradeLayers filterId={look} />
 
         {/* A whisper of vignette so controls read cleanly over any scene. */}
