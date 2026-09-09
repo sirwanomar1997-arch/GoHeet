@@ -198,7 +198,7 @@ export function AppShell({ children, hideNav = false }: { children: React.ReactN
   const swipe = useSwipeNav();
   return (
     <div
-      className={`min-h-screen bg-background ${hideNav ? "pb-10" : "pb-24"}`}
+      className={`min-h-screen touch-pan-y overscroll-x-none bg-background ${hideNav ? "pb-10" : "pb-24"}`}
       onTouchStart={swipe.onTouchStart}
       onTouchEnd={swipe.onTouchEnd}
     >
