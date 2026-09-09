@@ -445,7 +445,16 @@ function CameraPage() {
 
   /** Zoom: real lens zoom where the device offers it, gentle digital zoom otherwise. */
   const maxDigital = 4;
-  const zoomLabel = zoomRange ? `${(zoom / (zoomRange.min || 1)).toFixed(1)}×` : `${digital.toFixed(1)}×`;
+  /** Current view in the familiar phone-camera numbers (.5× / 1× / 2× / 3×). */
+  const zoomFactor = zoomRange ? zoom : digital;
+  const zoomLabel = `${zoomFactor < 1 ? zoomFactor.toFixed(1).replace(/^0/, "") : zoomFactor.toFixed(1)}×`;
+
+  /** The steps offered on screen, trimmed to what this lens can actually do. */
+  const zoomSteps = (() => {
+    const min = zoomRange?.min ?? 1;
+    const max = zoomRange?.max ?? maxDigital;
+    return [0.5, 1, 2, 3].filter((step) => step >= min - 0.001 && step <= max + 0.001);
+  })();
 
   const applyZoom = useCallback(
     (next: number) => {
@@ -524,7 +533,7 @@ function CameraPage() {
           await videoRef.current.play().catch(() => undefined);
         }
         setZoomRange(engine.state.zoomRange);
-        setZoom(engine.state.zoomRange?.min ?? 1);
+        setZoom(await engine.setZoom(1).catch(() => 1));
         setDigital(1);
         setTorchAvailable(engine.state.torchAvailable);
         setTorch(false);
