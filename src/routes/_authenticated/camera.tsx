@@ -136,6 +136,8 @@ function CameraPage() {
 
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
+  // The flip owns lens changes, so the boot effect reads facing from here.
+  const facingRef = useRef<"user" | "environment">("environment");
   const withAudio = true;
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(true);
@@ -244,7 +246,7 @@ function CameraPage() {
     setBooting(true);
 
     try {
-      const stream = await engine.start(facing, withAudio);
+      const stream = await engine.start(facingRef.current, withAudio);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
@@ -270,7 +272,7 @@ function CameraPage() {
     } finally {
       setBooting(false);
     }
-  }, [facing]);
+  }, []);
 
   useEffect(() => {
     if (captured) return;
@@ -521,17 +523,46 @@ function CameraPage() {
   };
 
 
+  /** Resolve once the preview element is actually painting pixels again. */
+  function waitForPaint(video: HTMLVideoElement | null): Promise<void> {
+    return new Promise((resolve) => {
+      if (!video) return resolve();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      const timer = window.setTimeout(finish, 1200);
+      const settle = () => {
+        window.clearTimeout(timer);
+        finish();
+      };
+      type WithRVFC = HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number };
+      const el = video as WithRVFC;
+      if (typeof el.requestVideoFrameCallback === "function") el.requestVideoFrameCallback(() => settle());
+      else {
+        const poll = () => {
+          if (done) return;
+          if (video.videoWidth > 0 && video.readyState >= 2) settle();
+          else requestAnimationFrame(poll);
+        };
+        poll();
+      }
+    });
+  }
+
   async function flipCamera() {
     const engine = engineRef.current;
     if (!engine || flipping) return;
-    setFlipping(true);
-    const next = facing === "user" ? "environment" : "user";
+    const from = facingRef.current;
+    const next = from === "user" ? "environment" : "user";
 
     // Freeze the current view first: the screen holds this still while the other
     // lens wakes up, so the flip reads as a soft dissolve instead of a blackout.
     let holdUrl: string | null = null;
     try {
-      const still = await CameraEngine.grabFrame(videoRef.current, facing === "user");
+      const still = await CameraEngine.grabFrame(videoRef.current, from === "user");
       if (still) {
         holdUrl = URL.createObjectURL(still);
         setFlipHold(holdUrl);
@@ -539,33 +570,35 @@ function CameraPage() {
     } catch {
       /* a held frame is a nicety, never a requirement */
     }
+    setFlipping(true);
+    // Let the held frame paint before the lens goes away.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-    if (recordingRef.current) {
-      // Keep the take running — only the lens changes.
-      try {
-        const stream = await engine.switchFacing(next);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => undefined);
-        }
-        setZoomRange(engine.state.zoomRange);
-        setZoom(await engine.setZoom(1).catch(() => 1));
-        setDigital(1);
-        setTorchAvailable(engine.state.torchAvailable);
-        setTorch(false);
-        setFacing(next);
-      } catch {
-        toast("We couldn't switch the camera just now.");
-      }
-    } else {
+    try {
+      // One path for both idle and recording: the engine keeps the take alive.
+      const stream = await engine.switchFacing(next);
+      facingRef.current = next;
       setFacing(next);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => undefined);
+        await waitForPaint(videoRef.current);
+      }
+      setZoomRange(engine.state.zoomRange);
+      setZoom(await engine.setZoom(1).catch(() => 1));
+      setDigital(1);
+      setTorchAvailable(engine.state.torchAvailable);
+      setTorch(false);
+    } catch {
+      toast("We couldn't switch the camera just now.");
     }
+
+    // New lens is genuinely live: release the held frame into a soft dissolve.
     setFlipping(false);
-    // Let the new lens settle for a beat, then dissolve the held frame away.
     window.setTimeout(() => {
       setFlipHold(null);
       if (holdUrl) URL.revokeObjectURL(holdUrl);
-    }, 260);
+    }, 320);
   }
 
 
@@ -1067,7 +1100,7 @@ function CameraPage() {
 
 
   const mirrored = facing === "user";
-  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${zoomRange ? 1 : digital})`;
+  const previewTransform = `${mirrored ? "scaleX(-1) " : ""}scale(${(zoomRange ? 1 : digital) * (flipping ? 1.04 : 1)})`;
 
   return (
     <main className="relative h-svh overflow-hidden bg-black">
@@ -1089,16 +1122,20 @@ function CameraPage() {
           muted
           autoPlay
         />
-        {/* Held still from the outgoing lens — dissolves away once the new one is live. */}
+        {/* Held still from the outgoing lens — blurs, then dissolves once the new one is live. */}
         {flipHold ? (
           <img
             src={flipHold}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-300 ease-out"
+            className="pointer-events-none absolute inset-0 size-full object-cover"
             style={{
               opacity: flipping ? 1 : 0,
-              ...(filterCss(look) ? { filter: filterCss(look) } : {}),
+              transform: flipping ? "scale(1.08)" : "scale(1.14)",
+              filter: `${filterCss(look) ? `${filterCss(look)} ` : ""}blur(${flipping ? 14 : 22}px) saturate(1.05)`,
+              transition:
+                "opacity 240ms cubic-bezier(0.22,1,0.36,1), transform 420ms cubic-bezier(0.22,1,0.36,1), filter 420ms cubic-bezier(0.22,1,0.36,1)",
+              willChange: "opacity, transform, filter",
             }}
           />
         ) : null}
