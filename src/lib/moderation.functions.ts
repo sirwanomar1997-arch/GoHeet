@@ -194,7 +194,7 @@ export const adminReviewQueue = createServerFn({ method: "POST" })
     const sb = await admin();
     const { data: moments } = await sb
       .from("moments")
-      .select("id, caption, kind, thumbnail_path, media_path, created_at, author_id")
+      .select("id, caption, kind, thumbnail_path, media_path, created_at, author_id, ai_score, ai_reason")
       .eq("status", "pending")
       .order("created_at", { ascending: true })
       .limit(50);
@@ -209,6 +209,8 @@ export const adminReviewQueue = createServerFn({ method: "POST" })
           caption: m.caption,
           createdAt: m.created_at as string,
           username: p?.username ?? "unknown",
+          aiScore: (m as { ai_score: number | null }).ai_score ?? null,
+          aiReason: (m as { ai_reason: string | null }).ai_reason ?? null,
           previewUrl: signed?.signedUrl ?? null,
         };
       }),
