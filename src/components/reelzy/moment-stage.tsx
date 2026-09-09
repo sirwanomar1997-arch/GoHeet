@@ -99,7 +99,6 @@ export function MomentStage({
   const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [heetPop, setHeetPop] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const look = filterCss(moment.styleFilter);
   const overlay = parseOverlay(moment.overlay);
 
