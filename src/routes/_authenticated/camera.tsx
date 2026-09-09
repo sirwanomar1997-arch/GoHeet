@@ -268,7 +268,7 @@ function CameraPage() {
     } finally {
       setBooting(false);
     }
-  }, [facing, withAudio]);
+  }, [facing]);
 
   useEffect(() => {
     if (captured) return;
