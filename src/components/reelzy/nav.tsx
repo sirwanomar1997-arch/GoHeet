@@ -180,7 +180,16 @@ function useSwipeNav() {
       const dx = t.clientX - start.x;
       const dy = t.clientY - start.y;
       if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      void navigate({ to: onFeed ? `/u/${username}` : "/feed" });
+      if (onFeed) {
+        void navigate({
+          to: "/u/$username",
+          params: { username },
+          replace: true,
+        });
+        return;
+      }
+
+      void navigate({ to: "/feed", replace: true });
     },
   };
 }

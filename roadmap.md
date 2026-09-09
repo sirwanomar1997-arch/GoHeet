@@ -56,4 +56,5 @@
 - [x] Make profile Edit and Settings controls respond on the first tap
 - [x] Remove blocking profile-save navigation waits
 - [x] Preserve Home/Profile-only swipe navigation
+- [x] Prevent Settings from reappearing after returning to Profile and swiping Home
 - [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)

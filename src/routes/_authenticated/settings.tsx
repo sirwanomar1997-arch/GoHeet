@@ -270,6 +270,7 @@ function SettingsPage() {
           to="/u/$username"
           params={{ username: me?.profile?.username ?? "" }}
           preload="intent"
+          replace
           aria-label="Back"
           className="tap-target grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground transition-transform active:scale-90"
         >
