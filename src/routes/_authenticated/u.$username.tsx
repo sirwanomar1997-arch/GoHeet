@@ -174,6 +174,7 @@ function ProfilePage() {
             <Link
               to="/edit-profile"
               preload="intent"
+              replace
               aria-label="Edit profile"
               className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
@@ -182,6 +183,7 @@ function ProfilePage() {
             <Link
               to="/settings"
               preload="intent"
+              replace
               aria-label="Settings"
               className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
@@ -261,6 +263,7 @@ function ProfilePage() {
           {data.isSelf ? (
             <Link
               to="/edit-profile"
+              replace
               className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               <Sparkles className="size-3" /> Manage profile picture

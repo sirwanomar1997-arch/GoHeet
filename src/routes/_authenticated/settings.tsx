@@ -288,6 +288,7 @@ function SettingsPage() {
         <Link
           to="/edit-profile"
           preload="intent"
+          replace
           className={`${section} flex touch-manipulation items-center justify-between active:scale-[0.99]`}
         >
           <span className="flex items-center gap-3 text-sm font-medium">
@@ -363,7 +364,12 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Your activity</h2>
           <div className="mt-2 divide-y divide-border">
-            <Link to="/u/$username" params={{ username: me?.profile?.username ?? "" }} className={row}>
+            <Link
+              to="/u/$username"
+              params={{ username: me?.profile?.username ?? "" }}
+              replace
+              className={row}
+            >
               <span className="flex items-center gap-3">
                 <History className="size-4 text-amber-400" /> Your history
               </span>

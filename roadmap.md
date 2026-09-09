@@ -57,4 +57,5 @@
 - [x] Remove blocking profile-save navigation waits
 - [x] Preserve Home/Profile-only swipe navigation
 - [x] Prevent Settings from reappearing after returning to Profile and swiping Home
+- [x] Block iPhone browser-history swipes so only GoHeet Home/Profile navigation runs
 - [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)
