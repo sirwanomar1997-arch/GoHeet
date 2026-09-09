@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
+import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Check, Play, Pause, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
@@ -19,13 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
