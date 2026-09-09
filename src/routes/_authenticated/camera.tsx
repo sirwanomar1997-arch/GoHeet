@@ -1089,16 +1089,20 @@ function CameraPage() {
           muted
           autoPlay
         />
-        {/* Held still from the outgoing lens — dissolves away once the new one is live. */}
+        {/* Held still from the outgoing lens — blurs, then dissolves once the new one is live. */}
         {flipHold ? (
           <img
             src={flipHold}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-300 ease-out"
+            className="pointer-events-none absolute inset-0 size-full object-cover"
             style={{
               opacity: flipping ? 1 : 0,
-              ...(filterCss(look) ? { filter: filterCss(look) } : {}),
+              transform: flipping ? "scale(1.08)" : "scale(1.14)",
+              filter: `${filterCss(look) ? `${filterCss(look)} ` : ""}blur(${flipping ? 14 : 22}px) saturate(1.05)`,
+              transition:
+                "opacity 240ms cubic-bezier(0.22,1,0.36,1), transform 420ms cubic-bezier(0.22,1,0.36,1), filter 420ms cubic-bezier(0.22,1,0.36,1)",
+              willChange: "opacity, transform, filter",
             }}
           />
         ) : null}
