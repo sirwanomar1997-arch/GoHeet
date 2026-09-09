@@ -82,6 +82,11 @@ export class CameraEngine {
   private canvas: HTMLCanvasElement | null = null;
   private mixVideo: HTMLVideoElement | null = null;
   private raf = 0;
+  /** Last good frame, held on screen while the other lens wakes up. */
+  private freeze: HTMLCanvasElement | null = null;
+  /** Timestamp the crossfade from the frozen frame to the new lens began. */
+  private fadeFrom = 0;
+  private swapping = false;
 
   state: EngineState = {
     facing: "user",
