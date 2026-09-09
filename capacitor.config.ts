@@ -13,7 +13,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "app.goheet.mobile",
   appName: "GoHeet",
-  webDir: "dist/client",
+  webDir: ".output/public",
   // Native shells load the hosted GoHeet build so server functions keep working.
   server: {
     url: "https://goheet.lovable.app",
