@@ -41,6 +41,12 @@ export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data, isLoading, isError } = useMe();
   const username = data?.profile?.username;
+  // The capture key only lives on browsing surfaces. Profile and Settings
+  // are destination pages — the record button should not appear there.
+  const showCapture =
+    pathname === "/feed" ||
+    pathname === "/discover" ||
+    pathname === "/activity";
 
   const fetchNotifications = useServerFn(listNotifications);
   const { data: notif } = useQuery({
