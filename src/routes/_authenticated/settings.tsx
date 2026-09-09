@@ -299,12 +299,15 @@ function SettingsPage() {
           </button>
 
           <Sheet open={langOpen} onOpenChange={setLangOpen}>
-            <SheetContent side="bottom" className="max-h-[80dvh] rounded-t-3xl">
+            <SheetContent
+              side="bottom"
+              className="flex h-[85dvh] max-h-[85dvh] flex-col rounded-t-3xl"
+            >
               <SheetHeader>
                 <SheetTitle>{tr("lang.title")}</SheetTitle>
               </SheetHeader>
               <p className="mt-1 text-xs text-muted-foreground">{tr("lang.line")}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 overflow-y-auto pb-6">
+              <div className="mt-4 grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pb-6">
                 <button
                   type="button"
                   onClick={() => {
