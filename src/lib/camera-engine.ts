@@ -97,6 +97,12 @@ export class CameraEngine {
     return this.stream;
   }
 
+  /** Hardware name of the lens in use — part of the proof a clip was filmed live. */
+  get cameraLabel(): string | null {
+    return this.videoTrack?.label ?? null;
+  }
+
+
   private get videoTrack(): TrackWithCaps | null {
     return (this.stream?.getVideoTracks()[0] as TrackWithCaps | undefined) ?? null;
   }
