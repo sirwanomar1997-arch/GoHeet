@@ -638,14 +638,71 @@ export const publishMoment = createServerFn({ method: "POST" })
 
     await sb
       .from("capture_sessions")
-      .update({ status: "consumed", consumed_at: new Date().toISOString(), storage_path: data.mediaPath })
+      .update({
+        status: "consumed",
+        consumed_at: new Date().toISOString(),
+        storage_path: data.mediaPath,
+        live_capture: data.liveCapture ?? false,
+        camera_label: data.cameraLabel ?? null,
+      })
       .eq("id", session.id);
 
-    // Automatic safety review — nothing is visible to other people until it passes.
-    const verdict = await reviewForSafety({
-      imagePath: data.kind === "photo" ? data.mediaPath : (data.thumbnailPath ?? null),
-      text: [data.caption, data.overlay?.text].filter(Boolean).join(" \n "),
+    const reviewText = [data.caption, data.overlay?.text].filter(Boolean).join(" \n ");
+    const framePath = data.kind === "photo" ? data.mediaPath : (data.thumbnailPath ?? null);
+
+    /** Immediate takedown for anything that is not a real filmed moment. */
+    const removeAsSynthetic = async (ai: { score: number; reason: string }) => {
+      await sb
+        .from("moments")
+        .update({
+          status: "removed",
+          moderation_state: "auto_removed",
+          deleted_at: new Date().toISOString(),
+          ai_score: ai.score,
+          ai_reason: ai.reason,
+          ai_checked_at: new Date().toISOString(),
+        })
+        .eq("id", moment.id);
+      await sb.from("moderation_actions").insert({
+        actor_id: null,
+        action: "remove_content",
+        target_type: "moment",
+        target_id: moment.id,
+        reason: `Automatic AI-media detection (${ai.score}/100): ${ai.reason}`.slice(0, 300),
+      });
+      await enforceAuthorStrikes(context.userId);
+      await track(context.userId, "moment_ai_rejected", { score: ai.score, reason: ai.reason });
+      throw new Error(AI_REJECTION_MESSAGE);
+    };
+
+    // Layer 1 — provenance. Was this really filmed live, here, just now?
+    const provenance = checkProvenance({
+      liveCapture: data.liveCapture ?? false,
+      cameraLabel: data.cameraLabel ?? null,
+      durationMs: data.durationMs ?? 0,
+      sessionElapsedMs: Date.now() - new Date(session.started_at).getTime(),
+      kind: data.kind as "video" | "photo",
     });
+    if (provenance) await removeAsSynthetic(provenance);
+
+    // Layer 2 — the frame itself, plus the ordinary safety review, in parallel.
+    let frameUrl: string | null = null;
+    if (framePath) {
+      const { data: signed } = await sb.storage.from("moments").createSignedUrl(framePath, 300);
+      frameUrl = signed?.signedUrl ?? null;
+    }
+
+    const [verdict, ai] = await Promise.all([
+      reviewForSafety({ imagePath: framePath, text: reviewText }),
+      detectSyntheticFrame({ imageUrl: frameUrl, caption: reviewText }),
+    ]);
+
+    await sb
+      .from("moments")
+      .update({ ai_score: ai.score, ai_reason: ai.reason, ai_checked_at: new Date().toISOString() })
+      .eq("id", moment.id);
+
+    if (ai.synthetic) await removeAsSynthetic(ai);
 
     if (verdict.decision === "reject") {
       await sb
@@ -666,10 +723,12 @@ export const publishMoment = createServerFn({ method: "POST" })
       );
     }
 
-    if (verdict.decision === "hold") {
-      await track(context.userId, "moment_held_for_review", {});
+    // Suspicious but not certain: a human looks before anyone else can.
+    if (verdict.decision === "hold" || ai.score >= AI_HOLD_THRESHOLD) {
+      await track(context.userId, "moment_held_for_review", { aiScore: ai.score });
       return { id: moment.id, review: "pending" as const };
     }
+
 
     await sb.from("moments").update({ status: "published", moderation_state: "clean" }).eq("id", moment.id);
     await track(context.userId, "moment_published", { kind: data.kind });
