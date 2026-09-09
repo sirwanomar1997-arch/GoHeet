@@ -146,6 +146,8 @@ function CameraPage() {
   const [torch, setTorch] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [flipping, setFlipping] = useState(false);
+  // The last frame of the outgoing lens, held on screen so a flip never flashes black.
+  const [flipHold, setFlipHold] = useState<string | null>(null);
   // Front-camera glow: the screen itself becomes a soft ring light.
   const [glow, setGlow] = useState(0);
   const [textTab, setTextTab] = useState<"font" | "colour" | "finish" | "size">("font");
