@@ -13,7 +13,6 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Music2,
 } from "lucide-react";
 import {
   Sheet,
@@ -343,29 +342,6 @@ export function MomentStage({
     return () => clearTimeout(timer);
   }, [moment.kind, flushView]);
 
-  // Music rides along with the frame: it starts, pauses and mutes with the video.
-  useEffect(() => {
-    const vid = videoRef.current;
-    const aud = audioRef.current;
-    if (!aud) return;
-    if (!vid) return;
-    const play = () => {
-      const offsetSeconds = moment.music ? moment.music.offsetMs / 1000 : 0;
-      const duration = aud.duration || 1;
-      aud.currentTime = (offsetSeconds + vid.currentTime) % duration;
-      aud.volume = moment.music?.volume ?? 0.75;
-      void aud.play().catch(() => undefined);
-    };
-    const pause = () => aud.pause();
-    vid.addEventListener("play", play);
-    vid.addEventListener("pause", pause);
-    return () => {
-      vid.removeEventListener("play", play);
-      vid.removeEventListener("pause", pause);
-      aud.pause();
-    };
-  }, [moment.music]);
-
   const likeMutation = useMutation({
     mutationFn: () => like({ data: { momentId: moment.id } }),
     onMutate: () => {
@@ -539,10 +515,6 @@ export function MomentStage({
       ) : null}
 
 
-      {moment.music?.url ? (
-        <audio ref={audioRef} src={moment.music.url} loop preload="none" muted={muted} />
-      ) : null}
-
       {moment.kind === "video" && paused ? (
         <button
           type="button"
@@ -621,15 +593,6 @@ export function MomentStage({
             {moment.caption}
           </p>
 
-        ) : null}
-
-        {moment.music ? (
-          <div className="mt-2.5 flex items-center gap-2 text-[12px] text-foreground/80">
-            <Music2 className="size-3.5 shrink-0 text-primary" strokeWidth={2} />
-            <span className="truncate">
-              {moment.music.title} · {moment.music.artist}
-            </span>
-          </div>
         ) : null}
 
       </div>

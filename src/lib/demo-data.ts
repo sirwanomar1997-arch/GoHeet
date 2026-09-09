@@ -193,7 +193,6 @@ const newMoments: MomentCard[] = [
     reposted: false,
     styleFilter: null,
     overlay: null,
-    music: { id: "m1", title: "Wallpaper", artist: "Kevin MacLeod", url: null, artworkUrl: null, attributionText: "CC-BY-4.0", offsetMs: 0, volume: 0.6 },
     originalAudioVolume: 1,
     author: demoAuthors[0]!,
     isOwn: false,
@@ -215,7 +214,6 @@ const newMoments: MomentCard[] = [
     reposted: false,
     styleFilter: null,
     overlay: null,
-    music: null,
     originalAudioVolume: 1,
     author: demoAuthors[2]!,
     isOwn: false,
@@ -239,9 +237,6 @@ export const demoMoments: MomentCard[] = [...newMoments, ...PHOTOS.map((photo, i
   reposted: i === 2,
   styleFilter: i === 1 ? "cinematic-warm" : i === 4 ? "vivid" : null,
   overlay: overlays[i] ?? null,
-  music: i % 2 === 0
-    ? { id: "m1", title: "Wallpaper", artist: "Kevin MacLeod", url: null, artworkUrl: null, attributionText: "CC-BY-4.0", offsetMs: 0, volume: 0.6 }
-    : null,
   originalAudioVolume: 1,
   author: demoAuthors[i % demoAuthors.length]!,
   isOwn: false,
