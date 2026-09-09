@@ -19,7 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useQuery } from "@tanstack/react-query";
 import {
   FILTERS,
   FILTER_CATEGORIES,
