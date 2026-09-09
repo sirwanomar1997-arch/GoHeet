@@ -288,6 +288,7 @@ function SettingsPage() {
         <Link
           to="/edit-profile"
           preload="intent"
+          replace
           className={`${section} flex touch-manipulation items-center justify-between active:scale-[0.99]`}
         >
           <span className="flex items-center gap-3 text-sm font-medium">

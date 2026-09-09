@@ -60,7 +60,7 @@ function EditProfilePage() {
       save({ data: { username, displayName, bio, socialLinks: links } }),
     onSuccess: () => {
       toast.success("Profile updated.");
-      void navigate({ to: "/u/$username", params: { username } });
+      void navigate({ to: "/u/$username", params: { username }, replace: true });
       void qc.invalidateQueries({ queryKey: ["me"] });
       void qc.invalidateQueries({ queryKey: ["profile", username] });
     },
@@ -119,6 +119,7 @@ function EditProfilePage() {
           to="/u/$username"
           params={{ username: me?.profile?.username ?? "" }}
           preload="intent"
+          replace
           aria-label="Back to profile"
           className="tap-target grid size-11 touch-manipulation place-items-center rounded-full border border-border bg-surface text-muted-foreground active:scale-95"
         >
@@ -305,6 +306,7 @@ function EditProfilePage() {
         <Link
           to="/settings"
           preload="intent"
+          replace
           className="block touch-manipulation rounded-2xl border border-border p-4 text-sm font-medium active:scale-[0.99]"
         >
           Looking for privacy, password or account settings? →

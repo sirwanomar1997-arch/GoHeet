@@ -174,6 +174,7 @@ function ProfilePage() {
             <Link
               to="/edit-profile"
               preload="intent"
+              replace
               aria-label="Edit profile"
               className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
@@ -182,6 +183,7 @@ function ProfilePage() {
             <Link
               to="/settings"
               preload="intent"
+              replace
               aria-label="Settings"
               className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
             >
