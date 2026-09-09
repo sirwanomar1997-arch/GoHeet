@@ -557,6 +557,8 @@ export const publishMoment = createServerFn({ method: "POST" })
       .optional()
       .parse(d.overlay),
     originalAudioVolume: z.number().min(0).max(1).optional().parse(d.originalAudioVolume),
+    liveCapture: z.boolean().optional().parse(d.liveCapture),
+    cameraLabel: z.string().max(120).optional().parse(d.cameraLabel),
   }))
   .handler(async ({ data, context }) => {
     const sb = await admin();
