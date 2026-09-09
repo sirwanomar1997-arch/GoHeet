@@ -246,7 +246,7 @@ function CameraPage() {
     setBooting(true);
 
     try {
-      const stream = await engine.start(facing, withAudio);
+      const stream = await engine.start(facingRef.current, withAudio);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
