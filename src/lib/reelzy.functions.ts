@@ -920,35 +920,6 @@ async function decorate(rows: FeedRow[], viewerId: string | null): Promise<Momen
 const MOMENT_SELECT =
   "id, caption, kind, media_path, thumbnail_path, duration_ms, location_label, created_at, view_count, like_count, comment_count, author_id, style_filter, overlay, original_audio_volume, profiles!moments_author_profile_fkey(id, username, display_name, avatar_url, personal_photo_url, profile_image_type)";
 
-/** The GoHeet music library. Only licensed tracks loaded by staff appear here. */
-export const listMusicTracks = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const sb = await admin();
-    const { data } = await sb
-      .from("music_tracks")
-      .select("id, title, artist, audio_path, artwork_url, duration_ms, mood, genres, attribution_text, provider")
-      .eq("active", true)
-      .eq("status", "licensed")
-      .order("title");
-    const rows = data ?? [];
-    const urls = await signMusic(rows.map((r) => r.audio_path));
-    return {
-      tracks: rows.map((r) => ({
-        id: r.id,
-        title: r.title,
-        artist: r.artist,
-        artworkUrl: r.artwork_url,
-        mood: r.mood,
-        genres: r.genres,
-        durationMs: r.duration_ms,
-        attributionText: r.attribution_text,
-        provider: r.provider,
-        url: urls[r.audio_path] ?? null,
-      })),
-    };
-  });
-
 export const getFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { scope: string; cursor?: string; sort?: string }) => ({

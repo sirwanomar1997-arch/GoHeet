@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Music2, Check, Play, Pause, Search, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
-import { publishMoment, startCapture, listMusicTracks } from "@/lib/reelzy.functions";
+import { publishMoment, startCapture } from "@/lib/reelzy.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -228,53 +228,9 @@ function CameraPage() {
     if (!dragMovedRef.current) setTextOpen(true);
   };
 
-  const [musicOpen, setMusicOpen] = useState(false);
-  const [track, setTrack] = useState<{
-    id: string;
-    title: string;
-    artist: string;
-    url: string | null;
-    durationMs: number | null;
-  } | null>(null);
-  const [musicSearch, setMusicSearch] = useState("");
-  const [musicOffsetMs, setMusicOffsetMs] = useState(0);
-  const [musicVolume, setMusicVolume] = useState(0.75);
-  const [originalAudioVolume, setOriginalAudioVolume] = useState(1);
-  const [previewingTrackId, setPreviewingTrackId] = useState<string | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const openSession = useServerFn(startCapture);
-  const fetchTracks = useServerFn(listMusicTracks);
-  const { data: music, isLoading: musicLoading } = useQuery({
-    queryKey: ["music-library"],
-    queryFn: () => fetchTracks({ data: undefined }),
-    enabled: musicOpen,
-  });
   const publish = useServerFn(publishMoment);
-  const visibleTracks = (music?.tracks ?? []).filter((item) => {
-    const query = musicSearch.trim().toLowerCase();
-    return !query || `${item.title} ${item.artist} ${item.mood ?? ""} ${item.genres.join(" ")}`.toLowerCase().includes(query);
-  });
-
-  useEffect(() => () => previewAudioRef.current?.pause(), []);
-
-  function toggleTrackPreview(item: { id: string; url: string | null }) {
-    const current = previewAudioRef.current;
-    if (previewingTrackId === item.id && current) {
-      current.pause();
-      setPreviewingTrackId(null);
-      return;
-    }
-    current?.pause();
-    if (!item.url) return;
-    const audio = new Audio(item.url);
-    audio.volume = 0.75;
-    audio.onended = () => setPreviewingTrackId(null);
-    previewAudioRef.current = audio;
-    setPreviewingTrackId(item.id);
-    void audio.play().catch(() => setPreviewingTrackId(null));
-  }
-
   const stopStream = useCallback(() => {
     engineRef.current?.stop();
   }, []);
@@ -628,10 +584,6 @@ function CameraPage() {
     setCaption("");
     setPlace("");
     setOverlay(null);
-    setTrack(null);
-    setMusicOffsetMs(0);
-    setMusicVolume(0.75);
-    setOriginalAudioVolume(1);
     setLook("none");
   }
 
@@ -668,9 +620,6 @@ function CameraPage() {
           ...(place.trim() ? { locationLabel: place.trim() } : {}),
           ...(look !== "none" ? { styleFilter: look } : {}),
           ...(overlay?.text.trim() ? { overlay } : {}),
-          ...(track ? { musicTrackId: track.id } : {}),
-          ...(track ? { musicOffsetMs, musicVolume } : {}),
-          originalAudioVolume,
         },
       });
       // Publishing a held moment empties its slot.
@@ -684,71 +633,6 @@ function CameraPage() {
       setPublishing(false);
     }
   }
-
-  const musicSheet = (
-    <Sheet open={musicOpen} onOpenChange={setMusicOpen}>
-      <SheetContent side="bottom" className="flex h-[70svh] flex-col rounded-t-[28px] border-border bg-surface">
-        <SheetHeader className="px-0">
-          <SheetTitle className="font-display">Add a track</SheetTitle>
-          <SheetDescription>Free instrumentals, cleared for use inside GoHeet.</SheetDescription>
-        </SheetHeader>
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={musicSearch} onChange={(event) => setMusicSearch(event.target.value)} placeholder="Search tracks, artists or moods" className="h-11 bg-surface-raised pl-10" />
-        </div>
-        <div className="flex-1 space-y-2 overflow-y-auto pb-6">
-          {musicLoading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading tracks…</p>
-          ) : (music?.tracks.length ?? 0) === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-              No tracks available right now. Try again in a moment.
-            </p>
-          ) : (
-            visibleTracks.map((t) => (
-              <div key={t.id} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3">
-                <Button variant="ghost" size="icon" onClick={() => toggleTrackPreview(t)} aria-label={`Preview ${t.title}`} className="shrink-0 overflow-hidden rounded-xl">
-                  {t.artworkUrl ? <img src={t.artworkUrl} alt="" className="size-full object-cover" /> : previewingTrackId === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}
-                </Button>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold">{t.title}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {t.artist}
-                    {t.mood ? ` · ${t.mood}` : ""}
-                  </span>
-                </span>
-                <Button
-                  variant={track?.id === t.id ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => {
-                    previewAudioRef.current?.pause();
-                    setPreviewingTrackId(null);
-                    setTrack({ id: t.id, title: t.title, artist: t.artist, url: t.url, durationMs: t.durationMs });
-                    setMusicOffsetMs(0);
-                    setMusicOpen(false);
-                  }}
-                  aria-label={`Use ${t.title}`}
-                >
-                  <Check className="size-4" />
-                </Button>
-              </div>
-            ))
-          )}
-        </div>
-        {track ? (
-          <Button
-            variant="ghost"
-            className="h-12 rounded-2xl border border-border"
-            onClick={() => {
-              setTrack(null);
-              setMusicOpen(false);
-            }}
-          >
-            Remove music
-          </Button>
-        ) : null}
-      </SheetContent>
-    </Sheet>
-  );
 
   if (captured) {
     const media = (
@@ -811,32 +695,6 @@ function CameraPage() {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => setMusicOpen(true)}
-                className="flex h-12 w-full items-center gap-3 rounded-2xl border border-border bg-surface-raised px-4 text-left text-sm"
-              >
-                <Music2 className="size-4 text-muted-foreground" />
-                <span className="truncate">{track ? `${track.title} · ${track.artist}` : "Add music (optional)"}</span>
-              </button>
-
-              {track ? (
-                <div className="space-y-4 rounded-2xl border border-border bg-surface-raised p-4">
-                  <label className="block space-y-2 text-xs text-muted-foreground">
-                    <span className="flex justify-between"><span>Start point</span><span>{Math.floor(musicOffsetMs / 1000)}s</span></span>
-                    <Slider value={[musicOffsetMs]} min={0} max={Math.max(0, (track.durationMs ?? 30000) - 1000)} step={1000} onValueChange={([value]) => setMusicOffsetMs(value ?? 0)} />
-                  </label>
-                  <label className="block space-y-2 text-xs text-muted-foreground">
-                    <span>Music volume</span>
-                    <Slider value={[musicVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setMusicVolume(value ?? 0.75)} />
-                  </label>
-                  <label className="block space-y-2 text-xs text-muted-foreground">
-                    <span>Original sound</span>
-                    <Slider value={[originalAudioVolume]} min={0} max={1} step={0.05} onValueChange={([value]) => setOriginalAudioVolume(value ?? 1)} />
-                  </label>
-                </div>
-              ) : null}
-
               <Button
                 onClick={doPublish}
                 disabled={publishing || !session}
@@ -862,7 +720,6 @@ function CameraPage() {
             </div>
           </div>
 
-          {musicSheet}
         </main>
       );
     }
@@ -962,16 +819,6 @@ function CameraPage() {
                   setFilterOpen(false);
                   if (!overlay) setOverlay({ ...DEFAULT_OVERLAY, text: "" });
                   setTextOpen(true);
-                },
-              },
-              {
-                key: "music",
-                icon: <Music2 className="size-5" />,
-                label: track ? "Change music" : "Add music",
-                active: !!track,
-                onClick: () => {
-                  setFilterOpen(false);
-                  setMusicOpen(true);
                 },
               },
             ].map((tool) => (
@@ -1175,7 +1022,6 @@ function CameraPage() {
         ) : null}
 
 
-        {musicSheet}
       </main>
     );
   }
