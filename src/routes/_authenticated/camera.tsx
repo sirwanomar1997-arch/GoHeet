@@ -248,7 +248,8 @@ function CameraPage() {
         await videoRef.current.play().catch(() => undefined);
       }
       setZoomRange(engine.state.zoomRange);
-      setZoom(engine.state.zoomRange?.min ?? 1);
+      // Every take opens at the natural 1× view, never at the widest lens.
+      setZoom(await engine.setZoom(1).catch(() => 1));
       setDigital(1);
       setTorchAvailable(engine.state.torchAvailable);
       setTorch(false);
