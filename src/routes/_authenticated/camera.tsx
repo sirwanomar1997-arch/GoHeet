@@ -272,7 +272,7 @@ function CameraPage() {
     } finally {
       setBooting(false);
     }
-  }, [facing]);
+  }, []);
 
   useEffect(() => {
     if (captured) return;
