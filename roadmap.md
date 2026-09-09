@@ -49,3 +49,6 @@
 
 - [x] Show profile setup only for genuinely new accounts
 - [x] Recognize existing Apple/Google/email/phone profiles without refresh
+
+- [x] Remove music information from the scrolling feed
+- [x] Make video descriptions smaller and lighter
