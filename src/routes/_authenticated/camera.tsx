@@ -1123,14 +1123,6 @@ function CameraPage() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setWithAudio((a) => !a)}
-            aria-label={withAudio ? "Record without sound" : "Record with sound"}
-            className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
-          >
-            {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5 text-white/50" />}
-          </button>
           {torchAvailable && !mirrored ? (
             <button
               type="button"
