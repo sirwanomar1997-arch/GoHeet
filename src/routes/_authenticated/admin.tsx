@@ -165,6 +165,15 @@ function AdminPage() {
                         @{m.username} · {timeAgo(m.createdAt)}
                       </p>
                       <p className="mt-1 text-sm">{m.caption || "No caption"}</p>
+                      {m.aiScore !== null ? (
+                        <p
+                          className={`data-figure mt-1 text-[10px] uppercase tracking-[0.2em] ${
+                            m.aiScore >= 30 ? "text-destructive" : "text-muted-foreground"
+                          }`}
+                        >
+                          AI likelihood {m.aiScore}/100{m.aiReason ? ` · ${m.aiReason}` : ""}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div className="mt-3 flex gap-2">

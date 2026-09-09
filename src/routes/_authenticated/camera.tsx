@@ -160,6 +160,12 @@ function CameraPage() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [captured, setCaptured] = useState<Captured | null>(null);
+  /** Proof that what is about to be published was filmed live in this app. */
+  const liveCaptureRef = useRef<{ live: boolean; sameSession: boolean; label: string | null }>({
+    live: false,
+    sameSession: true,
+    label: null,
+  });
 
   const [session, setSession] = useState<{ sessionId: string; storagePrefix: string } | null>(null);
   const [caption, setCaption] = useState("");
@@ -292,6 +298,7 @@ function CameraPage() {
         durationMs: clip.durationMs,
         poster: clip.poster,
       });
+      liveCaptureRef.current = { live: true, sameSession: false, label: null };
       setCaption(clip.caption ?? "");
       setPlace(clip.place ?? "");
       setLook((clip.styleFilter as FilterId | null) ?? "none");
@@ -338,6 +345,11 @@ function CameraPage() {
       toast.error("Couldn't capture that frame.");
       return;
     }
+    liveCaptureRef.current = {
+      live: true,
+      sameSession: true,
+      label: engineRef.current?.cameraLabel ?? null,
+    };
     setCaptured({
       blob: poster,
       url: URL.createObjectURL(poster),
@@ -372,6 +384,7 @@ function CameraPage() {
         toast("Hold a moment longer — that take was too short.");
         return;
       }
+      liveCaptureRef.current = { live: true, sameSession: true, label: engine.cameraLabel };
       setCaptured({ blob, url: URL.createObjectURL(blob), kind: "video", durationMs: duration, poster });
       stopStream();
     });
@@ -607,6 +620,9 @@ function CameraPage() {
           mediaPath,
           kind: captured.kind,
           durationMs: Math.round(captured.durationMs),
+          liveCapture: liveCaptureRef.current.live,
+          sameSession: liveCaptureRef.current.sameSession,
+          ...(liveCaptureRef.current.label ? { cameraLabel: liveCaptureRef.current.label.slice(0, 120) } : {}),
           ...(thumbnailPath ? { thumbnailPath } : {}),
           ...(caption.trim() ? { caption: caption.trim() } : {}),
           ...(place.trim() ? { locationLabel: place.trim() } : {}),

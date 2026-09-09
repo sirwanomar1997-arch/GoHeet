@@ -79,27 +79,33 @@ export type Database = {
       }
       capture_sessions: {
         Row: {
+          camera_label: string | null
           consumed_at: string | null
           device_kind: string | null
           id: string
+          live_capture: boolean
           started_at: string
           status: string
           storage_path: string | null
           user_id: string
         }
         Insert: {
+          camera_label?: string | null
           consumed_at?: string | null
           device_kind?: string | null
           id?: string
+          live_capture?: boolean
           started_at?: string
           status?: string
           storage_path?: string | null
           user_id: string
         }
         Update: {
+          camera_label?: string | null
           consumed_at?: string | null
           device_kind?: string | null
           id?: string
+          live_capture?: boolean
           started_at?: string
           status?: string
           storage_path?: string | null
@@ -393,6 +399,9 @@ export type Database = {
       }
       moments: {
         Row: {
+          ai_checked_at: string | null
+          ai_reason: string | null
+          ai_score: number | null
           author_id: string
           caption: string | null
           capture_session_id: string | null
@@ -419,6 +428,9 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          ai_checked_at?: string | null
+          ai_reason?: string | null
+          ai_score?: number | null
           author_id: string
           caption?: string | null
           capture_session_id?: string | null
@@ -445,6 +457,9 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          ai_checked_at?: string | null
+          ai_reason?: string | null
+          ai_score?: number | null
           author_id?: string
           caption?: string | null
           capture_session_id?: string | null
