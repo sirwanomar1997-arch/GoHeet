@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, Mic, MicOff, MapPin, Type as TypeIcon, Check, Play, Pause, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
+import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Pause, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
@@ -136,7 +136,7 @@ function CameraPage() {
 
 
   const [facing, setFacing] = useState<"user" | "environment">("environment");
-  const [withAudio, setWithAudio] = useState(true);
+  const withAudio = true;
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(true);
   const [error, setError] = useState<EngineError | null>(null);
@@ -268,7 +268,7 @@ function CameraPage() {
     } finally {
       setBooting(false);
     }
-  }, [facing, withAudio]);
+  }, [facing]);
 
   useEffect(() => {
     if (captured) return;
@@ -1123,14 +1123,6 @@ function CameraPage() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setWithAudio((a) => !a)}
-            aria-label={withAudio ? "Record without sound" : "Record with sound"}
-            className="grid size-10 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
-          >
-            {withAudio ? <Mic className="size-5" /> : <MicOff className="size-5 text-white/50" />}
-          </button>
           {torchAvailable && !mirrored ? (
             <button
               type="button"
