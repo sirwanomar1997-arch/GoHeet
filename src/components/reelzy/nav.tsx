@@ -148,20 +148,13 @@ export function GoHeetNav() {
 }
 
 
-/** Swipeable destinations, left → right. Camera stays tap-only (it needs the screen). */
+/** Swipe only moves between the home feed and your own profile. Everything else is tap-only. */
 function useSwipeNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { data } = useMe();
   const username = data?.profile?.username;
   const touch = useRef<{ x: number; y: number } | null>(null);
-
-  const routes: string[] = username
-    ? ["/feed", "/discover", "/activity", `/u/${username}`]
-    : ["/feed", "/discover", "/activity"];
-  const index = routes.findIndex((r) =>
-    r.startsWith("/u/") ? pathname.startsWith("/u/") : pathname === r,
-  );
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
@@ -172,15 +165,14 @@ function useSwipeNav() {
       const start = touch.current;
       touch.current = null;
       const t = e.changedTouches[0];
-      if (!start || !t || index === -1) return;
+      if (!start || !t || !username) return;
+      const onFeed = pathname === "/feed";
+      const onProfile = pathname.startsWith("/u/");
+      if (!onFeed && !onProfile) return;
       const dx = t.clientX - start.x;
       const dy = t.clientY - start.y;
       if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      // Circular: swipe left past the last page wraps to the home feed,
-      // swipe right past the first wraps to the profile.
-      const len = routes.length;
-      const next = dx < 0 ? routes[(index + 1) % len] : routes[(index - 1 + len) % len];
-      if (next && next !== routes[index]) void navigate({ to: next });
+      void navigate({ to: onFeed ? `/u/${username}` : "/feed" });
     },
   };
 }
