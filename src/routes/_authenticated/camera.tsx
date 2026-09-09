@@ -1159,12 +1159,29 @@ function CameraPage() {
         </div>
       </div>
 
-      {/* Zoom is pinch-only — nothing on screen, just your fingers. */}
-      {ready && !error && (zoomRange ? zoom > (zoomRange.min || 1) * 1.02 : digital > 1.02) ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-44 flex justify-center">
-          <span className="data-figure rounded-full bg-black/35 px-3 py-1 text-[11px] tracking-[0.1em] text-white/85 backdrop-blur-md">
-            {zoomLabel}
-          </span>
+      {/* Familiar phone-camera steps — tap one, or pinch for anything between. */}
+      {ready && !error ? (
+        <div className="absolute inset-x-0 bottom-44 flex justify-center">
+          <div className="flex items-center gap-1 rounded-full bg-black/35 p-1 backdrop-blur-md">
+            {zoomSteps.map((step) => {
+              const active = Math.abs(zoomFactor - step) < 0.12;
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  onClick={() => applyZoom(step)}
+                  aria-label={`Zoom ${step}×`}
+                  className={`data-figure grid h-9 min-w-9 touch-manipulation place-items-center rounded-full px-2.5 text-[12px] font-semibold transition-transform active:scale-90 ${
+                    active ? "bg-white text-black" : "text-white/85"
+                  }`}
+                >
+                  {active
+                    ? zoomLabel
+                    : `${step < 1 ? String(step).replace(/^0/, "") : step}×`}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
