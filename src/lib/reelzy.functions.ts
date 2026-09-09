@@ -532,6 +532,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     overlay?: { text: string; font: string; style: string; place: string; color?: string; x?: number; y?: number; size?: number; rotate?: number };
     originalAudioVolume?: number;
     liveCapture?: boolean;
+    sameSession?: boolean;
     cameraLabel?: string;
   }) => ({
     sessionId: z.string().uuid().parse(d.sessionId),
@@ -558,6 +559,7 @@ export const publishMoment = createServerFn({ method: "POST" })
       .parse(d.overlay),
     originalAudioVolume: z.number().min(0).max(1).optional().parse(d.originalAudioVolume),
     liveCapture: z.boolean().optional().parse(d.liveCapture),
+    sameSession: z.boolean().optional().parse(d.sameSession),
     cameraLabel: z.string().max(120).optional().parse(d.cameraLabel),
   }))
   .handler(async ({ data, context }) => {
@@ -684,6 +686,7 @@ export const publishMoment = createServerFn({ method: "POST" })
       cameraLabel: data.cameraLabel ?? null,
       durationMs: data.durationMs ?? 0,
       sessionElapsedMs: Date.now() - new Date(session.started_at).getTime(),
+      sameSession: data.sameSession ?? true,
       kind: data.kind as "video" | "photo",
     });
     if (provenance) await removeAsSynthetic(provenance);
