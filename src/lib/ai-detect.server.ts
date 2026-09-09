@@ -59,6 +59,8 @@ type Provenance = {
   durationMs: number;
   /** How long the capture session had been open when the clip was published. */
   sessionElapsedMs: number;
+  /** The clip was filmed in this very session (false for a clip held for later). */
+  sameSession: boolean;
   kind: "video" | "photo";
 };
 
@@ -72,7 +74,7 @@ export function checkProvenance(p: Provenance): SyntheticVerdict | null {
   if (p.kind === "video" && !p.liveCapture) {
     return { score: 100, reason: "Clip was not filmed live in the GoHeet camera", synthetic: true };
   }
-  if (p.durationMs > p.sessionElapsedMs + 15_000) {
+  if (p.sameSession && p.durationMs > p.sessionElapsedMs + 15_000) {
     return { score: 100, reason: "Clip is longer than the live camera session", synthetic: true };
   }
   if (p.cameraLabel && /virtual|obs|manycam|droidcam|snap ?camera|epoccam|screen|capture card/i.test(p.cameraLabel)) {
