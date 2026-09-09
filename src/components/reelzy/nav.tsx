@@ -41,6 +41,12 @@ export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data, isLoading, isError } = useMe();
   const username = data?.profile?.username;
+  // The capture key only lives on browsing surfaces. Profile and Settings
+  // are destination pages — the record button should not appear there.
+  const showCapture =
+    pathname === "/feed" ||
+    pathname === "/discover" ||
+    pathname === "/activity";
 
   const fetchNotifications = useServerFn(listNotifications);
   const { data: notif } = useQuery({
@@ -85,19 +91,21 @@ export function GoHeetNav() {
           <span className={spark(pathname === "/discover")} />
         </Link>
 
-        <Link
-          to="/camera"
-          aria-label="Open the GoHeet camera"
-          className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
-        >
-          <span className="absolute inset-0 rounded-2xl bg-ember opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
-          <span className="relative grid size-full place-items-center overflow-hidden rounded-2xl bg-[image:var(--gradient-ember)] shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_28%,transparent),inset_0_-8px_16px_color-mix(in_oklab,var(--ember-deep)_40%,transparent)]">
-            <svg className="size-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 4v16M4 12h16" />
-            </svg>
-            <span className="pointer-events-none absolute inset-0.5 rounded-[14px] border border-white/20" />
-          </span>
-        </Link>
+        {showCapture ? (
+          <Link
+            to="/camera"
+            aria-label="Open the GoHeet camera"
+            className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
+          >
+            <span className="absolute inset-0 rounded-2xl bg-ember opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
+            <span className="relative grid size-full place-items-center overflow-hidden rounded-2xl bg-[image:var(--gradient-ember)] shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_28%,transparent),inset_0_-8px_16px_color-mix(in_oklab,var(--ember-deep)_40%,transparent)]">
+              <svg className="size-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 4v16M4 12h16" />
+              </svg>
+              <span className="pointer-events-none absolute inset-0.5 rounded-[14px] border border-white/20" />
+            </span>
+          </Link>
+        ) : null}
 
         <Link
           to="/activity"
