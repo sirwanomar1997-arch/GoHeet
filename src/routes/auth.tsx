@@ -27,12 +27,7 @@ const searchSchema = z.object({
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
-  { label: "One capital letter", test: (v: string) => /[A-Z]/.test(v) },
   { label: "One number", test: (v: string) => /\d/.test(v) },
-  {
-    label: "One special character",
-    test: (v: string) => /[^A-Za-z0-9]/.test(v),
-  },
 ] as const;
 
 const AUTH_COPY = {
