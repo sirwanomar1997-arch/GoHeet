@@ -103,6 +103,40 @@ export const EYE_COLORS: Swatch[] = [
   { name: "Violet", hex: "#7a5f9e" },
 ];
 
+/** Exclusive colourways any outfit can be recoloured to. */
+export const OUTFIT_COLORS: Swatch[] = [
+  { name: "As shown", hex: "linear-gradient(135deg,#7a7a7a,#e6e6e6)" },
+  { name: "Midnight black", hex: "#15161a" },
+  { name: "Pure white", hex: "#f7f7f5" },
+  { name: "Ivory cream", hex: "#efe4d1" },
+  { name: "Champagne", hex: "#e3cfa8" },
+  { name: "Camel", hex: "#c89a63" },
+  { name: "Cognac brown", hex: "#8a4f2b" },
+  { name: "Espresso", hex: "#4a3529" },
+  { name: "Sand beige", hex: "#d9c3a5" },
+  { name: "Dove grey", hex: "#b3b6bb" },
+  { name: "Charcoal", hex: "#3c3f45" },
+  { name: "Navy", hex: "#1e2a4a" },
+  { name: "Royal blue", hex: "#2a4fbf" },
+  { name: "Powder blue", hex: "#a9c8e6" },
+  { name: "Teal", hex: "#146b70" },
+  { name: "Emerald", hex: "#116a4a" },
+  { name: "Sage green", hex: "#9aae8e" },
+  { name: "Olive", hex: "#6a6a35" },
+  { name: "Forest green", hex: "#26402a" },
+  { name: "Mustard gold", hex: "#c99a25" },
+  { name: "Burnt orange", hex: "#c0562a" },
+  { name: "Terracotta", hex: "#b26a4f" },
+  { name: "Crimson red", hex: "#a51c30" },
+  { name: "Burgundy", hex: "#5c1a2b" },
+  { name: "Blush pink", hex: "#e8b7bd" },
+  { name: "Hot pink", hex: "#d63f80" },
+  { name: "Lilac", hex: "#b9a5dd" },
+  { name: "Deep purple", hex: "#4b2a6b" },
+  { name: "Ice silver", hex: "#d7dbe0" },
+  { name: "Metallic gold", hex: "#c9a227" },
+];
+
 /* ---------------- picture options ---------------- */
 
 export const HAIR_MALE: Pic[] = [
