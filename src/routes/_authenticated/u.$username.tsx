@@ -170,6 +170,15 @@ function ProfilePage() {
     <AppShell hideNav>
       {/* --- Profile image stage --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
+        {/* Share profile — top-left */}
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          aria-label={data.isSelf ? "Share your profile" : "Share this profile"}
+          className="tap-target absolute left-4 top-4 z-20 grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
+        >
+          <Share2 className="pointer-events-none size-5" />
+        </button>
         <div
           aria-hidden
           className="ember-fill pointer-events-none absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
