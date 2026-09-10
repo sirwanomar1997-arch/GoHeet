@@ -62,3 +62,9 @@
 - [x] Remove Discover, Notice, messages, and feed from beneath every opened profile
 - [x] Block iPhone browser-history edge swipes across every signed-in screen without creating extra history entries
 - [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)
+
+- [x] Scale hardening: database indexes for feed, profiles, search, notifications
+- [x] Cache media/profile picture links so popular content is served instantly
+- [x] Batch usage statistics instead of writing one row per action
+- [x] Burst protection on posting, reactions, follows, search and messages
+- [x] Smarter client caching and retry back-off
