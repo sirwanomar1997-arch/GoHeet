@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,40 @@ const PASSWORD_RULES = [
   },
 ] as const;
 
+const AUTH_COPY = {
+  en: {
+    createTitle: "Create your account", createDescription: "Sign up with your email or phone number.",
+    almostThere: "Almost there.", enterTextCode: "Enter the code we texted you.", emailOrPhone: "Email or phone number",
+    phoneCodeHint: "We'll text you a code to confirm this number.", phoneHint: "Start with + to use a phone number instead.",
+    password: "Password", repeatPassword: "Repeat password", changeNumber: "Change number", oneMoment: "One moment…",
+    verifyContinue: "Verify & continue", sendCode: "Send code", createAccount: "Create account",
+    resetTitle: "Reset your password", resetDescription: "Enter the email or phone number on your account.",
+    codeDescription: "Enter the code we sent to {id}.", choosePassword: "Choose a new password.",
+    verificationCode: "Verification code", differentLogin: "Use a different email or number", sending: "Sending…",
+    checking: "Checking…", verifyCode: "Verify code", newPassword: "New password", repeatNewPassword: "Repeat new password",
+    saving: "Saving…", savePassword: "Save new password", hidePassword: "Hide password", showPassword: "Show password",
+    min8: "At least 8 characters", capital: "One capital letter", number: "One number", special: "One special character",
+  },
+  sv: {
+    createTitle: "Skapa ditt konto", createDescription: "Registrera dig med din e-postadress eller ditt telefonnummer.",
+    almostThere: "Nästan klart.", enterTextCode: "Ange koden vi skickade till dig.", emailOrPhone: "E-postadress eller telefonnummer",
+    phoneCodeHint: "Vi skickar en kod för att bekräfta numret.", phoneHint: "Börja med + för att använda ett telefonnummer istället.",
+    password: "Lösenord", repeatPassword: "Upprepa lösenord", changeNumber: "Byt nummer", oneMoment: "Ett ögonblick…",
+    verifyContinue: "Verifiera och fortsätt", sendCode: "Skicka kod", createAccount: "Skapa konto",
+    resetTitle: "Återställ ditt lösenord", resetDescription: "Ange e-postadressen eller telefonnumret för ditt konto.",
+    codeDescription: "Ange koden vi skickade till {id}.", choosePassword: "Välj ett nytt lösenord.",
+    verificationCode: "Verifieringskod", differentLogin: "Använd en annan e-postadress eller ett annat nummer", sending: "Skickar…",
+    checking: "Kontrollerar…", verifyCode: "Verifiera kod", newPassword: "Nytt lösenord", repeatNewPassword: "Upprepa nytt lösenord",
+    saving: "Sparar…", savePassword: "Spara nytt lösenord", hidePassword: "Dölj lösenord", showPassword: "Visa lösenord",
+    min8: "Minst 8 tecken", capital: "En stor bokstav", number: "En siffra", special: "Ett specialtecken",
+  },
+} as const;
+
+function useAuthCopy() {
+  const { locale } = useI18n();
+  return locale === "sv" ? AUTH_COPY.sv : AUTH_COPY.en;
+}
+
 function passwordProblem(value: string): string | null {
   const failed = PASSWORD_RULES.filter((r) => !r.test(value));
   if (failed.length === 0) return null;
@@ -41,6 +76,7 @@ function passwordProblem(value: string): string | null {
 }
 
 function PasswordChecklist({ value }: { value: string }) {
+  const copy = useAuthCopy();
   if (!value) return null;
   return (
     <ul className="mt-2 space-y-1">
@@ -58,7 +94,7 @@ function PasswordChecklist({ value }: { value: string }) {
             ) : (
               <span className="size-3.5 rounded-full border border-current opacity-50" />
             )}
-            {rule.label}
+            {rule.label === "At least 8 characters" ? copy.min8 : rule.label === "One capital letter" ? copy.capital : rule.label === "One number" ? copy.number : copy.special}
           </li>
         );
       })}
@@ -80,6 +116,7 @@ function PasswordField({
   autoComplete?: string;
 }) {
   const [show, setShow] = useState(false);
+  const copy = useAuthCopy();
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
@@ -97,7 +134,7 @@ function PasswordField({
         <button
           type="button"
           onClick={() => setShow((v) => !v)}
-          aria-label={show ? "Hide password" : "Show password"}
+          aria-label={show ? copy.hidePassword : copy.showPassword}
           aria-pressed={show}
           className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
         >
@@ -441,6 +478,7 @@ function SignUpDialog({
   onOpenChange: (v: boolean) => void;
   goAuthed: (to: string) => void;
 }) {
+  const copy = useAuthCopy();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -510,15 +548,15 @@ function SignUpDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl">
+      <DialogContent className="max-w-sm rounded-3xl" data-no-translate>
         <DialogHeader>
-          <DialogTitle>Create your account</DialogTitle>
+          <DialogTitle>{copy.createTitle}</DialogTitle>
           <DialogDescription>
             {emailSent
-              ? "Almost there."
+              ? copy.almostThere
               : otpSent
-                ? "Enter the code we texted you."
-                : "Sign up with your email or phone number."}
+                ? copy.enterTextCode
+                : copy.createDescription}
           </DialogDescription>
         </DialogHeader>
 
@@ -534,7 +572,7 @@ function SignUpDialog({
           <form onSubmit={submit} className="space-y-4">
             {otpSent ? (
               <div>
-                <Label htmlFor="su-code">Enter the code</Label>
+                <Label htmlFor="su-code">{copy.enterTextCode}</Label>
                 <Input
                   id="su-code"
                   type="text"
@@ -553,13 +591,13 @@ function SignUpDialog({
                     setCode("");
                   }}
                 >
-                  Change number
+                  {copy.changeNumber}
                 </button>
               </div>
             ) : (
               <>
                 <div>
-                  <Label htmlFor="su-id">Email or phone number</Label>
+                  <Label htmlFor="su-id">{copy.emailOrPhone}</Label>
                   <Input
                     id="su-id"
                     type="text"
@@ -572,14 +610,14 @@ function SignUpDialog({
                   />
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     {isPhone
-                      ? "We'll text you a code to confirm this number."
-                      : "Start with + to use a phone number instead."}
+                      ? copy.phoneCodeHint
+                      : copy.phoneHint}
                   </p>
                 </div>
                 <div>
                   <PasswordField
                     id="su-pw"
-                    label="Password"
+                    label={copy.password}
                     value={password}
                     onChange={setPassword}
                   />
@@ -587,7 +625,7 @@ function SignUpDialog({
                 </div>
                 <PasswordField
                   id="su-pw2"
-                  label="Repeat password"
+                  label={copy.repeatPassword}
                   value={confirm}
                   onChange={setConfirm}
                 />
@@ -599,12 +637,12 @@ function SignUpDialog({
               className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
             >
               {busy
-                ? "One moment…"
+                ? copy.oneMoment
                 : otpSent
-                  ? "Verify & continue"
+                  ? copy.verifyContinue
                   : isPhone
-                    ? "Send code"
-                    : "Create account"}
+                    ? copy.sendCode
+                    : copy.createAccount}
             </Button>
           </form>
         )}
@@ -620,6 +658,7 @@ function ResetDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const copy = useAuthCopy();
   const [step, setStep] = useState<"identifier" | "code" | "password">("identifier");
   const [identifier, setIdentifier] = useState("");
   const [code, setCode] = useState("");
@@ -721,22 +760,22 @@ function ResetDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
-      <DialogContent className="max-w-sm rounded-3xl">
+      <DialogContent className="max-w-sm rounded-3xl" data-no-translate>
         <DialogHeader>
-          <DialogTitle>Reset your password</DialogTitle>
+          <DialogTitle>{copy.resetTitle}</DialogTitle>
           <DialogDescription>
             {step === "identifier"
-              ? "Enter the email or phone number on your account."
+              ? copy.resetDescription
               : step === "code"
-                ? `Enter the code we sent to ${identifier.trim()}.`
-                : "Choose a new password."}
+                ? copy.codeDescription.replace("{id}", identifier.trim())
+                : copy.choosePassword}
           </DialogDescription>
         </DialogHeader>
 
         {step === "identifier" && (
           <form onSubmit={sendCode} className="space-y-4">
             <div>
-              <Label htmlFor="rs-id">Email or phone number</Label>
+              <Label htmlFor="rs-id">{copy.emailOrPhone}</Label>
               <Input
                 id="rs-id"
                 type="text"
@@ -753,7 +792,7 @@ function ResetDialog({
               disabled={busy}
               className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
             >
-              {busy ? "Sending…" : "Send code"}
+              {busy ? copy.sending : copy.sendCode}
             </Button>
           </form>
         )}
@@ -761,7 +800,7 @@ function ResetDialog({
         {step === "code" && (
           <form onSubmit={verify} className="space-y-4">
             <div>
-              <Label htmlFor="rs-code">Verification code</Label>
+              <Label htmlFor="rs-code">{copy.verificationCode}</Label>
               <Input
                 id="rs-code"
                 type="text"
@@ -777,7 +816,7 @@ function ResetDialog({
                 className="mt-2 text-xs text-muted-foreground underline"
                 onClick={() => setStep("identifier")}
               >
-                Use a different email or number
+                {copy.differentLogin}
               </button>
             </div>
             <Button
@@ -785,7 +824,7 @@ function ResetDialog({
               disabled={busy}
               className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
             >
-              {busy ? "Checking…" : "Verify code"}
+              {busy ? copy.checking : copy.verifyCode}
             </Button>
           </form>
         )}
@@ -795,7 +834,7 @@ function ResetDialog({
             <div>
               <PasswordField
                 id="rs-pw"
-                label="New password"
+                label={copy.newPassword}
                 value={password}
                 onChange={setPassword}
               />
@@ -803,7 +842,7 @@ function ResetDialog({
             </div>
             <PasswordField
               id="rs-pw2"
-              label="Repeat new password"
+              label={copy.repeatNewPassword}
               value={confirm}
               onChange={setConfirm}
             />
@@ -812,7 +851,7 @@ function ResetDialog({
               disabled={busy}
               className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
             >
-              {busy ? "Saving…" : "Save new password"}
+              {busy ? copy.saving : copy.savePassword}
             </Button>
           </form>
         )}
