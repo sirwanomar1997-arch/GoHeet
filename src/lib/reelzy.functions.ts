@@ -678,6 +678,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     cameraLabel: z.string().max(120).optional().parse(d.cameraLabel),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "publish", 20, 60_000);
     const sb = await admin();
 
     // 0. Banned or suspended accounts cannot publish.
