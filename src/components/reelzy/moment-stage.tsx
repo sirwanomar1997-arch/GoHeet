@@ -43,6 +43,7 @@ import {
   toggleSave,
   type MomentCard,
 } from "@/lib/reelzy.functions";
+import { isDemoMode } from "@/lib/use-demo-mode";
 import { formatCount, timeAgo } from "./format";
 import { HeetFlame } from "./heet-flame";
 import { ShareSheet } from "./share-sheet";
@@ -343,7 +344,11 @@ export function MomentStage({
   }, [moment.kind, flushView]);
 
   const likeMutation = useMutation({
-    mutationFn: () => like({ data: { momentId: moment.id } }),
+    mutationFn: async () => {
+      // Screenshot/demo mode uses mock moments that don't exist server-side.
+      if (isDemoMode()) return { liked: true } as unknown as Awaited<ReturnType<typeof like>>;
+      return like({ data: { momentId: moment.id } });
+    },
     onMutate: () => {
       setLiked((v) => !v);
       setLikeCount((c) => c + (liked ? -1 : 1));
@@ -627,7 +632,7 @@ export function MomentStage({
           />
         </button>
         <span className="font-sans text-[15px] font-bold leading-tight text-foreground">
-          {formatCount(moment.likeCount)}
+          {formatCount(likeCount)}
         </span>
       </div>
 
