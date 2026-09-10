@@ -1179,6 +1179,7 @@ export const recordView = createServerFn({ method: "POST" })
     completed: z.boolean().optional().parse(d.completed),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "view", 120, 60_000);
     // A view only counts once per person per moment per day, and only after
     // a meaningful amount of watch time.
     if (data.watchedMs < 1500) return { counted: false };
@@ -1211,6 +1212,7 @@ export const toggleLike = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "like", 90, 60_000);
     const { data: existing } = await context.supabase
       .from("likes")
       .select("id")
@@ -1233,6 +1235,7 @@ export const toggleSave = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "save", 90, 60_000);
     const { data: existing } = await context.supabase
       .from("saves")
       .select("id")
@@ -1254,6 +1257,7 @@ export const toggleRepost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "repost", 60, 60_000);
     const { data: existing } = await context.supabase
       .from("reposts")
       .select("id")
@@ -1277,6 +1281,7 @@ export const toggleFollow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string }) => ({ userId: z.string().uuid().parse(d.userId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "follow", 60, 60_000);
     if (data.userId === context.userId) throw new Error("You cannot follow yourself.");
     const { data: existing } = await context.supabase
       .from("follows")
@@ -1519,6 +1524,7 @@ export const searchGoHeet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { q: string }) => ({ q: z.string().trim().max(60).parse(d.q) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "search", 60, 60_000);
     const term = data.q.replace(/[%_]/g, "");
     const people = term
       ? await context.supabase
@@ -1968,6 +1974,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     body: z.string().trim().min(1, "Write something first.").max(2000).parse(d.body),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "message", 40, 60_000);
     const me = context.userId;
     const sb = await admin();
 
