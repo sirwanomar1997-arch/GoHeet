@@ -1,6 +1,6 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMe } from "@/lib/use-me";
@@ -76,6 +76,7 @@ export function GoHeetNav() {
       <div className="nav-dock mx-auto flex h-[76px] max-w-lg items-center justify-between px-3">
         <Link
           to="/feed"
+          replace
           className={item(pathname === "/feed", "text-nav-reelz", "nav-glow-reelz")}
           aria-label="Reelz feed"
         >
@@ -84,6 +85,7 @@ export function GoHeetNav() {
         </Link>
         <Link
           to="/discover"
+          replace
           className={item(pathname === "/discover", "text-nav-search", "nav-glow-search")}
           aria-label="Search"
         >
@@ -94,6 +96,7 @@ export function GoHeetNav() {
         {showCapture ? (
           <Link
             to="/camera"
+            replace
             aria-label="Open the GoHeet camera"
             className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
           >
@@ -109,6 +112,7 @@ export function GoHeetNav() {
 
         <Link
           to="/activity"
+          replace
           className={`group relative grid size-14 place-items-center rounded-2xl transition-all duration-300 active:scale-90 ${
             pathname === "/activity" ? "scale-105 opacity-100" : "opacity-75"
           }`}
@@ -127,6 +131,7 @@ export function GoHeetNav() {
           <Link
             to="/u/$username"
             params={{ username }}
+            replace
             className={item(pathname.startsWith("/u/"), "text-nav-profile", "nav-glow-profile")}
             aria-label="Your profile"
           >
@@ -136,6 +141,7 @@ export function GoHeetNav() {
         ) : !isLoading && !isError ? (
           <Link
             to="/onboarding"
+            replace
             className={item(pathname === "/onboarding", "text-nav-profile", "nav-glow-profile")}
             aria-label="Finish your profile"
           >
@@ -171,6 +177,22 @@ function useSwipeNav() {
   const onFeed = pathname === "/feed";
   const onOwnProfile = !!username && pathname === `/u/${username}`;
   const enabled = onFeed || onOwnProfile;
+
+  // A phone-edge swipe is browser history, not a React touch gesture. Never
+  // allow it to uncover Discover, Activity, Settings, or Edit behind the
+  // signed-in user's profile; make Home the profile's only swipe destination.
+  const historyBlocker = useBlocker({
+    shouldBlockFn: ({ action, next }) =>
+      onOwnProfile && action === "BACK" && next.pathname !== "/feed",
+    enableBeforeUnload: false,
+    withResolver: true,
+  });
+
+  useEffect(() => {
+    if (historyBlocker.status !== "blocked") return;
+    historyBlocker.reset();
+    void navigate({ to: "/feed", replace: true });
+  }, [historyBlocker, navigate]);
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
@@ -213,7 +235,7 @@ export function AppShell({ children, hideNav = false }: { children: React.ReactN
   const swipe = useSwipeNav();
   return (
     <div
-      className={`min-h-screen touch-pan-y overscroll-x-none bg-background ${hideNav ? "pb-10" : "pb-24"}`}
+      className={`min-h-screen touch-pan-y overscroll-none bg-background ${hideNav ? "pb-10" : "pb-24"}`}
       onTouchStart={swipe.onTouchStart}
       onTouchEnd={swipe.onTouchEnd}
     >

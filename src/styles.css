@@ -136,6 +136,7 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
 
   a,
@@ -149,7 +150,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
   }
 
   h1,
