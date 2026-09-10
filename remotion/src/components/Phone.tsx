@@ -2,8 +2,8 @@ import { AbsoluteFill, Video, staticFile, useCurrentFrame, useVideoConfig, sprin
 
 const W = 690;
 const H = 1496;
-const SRC_W = 786;
-const SRC_H = 1704;
+const SRC_W = 393;
+const SRC_H = 852;
 
 export const Phone: React.FC<{
   clip: string;
@@ -47,10 +47,12 @@ export const Phone: React.FC<{
             muted
             style={{
               position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
+              top: 0,
+              left: 0,
+              width: SRC_W,
+              height: SRC_H,
+              transform: `scale(${W / SRC_W})`,
+              transformOrigin: "top left",
               display: "block",
             }}
           />
