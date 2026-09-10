@@ -1025,20 +1025,20 @@ function RailAction({
 }) {
   const core = active ? (activeColor ?? color) : color;
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center gap-0">
       <button
         type="button"
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className="grid size-8 place-items-center rounded-full transition-transform active:scale-90"
+        className="grid size-7 place-items-center rounded-full transition-transform active:scale-90"
         style={{ color: core, filter: softNeonFilter(core) }}
       >
         {children}
       </button>
       {count ? (
         <span
-          className="data-figure -mt-1 text-[11px] font-bold leading-none text-white"
+          className="data-figure -mt-0.5 text-[11px] font-bold leading-none text-foreground"
           style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
         >
           {count}
