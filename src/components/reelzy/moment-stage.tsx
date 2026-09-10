@@ -640,10 +640,11 @@ export function MomentStage({
         <RailAction
           label="Views"
           count={formatCount(moment.viewCount)}
-          color={NEON_AMBER}
+          color="var(--foreground)"
+          clean
           onClick={() => undefined}
         >
-          <Eye className="size-5" strokeWidth={2.2} />
+          <Eye className="size-5" strokeWidth={2} />
         </RailAction>
 
         <RailAction
@@ -972,7 +973,6 @@ const NEON_GREEN = "oklch(0.82 0.19 150)";
 const NEON_VIOLET = "oklch(0.75 0.19 300)";
 const NEON_CYAN = "oklch(0.83 0.14 200)";
 const NEON_RED = "oklch(0.68 0.22 22)";
-const NEON_AMBER = "oklch(0.82 0.17 75)";
 const NEON_CORE = NEON_BLUE;
 const NEON_GLOW = NEON_BLUE;
 
@@ -1012,6 +1012,7 @@ function RailAction({
   active,
   color,
   activeColor,
+  clean = false,
   onClick,
   children,
 }: {
@@ -1020,25 +1021,26 @@ function RailAction({
   active?: boolean;
   color: string;
   activeColor?: string;
+  clean?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   const core = active ? (activeColor ?? color) : color;
   return (
-    <div className="flex w-10 flex-col items-center gap-1">
+    <div className="flex w-10 flex-col items-center gap-0.5 bg-transparent">
       <button
         type="button"
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className="grid size-7 place-items-center rounded-full transition-transform active:scale-90"
-        style={{ color: core, filter: softNeonFilter(core) }}
+        className="grid size-7 place-items-center rounded-full bg-transparent shadow-none transition-transform active:scale-90"
+        style={{ color: core, filter: clean ? "none" : softNeonFilter(core) }}
       >
         {children}
       </button>
       {count ? (
         <span
-          className="data-figure whitespace-nowrap bg-transparent text-center text-[11px] font-bold leading-none text-foreground shadow-none [filter:none]"
+          className="data-figure block w-10 whitespace-nowrap bg-transparent p-0 text-center text-[11px] font-bold leading-none text-foreground shadow-none [filter:none]"
         >
           {count}
         </span>
