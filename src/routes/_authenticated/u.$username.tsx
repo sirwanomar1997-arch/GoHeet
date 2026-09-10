@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
+import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoProfile } from "@/lib/demo-data";
@@ -78,6 +79,7 @@ function ProfilePage() {
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageBody, setMessageBody] = useState("");
   const [sending, setSending] = useState(false);
