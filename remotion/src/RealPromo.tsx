@@ -127,7 +127,7 @@ const Hook: React.FC = () => {
   const words = ["REAL LIFE.", "REAL PEOPLE.", "REAL MOMENTS."];
   return (
     <AbsoluteFill>
-      <Screen src="app/feed.mp4" startFrom={2.4} zoom={1.18} dim={0.55} />
+      <Screen src="app/s_hook.mp4" startFrom={0} zoom={1.18} dim={0.55} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily }}>
         {words.map((w, i) => {
           const s = spring({ frame: frame - i * 12, fps, config: { damping: 14, stiffness: 140 } });
@@ -209,27 +209,27 @@ export const RealPromo: React.FC = () => (
       <Hook />
     </Sequence>
     <Sequence from={90} durationInFrames={300}>
-      <Screen src="app/feed.mp4" startFrom={2.0} />
+      <Screen src="app/s_feed1.mp4" startFrom={0} />
       <Kicker kicker="One tap" line={"Tap the flame.\nHeet the moment."} delay={6} />
     </Sequence>
     <Sequence from={390} durationInFrames={150}>
-      <Screen src="app/feed.mp4" startFrom={13.0} />
+      <Screen src="app/s_feed2.mp4" startFrom={0} />
       <Kicker kicker="Out there" line={"Real moments,\nfilmed right now."} delay={6} bottom />
     </Sequence>
     <Sequence from={540} durationInFrames={120}>
-      <Screen src="app/discover.mp4" startFrom={1.2} />
+      <Screen src="app/s_discover.mp4" startFrom={0} />
       <Kicker kicker="Discover" line={"Find people\nnear you."} delay={6} />
     </Sequence>
     <Sequence from={660} durationInFrames={120}>
-      <Screen src="app/camera.mp4" startFrom={0.6} />
+      <Screen src="app/s_camera.mp4" startFrom={0} />
       <Kicker kicker="Camera only" line={"No uploads.\nEver."} delay={6} />
     </Sequence>
     <Sequence from={780} durationInFrames={180}>
-      <Screen src="app/avatar.mp4" startFrom={1.6} />
+      <Screen src="app/s_avatar.mp4" startFrom={0} />
       <Kicker kicker="Be you" line={"Build your avatar."} delay={6} />
     </Sequence>
     <Sequence from={960} durationInFrames={150}>
-      <Screen src="app/profile.mp4" startFrom={0.8} />
+      <Screen src="app/s_profile.mp4" startFrom={0} />
       <Kicker kicker="Your profile" line={"Watch your\nHeets rise."} delay={6} bottom />
     </Sequence>
     <Sequence from={1110} durationInFrames={90}>
