@@ -127,7 +127,30 @@ export const HAIR_MALE: Pic[] = [
   "shaggy fringe",
   "bald head",
   "swept back waves",
-]);
+  ]),
+  ...pics(SHEETS.hairMale2, [
+    "crew cut",
+    "caesar cut with a straight fringe",
+    "high and tight military cut",
+    "comb over fade",
+    "curtain fringe",
+    "long layered surfer hair",
+    "wolf cut",
+    "low taper fade with waves",
+    "twisted sponge curls",
+    "braided cornrow ponytail",
+    "short dreadlock top knot",
+    "shoulder length straight hair tucked behind the ears",
+    "messy bedhead fringe",
+    "flat top",
+    "curly fringe with faded sides",
+    "slicked wet look side part",
+    "half up top knot with loose sides",
+    "shoulder length curly hair",
+    "buzz cut with a hard side part line",
+    "long wavy hair tied in a low ponytail",
+  ]),
+];
 
 export const HAIR_FEMALE = pics(SHEETS.hairFemale, [
   "long waves",
