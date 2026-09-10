@@ -184,17 +184,32 @@ function AuthPage() {
   const goAuthed = useCallback(
     (to: string) => {
       void (async () => {
+        // Make sure the session is actually stored before leaving this screen,
+        // otherwise the next page can mount with no user and render nothing.
+        for (let i = 0; i < 20; i++) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) break;
+          await new Promise((r) => setTimeout(r, 100));
+        }
         try {
-          await supabase.auth.getSession();
           await router.invalidate();
           await router.navigate({ to: to as never, replace: true });
         } catch {
           window.location.replace(to);
+          return;
         }
+        // Safety net: if the router did not actually move (blank screen in the
+        // native shell), fall back to a real navigation.
+        setTimeout(() => {
+          if (window.location.pathname.startsWith("/auth")) {
+            window.location.replace(to);
+          }
+        }, 1200);
       })();
     },
     [router],
   );
+
 
 
   const goToExistingProfileOrSetup = useCallback(
