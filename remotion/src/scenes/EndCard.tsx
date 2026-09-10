@@ -1,29 +1,20 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { Backdrop } from "../components/Backdrop";
+import { Flame } from "../components/Flame";
 import { COLORS, fontFamily } from "../theme";
 
 export const EndCard: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const flame = spring({ frame, fps, config: { damping: 12, stiffness: 100 } });
   const name = spring({ frame: frame - 12, fps, config: { damping: 200 } });
   const tag = spring({ frame: frame - 26, fps, config: { damping: 200 } });
   const rule = spring({ frame: frame - 40, fps, config: { damping: 200 } });
-  const pulse = 1 + Math.sin((frame / 16) * Math.PI) * 0.03;
 
   return (
     <AbsoluteFill>
       <Backdrop intensity={1.35} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily }}>
-        <div
-          style={{
-            fontSize: 170,
-            transform: `scale(${interpolate(flame, [0, 1], [0.5, 1]) * pulse})`,
-            filter: "drop-shadow(0 0 80px rgba(255,90,31,0.8))",
-          }}
-        >
-          🔥
-        </div>
+        <Flame size={280} />
         <div
           style={{
             marginTop: 22,

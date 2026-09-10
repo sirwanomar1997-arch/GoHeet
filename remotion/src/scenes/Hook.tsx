@@ -1,5 +1,6 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate, Sequence } from "remotion";
 import { Backdrop } from "../components/Backdrop";
+import { Flame } from "../components/Flame";
 import { COLORS, fontFamily } from "../theme";
 
 const Word: React.FC<{ text: string; delay: number; size: number; color: string }> = ({ text, delay, size, color }) => {
@@ -30,29 +31,17 @@ const Word: React.FC<{ text: string; delay: number; size: number; color: string 
 export const Hook: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const flame = spring({ frame, fps, config: { damping: 10, stiffness: 90 } });
-  const pulse = 1 + Math.sin((frame / 14) * Math.PI) * 0.035;
-
+  
   return (
     <AbsoluteFill>
       <Backdrop intensity={1.25} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingBottom: 60 }}>
-        <div
-          style={{
-            fontSize: 190,
-            opacity: flame,
-            transform: `scale(${interpolate(flame, [0, 1], [0.4, 1]) * pulse})`,
-            filter: "drop-shadow(0 0 70px rgba(255,90,31,0.75))",
-            marginBottom: 34,
-          }}
-        >
-          🔥
-        </div>
+        <Flame size={300} />
         <Sequence from={0}>
           <div style={{ textAlign: "center" }}>
-            <Word text="REAL LIFE." delay={10} size={104} color={COLORS.cream} />
-            <Word text="REAL PEOPLE." delay={20} size={104} color={COLORS.amber} />
-            <Word text="REAL MOMENTS." delay={30} size={104} color={COLORS.ember} />
+            <Word text="REAL LIFE." delay={10} size={96} color={COLORS.cream} />
+            <Word text="REAL PEOPLE." delay={20} size={96} color={COLORS.amber} />
+            <Word text="REAL MOMENTS." delay={30} size={96} color={COLORS.ember} />
           </div>
         </Sequence>
       </AbsoluteFill>
