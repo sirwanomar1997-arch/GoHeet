@@ -88,28 +88,77 @@ export const signInWithIdentifier = createServerFn({ method: "POST" })
     };
   });
 
-async function signMedia(paths: (string | null)[]) {
-  const clean = [...new Set(paths.filter((p): p is string => !!p))];
-  if (clean.length === 0) return {} as Record<string, string>;
-  const sb = await admin();
-  const { data } = await sb.storage.from("moments").createSignedUrls(clean, SIGNED_URL_TTL);
+/* ------------------------------------------------------------------ */
+/* Signed-URL cache                                                    */
+/*                                                                     */
+/* Signing is a network call per batch. At scale the same popular      */
+/* moments and avatars are requested thousands of times a minute, so   */
+/* results are cached in memory until shortly before they expire.      */
+/* ------------------------------------------------------------------ */
+
+const SIGN_CACHE_TTL = (SIGNED_URL_TTL - 300) * 1000; // refresh 5 min early
+const SIGN_CACHE_MAX = 5_000;
+const signCache = new Map<string, { url: string; at: number }>();
+
+function cacheGet(bucket: string, path: string): string | undefined {
+  const hit = signCache.get(`${bucket}:${path}`);
+  if (!hit) return undefined;
+  if (Date.now() - hit.at > SIGN_CACHE_TTL) {
+    signCache.delete(`${bucket}:${path}`);
+    return undefined;
+  }
+  return hit.url;
+}
+
+function cacheSet(bucket: string, path: string, url: string) {
+  if (signCache.size >= SIGN_CACHE_MAX) {
+    // Drop the oldest entries so memory stays bounded on long-lived workers.
+    let drop = Math.ceil(SIGN_CACHE_MAX / 10);
+    for (const key of signCache.keys()) {
+      signCache.delete(key);
+      if (--drop <= 0) break;
+    }
+  }
+  signCache.set(`${bucket}:${path}`, { url, at: Date.now() });
+}
+
+async function signBucket(bucket: "moments" | "avatars", paths: (string | null)[]) {
+  const clean = [
+    ...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http"))),
+  ];
   const map: Record<string, string> = {};
-  for (const row of data ?? []) {
-    if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
+  const missing: string[] = [];
+  for (const path of clean) {
+    const cached = cacheGet(bucket, path);
+    if (cached) map[path] = cached;
+    else missing.push(path);
+  }
+  if (missing.length === 0) return map;
+
+  const sb = await admin();
+  // Storage caps how many paths one call may sign; chunk to stay safe.
+  const chunks: string[][] = [];
+  for (let i = 0; i < missing.length; i += 100) chunks.push(missing.slice(i, i + 100));
+  const results = await Promise.all(
+    chunks.map((chunk) => sb.storage.from(bucket).createSignedUrls(chunk, SIGNED_URL_TTL)),
+  );
+  for (const { data } of results) {
+    for (const row of data ?? []) {
+      if (row.path && row.signedUrl) {
+        map[row.path] = row.signedUrl;
+        cacheSet(bucket, row.path, row.signedUrl);
+      }
+    }
   }
   return map;
 }
 
+async function signMedia(paths: (string | null)[]) {
+  return signBucket("moments", paths);
+}
+
 async function signAvatars(paths: (string | null)[]) {
-  const clean = [...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http")))];
-  if (clean.length === 0) return {} as Record<string, string>;
-  const sb = await admin();
-  const { data } = await sb.storage.from("avatars").createSignedUrls(clean, SIGNED_URL_TTL);
-  const map: Record<string, string> = {};
-  for (const row of data ?? []) {
-    if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
-  }
-  return map;
+  return signBucket("avatars", paths);
 }
 
 /** The picture a person actually chose to show: personal photo or avatar. */
@@ -126,14 +175,40 @@ function chosenImage(
     : (p.avatar_url ?? null);
 }
 
+/* ------------------------------------------------------------------ */
+/* Usage statistics                                                    */
+/*                                                                     */
+/* Buffered and written in batches. A user action never waits on an    */
+/* analytics write, and a burst of activity turns into one insert      */
+/* instead of thousands.                                               */
+/* ------------------------------------------------------------------ */
 
-async function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
+type PendingEvent = { user_id: string | null; name: string; props: Record<string, unknown> };
+let eventBuffer: PendingEvent[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+const EVENT_FLUSH_MS = 2_000;
+const EVENT_BUFFER_MAX = 200;
+
+async function flushEvents() {
+  flushTimer = undefined;
+  if (eventBuffer.length === 0) return;
+  const batch = eventBuffer;
+  eventBuffer = [];
   try {
     const sb = await admin();
-    await sb.from("analytics_events").insert({ user_id: userId, name, props: props as never });
+    await sb.from("analytics_events").insert(batch as never);
   } catch {
     /* analytics must never break a user action */
   }
+}
+
+function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
+  eventBuffer.push({ user_id: userId, name, props });
+  if (eventBuffer.length >= EVENT_BUFFER_MAX) {
+    void flushEvents();
+    return;
+  }
+  if (!flushTimer) flushTimer = setTimeout(() => void flushEvents(), EVENT_FLUSH_MS);
 }
 
 function ageFrom(birthDate: string) {
