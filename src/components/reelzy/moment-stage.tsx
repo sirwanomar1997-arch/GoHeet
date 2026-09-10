@@ -626,10 +626,7 @@ export function MomentStage({
             glow={liked || heetPop}
           />
         </button>
-        <span
-          className="data-figure text-[16px] font-bold leading-none text-white"
-          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
-        >
+        <span className="font-sans text-[15px] font-bold leading-tight text-foreground">
           {formatCount(moment.likeCount)}
         </span>
       </div>
@@ -641,7 +638,6 @@ export function MomentStage({
           label="Views"
           count={formatCount(moment.viewCount)}
           color="var(--nav-reelz)"
-          unlit
           onClick={() => undefined}
         >
           <Eye className="size-5" strokeWidth={1.8} />
@@ -1012,7 +1008,6 @@ function RailAction({
   active,
   color,
   activeColor,
-  unlit = false,
   onClick,
   children,
 }: {
@@ -1021,26 +1016,25 @@ function RailAction({
   active?: boolean;
   color: string;
   activeColor?: string;
-  unlit?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   const core = active ? (activeColor ?? color) : color;
   return (
-    <div className="flex w-10 flex-col items-center gap-0.5 bg-transparent">
+    <div className="flex w-12 flex-col items-center gap-0.5 bg-transparent">
       <button
         type="button"
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
         className="grid size-7 place-items-center rounded-full bg-transparent shadow-none transition-transform active:scale-90"
-        style={{ color: core, filter: unlit ? "none" : softNeonFilter(core) }}
+        style={{ color: core, filter: softNeonFilter(core) }}
       >
         {children}
       </button>
       {count ? (
         <span
-          className="data-figure block w-10 whitespace-nowrap bg-transparent p-0 text-center text-[11px] font-bold leading-none text-foreground shadow-none [filter:none]"
+          className="block w-12 whitespace-nowrap bg-transparent p-0 text-center font-sans text-[14px] font-bold leading-tight text-foreground shadow-none [filter:none]"
         >
           {count}
         </span>
