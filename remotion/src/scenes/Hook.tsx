@@ -37,7 +37,7 @@ export const Hook: React.FC = () => {
       <Backdrop intensity={1.25} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingBottom: 60 }}>
         <Flame size={300} />
-        <Sequence from={0}>
+        <Sequence from={0} layout="none">
           <div style={{ textAlign: "center" }}>
             <Word text="REAL LIFE." delay={10} size={96} color={COLORS.cream} />
             <Word text="REAL PEOPLE." delay={20} size={96} color={COLORS.amber} />

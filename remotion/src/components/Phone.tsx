@@ -2,8 +2,8 @@ import { AbsoluteFill, Video, staticFile, useCurrentFrame, useVideoConfig, sprin
 
 const W = 690;
 const H = 1496;
-const SRC_W = 393;
-const SRC_H = 852;
+const SRC_W = 786;
+const SRC_H = 1704;
 
 export const Phone: React.FC<{
   clip: string;

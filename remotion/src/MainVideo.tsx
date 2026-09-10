@@ -20,19 +20,19 @@ export const MainVideo: React.FC = () => (
       </TransitionSeries.Sequence>
       {T()}
       <TransitionSeries.Sequence durationInFrames={195}>
-        <ClipScene clip="clips/seg_feed.mp4" kicker="One tap" line={"Tap the flame.\nHeet the moment."} tilt={-1} />
+        <ClipScene clip="clips/c_feed.mp4" kicker="One tap" line={"Tap the flame.\nHeet the moment."} tilt={-1} />
       </TransitionSeries.Sequence>
       {T()}
       <TransitionSeries.Sequence durationInFrames={96}>
-        <ClipScene clip="clips/seg_discover.mp4" kicker="Discover" line={"Find real people\nworth following."} tilt={1} />
+        <ClipScene clip="clips/c_discover.mp4" kicker="Discover" line={"Find real people\nworth following."} tilt={1} />
       </TransitionSeries.Sequence>
       {T()}
       <TransitionSeries.Sequence durationInFrames={138}>
-        <ClipScene clip="clips/seg_camera.mp4" kicker="Camera only" line={"Shot here, now.\nNo uploads. Ever."} tilt={-1} />
+        <ClipScene clip="clips/c_camera.mp4" kicker="Camera only" line={"Shot here, now.\nNo uploads. Ever."} tilt={-1} />
       </TransitionSeries.Sequence>
       {T()}
       <TransitionSeries.Sequence durationInFrames={165}>
-        <ClipScene clip="clips/seg_profile.mp4" kicker="Your profile" line={"Every Heet\nadds up."} tilt={1} />
+        <ClipScene clip="clips/c_profile.mp4" kicker="Your profile" line={"Every Heet\nadds up."} tilt={1} />
       </TransitionSeries.Sequence>
       {T()}
       <TransitionSeries.Sequence durationInFrames={270}>
