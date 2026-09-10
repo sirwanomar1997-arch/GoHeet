@@ -105,7 +105,7 @@ export const EYE_COLORS: Swatch[] = [
 
 /** Exclusive colourways any outfit can be recoloured to. */
 export const OUTFIT_COLORS: Swatch[] = [
-  { name: "As shown", hex: "linear-gradient(135deg,#7a7a7a,#e6e6e6)" },
+  { name: "As shown", hex: "linear-gradient(45deg, transparent 45%, #c0392b 45%, #c0392b 55%, transparent 55%), #f5f5f5" },
   { name: "Midnight black", hex: "#15161a" },
   { name: "Pure white", hex: "#f7f7f5" },
   { name: "Ivory cream", hex: "#efe4d1" },
