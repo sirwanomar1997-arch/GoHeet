@@ -1005,8 +1005,6 @@ export type Database = {
     }
     Functions: {
       prune_analytics_events: { Args: { _keep_days?: number }; Returns: number }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       username_taken: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
