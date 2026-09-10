@@ -374,20 +374,20 @@ function ProfilePage() {
 
 
 
-          {/* follower band — two clean segments, matching the profile hierarchy */}
-          <div className="mt-5 grid w-full max-w-sm grid-cols-2 overflow-hidden rounded-[2rem] border border-border bg-surface/70">
+          {/* follower band — restrained type and a single clean divider */}
+          <div className="mt-5 grid w-full max-w-sm grid-cols-2 border-y border-border">
             {[
               ["Followers", formatCount(p.followerCount)],
               ["Following", formatCount(p.followingCount)],
             ].map(([k, v]) => (
               <div
                 key={k as string}
-                className="relative flex flex-col items-center gap-1.5 px-3 py-4 [&:not(:last-child)]:border-r [&:not(:last-child)]:border-border"
+                className="relative flex flex-col items-center gap-1 px-3 py-4 [&:not(:last-child)]:after:absolute [&:not(:last-child)]:after:right-0 [&:not(:last-child)]:after:top-1/4 [&:not(:last-child)]:after:h-1/2 [&:not(:last-child)]:after:w-px [&:not(:last-child)]:after:bg-border"
               >
-                <p className="data-figure text-2xl font-semibold leading-none tabular-nums text-foreground">
+                <p className="font-display text-[22px] font-bold leading-none tabular-nums text-foreground">
                   {v}
                 </p>
-                <p className="data-figure text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[11px] font-medium text-muted-foreground">
                   {k}
                 </p>
               </div>
