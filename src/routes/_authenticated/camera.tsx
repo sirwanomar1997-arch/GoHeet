@@ -162,6 +162,8 @@ function CameraPage() {
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  /** Optional self-timer: off by default so the record button films right away. */
+  const [timerSec, setTimerSec] = useState<0 | 3 | 5 | 10>(0);
   const [elapsed, setElapsed] = useState(0);
   const [captured, setCaptured] = useState<Captured | null>(null);
   /** Proof that what is about to be published was filmed live in this app. */
