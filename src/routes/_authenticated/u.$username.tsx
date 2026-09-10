@@ -693,6 +693,15 @@ function ProfilePage() {
           </div>
         </div>
       ) : null}
+
+      <ShareSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={`https://goheet.lovable.app/u/${p.username}`}
+        text={`${p.displayName || p.username} on GoHeet`}
+        title={data.isSelf ? "Share your profile" : "Share this profile"}
+        qr
+      />
     </AppShell>
   );
 }
