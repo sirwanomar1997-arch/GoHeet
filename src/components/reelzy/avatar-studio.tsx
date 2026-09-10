@@ -53,7 +53,9 @@ function describe(t: Traits) {
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
     t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
 
-    `wearing a ${t.outfit}`,
+    t.outfitColor && t.outfitColor !== "As shown"
+      ? `wearing a ${t.outfit} recoloured entirely in ${t.outfitColor.toLowerCase()}`
+      : `wearing a ${t.outfit}`,
     t.accessories.length ? `wearing ${t.accessories.join(" and ")}` : "no accessories at all",
   ];
   return bits.join(", ");
@@ -90,6 +92,12 @@ function changeLabels(prev: Traits, next: Traits): string[] {
 
     );
   if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit}`);
+  if (prev.outfitColor !== next.outfitColor)
+    out.push(
+      next.outfitColor === "As shown"
+        ? "the clothing keeps its own original colours"
+        : `the entire outfit is now ${next.outfitColor.toLowerCase()} in colour, recolour every part of the clothing`,
+    );
   if (prev.accessories.join("|") !== next.accessories.join("|")) {
     out.push(
       next.accessories.length
