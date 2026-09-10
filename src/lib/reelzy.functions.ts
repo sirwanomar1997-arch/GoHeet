@@ -1147,10 +1147,14 @@ export const getFeed = createServerFn({ method: "POST" })
     if (data.cursor && data.sort === "new") query = query.lt("created_at", data.cursor);
 
     if (data.scope === "following") {
+      // Cap the list so someone following a very large number of people still
+      // gets a fast, bounded query instead of an ever-growing filter.
       const { data: follows } = await context.supabase
         .from("follows")
         .select("following_id")
-        .eq("follower_id", context.userId);
+        .eq("follower_id", context.userId)
+        .order("created_at", { ascending: false })
+        .limit(1000);
       const ids = (follows ?? []).map((f) => f.following_id);
       if (!ids.length) return { moments: [], nextCursor: null };
       query = query.in("author_id", ids);
