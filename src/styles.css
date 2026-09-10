@@ -197,6 +197,16 @@
   min-width: 44px;
 }
 
+/* Profile pictures are look-only: no long-press save, no drag, no selection,
+   no tap-to-enlarge. */
+@utility untouchable-photo {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
 /* Cinematic stage treatment: a soft vignette plus a whisper of film grain so
    captured footage reads like film, not like a video player. */
 @utility stage-vignette {
