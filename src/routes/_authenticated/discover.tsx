@@ -61,8 +61,13 @@ function DiscoverPage() {
       ) : (
         <div className="px-4 pb-8">
           <h2 className="data-figure mt-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-            {term ? "People" : "Worth following"}
+            {term ? "People" : "Recommended people"}
           </h2>
+          {!term ? (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              People you might know, and others worth a look.
+            </p>
+          ) : null}
           <ul className="mt-3 divide-y divide-border">
             {(data?.people ?? []).map((p) => (
               <li key={p.id} className="flex items-center gap-3 py-3">
