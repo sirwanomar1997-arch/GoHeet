@@ -696,11 +696,23 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
         ) : null}
 
         {category === "Outfits" ? (
-          <PictureGrid
-            opts={outfits}
-            value={traits.outfit}
-            onPick={(o) => updateFromPicture({ outfit: o.name }, o.sheet, o.index)}
-          />
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Outfit colour
+              </p>
+              <SwatchGrid
+                opts={OUTFIT_COLORS}
+                value={traits.outfitColor}
+                onPick={(v) => update({ outfitColor: v })}
+              />
+            </div>
+            <PictureGrid
+              opts={outfits}
+              value={traits.outfit}
+              onPick={(o) => updateFromPicture({ outfit: o.name }, o.sheet, o.index)}
+            />
+          </div>
         ) : null}
 
         {category === "Extras" ? (
