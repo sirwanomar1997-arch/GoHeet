@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMe } from "@/lib/use-me";
@@ -177,30 +177,6 @@ function useSwipeNav() {
   const onFeed = pathname === "/feed";
   const onOwnProfile = !!username && pathname === `/u/${username}`;
   const enabled = onFeed || onOwnProfile;
-
-  // Keep one same-URL entry behind every signed-in screen. An iPhone edge
-  // swipe then consumes this harmless entry instead of revealing an older
-  // tab from browser history. Explicit app links still navigate normally.
-  useEffect(() => {
-    const guardKey = "__goheetSwipeGuard";
-    const arm = () => {
-      const state = window.history.state as Record<string, unknown> | null;
-      if (state?.[guardKey] === pathname) return;
-      window.history.pushState(
-        { ...(state ?? {}), [guardKey]: pathname },
-        "",
-        window.location.href,
-      );
-    };
-
-    const absorbBrowserSwipe = () => {
-      window.setTimeout(arm, 0);
-    };
-
-    arm();
-    window.addEventListener("popstate", absorbBrowserSwipe);
-    return () => window.removeEventListener("popstate", absorbBrowserSwipe);
-  }, [pathname]);
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
