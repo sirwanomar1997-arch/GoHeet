@@ -60,5 +60,5 @@
 - [x] Block iPhone browser-history swipes so only GoHeet Home/Profile navigation runs
 - [x] Remove Discover and Activity from tab history and force profile back-swipes to Home
 - [x] Remove Discover, Notice, messages, and feed from beneath every opened profile
-- [x] Absorb repeated iPhone browser-history swipes across every signed-in screen
+- [x] Block iPhone browser-history edge swipes across every signed-in screen without creating extra history entries
 - [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)

@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Cache the signed-in user in memory so moving between pages inside the app
@@ -34,5 +35,29 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth" });
     }
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  useEffect(() => {
+    // Safari's screen-edge gesture navigates browser history before React can
+    // handle a swipe. Cancel only edge-originating touches so Discover and
+    // Notice remain tap-only; ordinary in-app Home/Profile swipes still work.
+    const blockBrowserEdgeSwipe = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      const edgeWidth = 36;
+      if (touch.clientX <= edgeWidth || touch.clientX >= window.innerWidth - edgeWidth) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener("touchstart", blockBrowserEdgeSwipe, {
+      capture: true,
+      passive: false,
+    });
+    return () => document.removeEventListener("touchstart", blockBrowserEdgeSwipe, true);
+  }, []);
+
+  return <Outlet />;
+}
