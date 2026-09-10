@@ -74,7 +74,12 @@ function DiscoverPage() {
                 <Link to="/u/$username" params={{ username: p.username }} className="shrink-0">
                   <span className="grid size-11 place-items-center overflow-hidden rounded-2xl bg-surface-raised font-display text-sm font-bold uppercase">
                     {p.avatarUrl ? (
-                      <img src={p.avatarUrl} alt="" className="size-full object-cover" />
+                      <img
+                        src={p.avatarUrl}
+                        alt=""
+                        draggable={false}
+                        className="untouchable-photo size-full object-cover"
+                      />
                     ) : (
                       p.username.slice(0, 1)
                     )}
@@ -85,10 +90,11 @@ function DiscoverPage() {
                     to="/u/$username"
                     params={{ username: p.username }}
                     className="block truncate font-semibold"
+                    data-no-translate
                   >
                     {p.displayName || p.username}
                   </Link>
-                  <p className="data-figure truncate text-[11px] text-muted-foreground">
+                  <p className="data-figure truncate text-[11px] text-muted-foreground" data-no-translate>
                     @{p.username} · {formatCount(p.followerCount)} followers ·{" "}
                     {formatCount(p.momentCount)} moments
                   </p>
