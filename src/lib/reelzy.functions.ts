@@ -88,28 +88,77 @@ export const signInWithIdentifier = createServerFn({ method: "POST" })
     };
   });
 
-async function signMedia(paths: (string | null)[]) {
-  const clean = [...new Set(paths.filter((p): p is string => !!p))];
-  if (clean.length === 0) return {} as Record<string, string>;
-  const sb = await admin();
-  const { data } = await sb.storage.from("moments").createSignedUrls(clean, SIGNED_URL_TTL);
+/* ------------------------------------------------------------------ */
+/* Signed-URL cache                                                    */
+/*                                                                     */
+/* Signing is a network call per batch. At scale the same popular      */
+/* moments and avatars are requested thousands of times a minute, so   */
+/* results are cached in memory until shortly before they expire.      */
+/* ------------------------------------------------------------------ */
+
+const SIGN_CACHE_TTL = (SIGNED_URL_TTL - 300) * 1000; // refresh 5 min early
+const SIGN_CACHE_MAX = 5_000;
+const signCache = new Map<string, { url: string; at: number }>();
+
+function cacheGet(bucket: string, path: string): string | undefined {
+  const hit = signCache.get(`${bucket}:${path}`);
+  if (!hit) return undefined;
+  if (Date.now() - hit.at > SIGN_CACHE_TTL) {
+    signCache.delete(`${bucket}:${path}`);
+    return undefined;
+  }
+  return hit.url;
+}
+
+function cacheSet(bucket: string, path: string, url: string) {
+  if (signCache.size >= SIGN_CACHE_MAX) {
+    // Drop the oldest entries so memory stays bounded on long-lived workers.
+    let drop = Math.ceil(SIGN_CACHE_MAX / 10);
+    for (const key of signCache.keys()) {
+      signCache.delete(key);
+      if (--drop <= 0) break;
+    }
+  }
+  signCache.set(`${bucket}:${path}`, { url, at: Date.now() });
+}
+
+async function signBucket(bucket: "moments" | "avatars", paths: (string | null)[]) {
+  const clean = [
+    ...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http"))),
+  ];
   const map: Record<string, string> = {};
-  for (const row of data ?? []) {
-    if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
+  const missing: string[] = [];
+  for (const path of clean) {
+    const cached = cacheGet(bucket, path);
+    if (cached) map[path] = cached;
+    else missing.push(path);
+  }
+  if (missing.length === 0) return map;
+
+  const sb = await admin();
+  // Storage caps how many paths one call may sign; chunk to stay safe.
+  const chunks: string[][] = [];
+  for (let i = 0; i < missing.length; i += 100) chunks.push(missing.slice(i, i + 100));
+  const results = await Promise.all(
+    chunks.map((chunk) => sb.storage.from(bucket).createSignedUrls(chunk, SIGNED_URL_TTL)),
+  );
+  for (const { data } of results) {
+    for (const row of data ?? []) {
+      if (row.path && row.signedUrl) {
+        map[row.path] = row.signedUrl;
+        cacheSet(bucket, row.path, row.signedUrl);
+      }
+    }
   }
   return map;
 }
 
+async function signMedia(paths: (string | null)[]) {
+  return signBucket("moments", paths);
+}
+
 async function signAvatars(paths: (string | null)[]) {
-  const clean = [...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http")))];
-  if (clean.length === 0) return {} as Record<string, string>;
-  const sb = await admin();
-  const { data } = await sb.storage.from("avatars").createSignedUrls(clean, SIGNED_URL_TTL);
-  const map: Record<string, string> = {};
-  for (const row of data ?? []) {
-    if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
-  }
-  return map;
+  return signBucket("avatars", paths);
 }
 
 /** The picture a person actually chose to show: personal photo or avatar. */
@@ -126,15 +175,66 @@ function chosenImage(
     : (p.avatar_url ?? null);
 }
 
+/* ------------------------------------------------------------------ */
+/* Usage statistics                                                    */
+/*                                                                     */
+/* Buffered and written in batches. A user action never waits on an    */
+/* analytics write, and a burst of activity turns into one insert      */
+/* instead of thousands.                                               */
+/* ------------------------------------------------------------------ */
 
-async function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
+type PendingEvent = { user_id: string | null; name: string; props: Record<string, unknown> };
+let eventBuffer: PendingEvent[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+const EVENT_FLUSH_MS = 2_000;
+const EVENT_BUFFER_MAX = 200;
+
+async function flushEvents() {
+  flushTimer = undefined;
+  if (eventBuffer.length === 0) return;
+  const batch = eventBuffer;
+  eventBuffer = [];
   try {
     const sb = await admin();
-    await sb.from("analytics_events").insert({ user_id: userId, name, props: props as never });
+    await sb.from("analytics_events").insert(batch as never);
   } catch {
     /* analytics must never break a user action */
   }
 }
+
+function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
+  eventBuffer.push({ user_id: userId, name, props });
+  if (eventBuffer.length >= EVENT_BUFFER_MAX) {
+    void flushEvents();
+    return;
+  }
+  if (!flushTimer) flushTimer = setTimeout(() => void flushEvents(), EVENT_FLUSH_MS);
+}
+
+/* ------------------------------------------------------------------ */
+/* Burst protection                                                    */
+/*                                                                     */
+/* A cheap in-memory guard that stops a runaway client, script or bug  */
+/* from hammering an action hundreds of times a second. Slower, longer */
+/* limits that must survive restarts stay in the database.             */
+/* ------------------------------------------------------------------ */
+
+const burstBuckets = new Map<string, number[]>();
+const BURST_KEYS_MAX = 20_000;
+
+function guardBurst(userId: string, action: string, max: number, windowMs: number) {
+  const key = `${action}:${userId}`;
+  const now = Date.now();
+  const hits = (burstBuckets.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (hits.length >= max) {
+    throw new Error("Slow down a little — try again in a moment.");
+  }
+  hits.push(now);
+  if (burstBuckets.size >= BURST_KEYS_MAX) burstBuckets.clear();
+  burstBuckets.set(key, hits);
+}
+
+
 
 function ageFrom(birthDate: string) {
   const dob = new Date(birthDate);
@@ -578,6 +678,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     cameraLabel: z.string().max(120).optional().parse(d.cameraLabel),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "publish", 20, 60_000);
     const sb = await admin();
 
     // 0. Banned or suspended accounts cannot publish.
@@ -1046,10 +1147,14 @@ export const getFeed = createServerFn({ method: "POST" })
     if (data.cursor && data.sort === "new") query = query.lt("created_at", data.cursor);
 
     if (data.scope === "following") {
+      // Cap the list so someone following a very large number of people still
+      // gets a fast, bounded query instead of an ever-growing filter.
       const { data: follows } = await context.supabase
         .from("follows")
         .select("following_id")
-        .eq("follower_id", context.userId);
+        .eq("follower_id", context.userId)
+        .order("created_at", { ascending: false })
+        .limit(1000);
       const ids = (follows ?? []).map((f) => f.following_id);
       if (!ids.length) return { moments: [], nextCursor: null };
       query = query.in("author_id", ids);
@@ -1079,6 +1184,7 @@ export const recordView = createServerFn({ method: "POST" })
     completed: z.boolean().optional().parse(d.completed),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "view", 120, 60_000);
     // A view only counts once per person per moment per day, and only after
     // a meaningful amount of watch time.
     if (data.watchedMs < 1500) return { counted: false };
@@ -1111,6 +1217,7 @@ export const toggleLike = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "like", 90, 60_000);
     const { data: existing } = await context.supabase
       .from("likes")
       .select("id")
@@ -1133,6 +1240,7 @@ export const toggleSave = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "save", 90, 60_000);
     const { data: existing } = await context.supabase
       .from("saves")
       .select("id")
@@ -1154,6 +1262,7 @@ export const toggleRepost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "repost", 60, 60_000);
     const { data: existing } = await context.supabase
       .from("reposts")
       .select("id")
@@ -1177,6 +1286,7 @@ export const toggleFollow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string }) => ({ userId: z.string().uuid().parse(d.userId) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "follow", 60, 60_000);
     if (data.userId === context.userId) throw new Error("You cannot follow yourself.");
     const { data: existing } = await context.supabase
       .from("follows")
@@ -1419,6 +1529,7 @@ export const searchGoHeet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { q: string }) => ({ q: z.string().trim().max(60).parse(d.q) }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "search", 60, 60_000);
     const term = data.q.replace(/[%_]/g, "");
     const people = term
       ? await context.supabase
@@ -1868,6 +1979,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     body: z.string().trim().min(1, "Write something first.").max(2000).parse(d.body),
   }))
   .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "message", 40, 60_000);
     const me = context.userId;
     const sb = await admin();
 
