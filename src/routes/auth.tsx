@@ -161,27 +161,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const search = Route.useSearch();
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [code, setCode] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const [signupOpen, setSignupOpen] = useState(search.mode === "signup");
-  const [resetOpen, setResetOpen] = useState(false);
-
-  // A leading "+" means the user is signing in with a phone number (SMS code),
-  // which keeps it unambiguous from a username.
-  const isPhone = identifier.trim().startsWith("+");
-
-  const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
-
-  // Complete authentication with a fresh document navigation. This avoids a
-  // race between the auth-state listener and the protected route guard on iOS.
-  const goAuthed = useCallback((to: string) => {
-    window.location.replace(to);
-  }, []);
+  const router = useRouter();
 
   const goToExistingProfileOrSetup = useCallback(
     async (fallback: string) => {
