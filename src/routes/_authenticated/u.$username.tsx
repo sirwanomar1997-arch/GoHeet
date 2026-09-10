@@ -292,15 +292,6 @@ function ProfilePage() {
             </Link>
           ) : null}
 
-          <button
-            type="button"
-            onClick={() => setShareOpen(true)}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Share2 className="size-3" />
-            {data.isSelf ? "Share your profile · QR" : "Share this profile"}
-          </button>
-
           {/* nickname + username — compact, tight under the avatar button */}
           <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground" data-no-translate>
             {p.displayName || p.username}
