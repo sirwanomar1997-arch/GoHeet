@@ -17,7 +17,6 @@ export const Phone: React.FC<{
   const scale = interpolate(enter, [0, 1], [scaleFrom, 1]);
   const float = Math.sin((frame / 78) * Math.PI) * 9;
   const slowZoom = interpolate(frame, [0, 220], [1, 1.035], { extrapolateRight: "clamp" });
-  const inner = W / SRC_W;
 
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
@@ -48,12 +47,11 @@ export const Phone: React.FC<{
             muted
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              width: SRC_W,
-              height: SRC_H,
-              transform: `scale(${inner})`,
-              transformOrigin: "top left",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
             }}
           />
         </div>
