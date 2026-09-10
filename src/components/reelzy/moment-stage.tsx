@@ -640,7 +640,7 @@ export function MomentStage({
         <RailAction
           label="Views"
           count={formatCount(moment.viewCount)}
-          color="var(--foreground)"
+          color="var(--nav-reelz)"
           clean
           onClick={() => undefined}
         >
