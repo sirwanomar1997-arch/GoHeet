@@ -253,9 +253,17 @@ function ProfilePage() {
         )}
 
         <div className="relative flex flex-col items-center">
-          <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
+          <div
+            className="key-glow untouchable-photo relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface"
+            onContextMenu={(e) => e.preventDefault()}
+          >
             {p.avatarUrl ? (
-              <img src={p.avatarUrl} alt={`${p.username}'s profile`} className="size-full object-cover" />
+              <img
+                src={p.avatarUrl}
+                alt={`${p.username}'s profile`}
+                draggable={false}
+                className="untouchable-photo size-full object-cover"
+              />
             ) : (
               <span className="grid size-full place-items-center font-display text-6xl font-extrabold uppercase text-muted-foreground">
                 {p.username.slice(0, 1)}
