@@ -66,11 +66,18 @@ export function ShareSheet({
   onOpenChange,
   url,
   text,
+  title = "Share this reel",
+  description = "Send it to someone on GoHeet, or out to any other app.",
+  qr = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   url: string;
   text: string;
+  title?: string;
+  description?: string;
+  /** Show a scannable code for this link. */
+  qr?: boolean;
 }) {
   const fetchConversations = useServerFn(listConversations);
   const send = useServerFn(sendMessage);
