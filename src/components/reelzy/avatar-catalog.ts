@@ -105,7 +105,8 @@ export const EYE_COLORS: Swatch[] = [
 
 /* ---------------- picture options ---------------- */
 
-export const HAIR_MALE = pics(SHEETS.hairMale, [
+export const HAIR_MALE: Pic[] = [
+  ...pics(SHEETS.hairMale, [
   "short crop",
   "buzz cut",
   "textured fade",
