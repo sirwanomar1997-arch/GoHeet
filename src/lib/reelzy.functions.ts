@@ -112,6 +112,21 @@ async function signAvatars(paths: (string | null)[]) {
   return map;
 }
 
+/** The picture a person actually chose to show: personal photo or avatar. */
+function chosenImage(
+  p?: {
+    avatar_url?: string | null;
+    personal_photo_url?: string | null;
+    profile_image_type?: string | null;
+  } | null,
+): string | null {
+  if (!p) return null;
+  return p.profile_image_type === "photo" && p.personal_photo_url
+    ? p.personal_photo_url
+    : (p.avatar_url ?? null);
+}
+
+
 async function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
   try {
     const sb = await admin();
@@ -1188,7 +1203,7 @@ export const listComments = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows } = await context.supabase
       .from("comments")
-      .select("id, body, created_at, author_id, parent_id, profiles!comments_author_profile_fkey(username, display_name, avatar_url)")
+      .select("id, body, created_at, author_id, parent_id, profiles!comments_author_profile_fkey(username, display_name, avatar_url, personal_photo_url, profile_image_type)")
       .eq("moment_id", data.momentId)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -1198,7 +1213,7 @@ export const listComments = createServerFn({ method: "POST" })
       created_at: string;
       author_id: string;
       parent_id: string | null;
-      profiles: { username: string; display_name: string | null; avatar_url: string | null } | null;
+      profiles: { username: string; display_name: string | null; avatar_url: string | null; personal_photo_url: string | null; profile_image_type: string | null } | null;
     }>;
     const ids = list.map((c) => c.id);
     const { data: likeRows } = ids.length
@@ -1213,7 +1228,7 @@ export const listComments = createServerFn({ method: "POST" })
       counts.set(r.comment_id, (counts.get(r.comment_id) ?? 0) + 1);
       if (r.user_id === context.userId) mine.add(r.comment_id);
     }
-    const avatars = await signAvatars(list.map((c) => c.profiles?.avatar_url ?? null));
+    const avatars = await signAvatars(list.map((c) => chosenImage(c.profiles)));
     return {
       comments: list.map((c) => ({
         id: c.id,
@@ -1225,7 +1240,7 @@ export const listComments = createServerFn({ method: "POST" })
         isOwn: c.author_id === context.userId,
         username: c.profiles?.username ?? "someone",
         displayName: c.profiles?.display_name ?? null,
-        avatarUrl: c.profiles?.avatar_url ? (avatars[c.profiles.avatar_url] ?? null) : null,
+        avatarUrl: chosenImage(c.profiles) ? (avatars[chosenImage(c.profiles)!] ?? null) : null,
       })),
     };
   });
@@ -1408,21 +1423,21 @@ export const searchGoHeet = createServerFn({ method: "POST" })
     const people = term
       ? await context.supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url, follower_count, moment_count")
+          .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type, follower_count, moment_count")
           .eq("discoverable", true)
           .neq("id", context.userId)
           .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
           .limit(20)
       : await context.supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url, follower_count, moment_count")
+          .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type, follower_count, moment_count")
           .eq("discoverable", true)
           .neq("id", context.userId)
           .order("follower_count", { ascending: false })
           .limit(20);
 
     const rows = people.data ?? [];
-    const avatars = await signAvatars(rows.map((p) => p.avatar_url));
+    const avatars = await signAvatars(rows.map((p) => chosenImage(p)));
 
     let moments: MomentCard[] = [];
     if (term) {
@@ -1450,7 +1465,7 @@ export const searchGoHeet = createServerFn({ method: "POST" })
         id: p.id,
         username: p.username,
         displayName: p.display_name,
-        avatarUrl: p.avatar_url ? (avatars[p.avatar_url] ?? null) : null,
+        avatarUrl: chosenImage(p) ? (avatars[chosenImage(p)!] ?? null) : null,
         followerCount: p.follower_count,
         momentCount: p.moment_count,
       })),
@@ -1472,10 +1487,10 @@ export const listNotifications = createServerFn({ method: "POST" })
     const { data: actors } = actorIds.length
       ? await context.supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url")
+          .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type")
           .in("id", actorIds)
       : { data: [] };
-    const avatars = await signAvatars((actors ?? []).map((a) => a.avatar_url));
+    const avatars = await signAvatars((actors ?? []).map((a) => chosenImage(a)));
     const byId = new Map((actors ?? []).map((a) => [a.id, a]));
     const momentIds = [...new Set(list.map((n) => n.moment_id).filter(Boolean))] as string[];
     const { data: moms } = momentIds.length
@@ -1506,7 +1521,7 @@ export const listNotifications = createServerFn({ method: "POST" })
             ? {
                 username: actor.username,
                 displayName: actor.display_name,
-                avatarUrl: actor.avatar_url ? (avatars[actor.avatar_url] ?? null) : null,
+                avatarUrl: chosenImage(actor) ? (avatars[chosenImage(actor)!] ?? null) : null,
               }
             : null,
         };
@@ -1972,9 +1987,9 @@ export const listConversations = createServerFn({ method: "POST" })
     const otherIds = list.map((c) => (c.user_a === me ? c.user_b : c.user_a));
     const { data: people } = await sb
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type")
       .in("id", otherIds);
-    const avatars = await signAvatars((people ?? []).map((p) => p.avatar_url));
+    const avatars = await signAvatars((people ?? []).map((p) => chosenImage(p)));
     const byId = new Map((people ?? []).map((p) => [p.id, p]));
 
     const { data: lastMsgs } = await sb
@@ -2008,7 +2023,7 @@ export const listConversations = createServerFn({ method: "POST" })
           id: otherId,
           username: p?.username ?? "someone",
           displayName: p?.display_name ?? p?.username ?? "Someone",
-          avatarUrl: p?.avatar_url ? (avatars[p.avatar_url] ?? p.avatar_url) : null,
+          avatarUrl: chosenImage(p) ? (avatars[chosenImage(p)!] ?? chosenImage(p)!) : null,
         },
       };
     };
@@ -2039,10 +2054,10 @@ export const getConversation = createServerFn({ method: "POST" })
     const otherId = convo.user_a === me ? convo.user_b : convo.user_a;
     const { data: p } = await sb
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type")
       .eq("id", otherId)
       .maybeSingle();
-    const avatars = await signAvatars([p?.avatar_url ?? null]);
+    const avatars = await signAvatars([chosenImage(p)]);
 
     const { data: msgs } = await sb
       .from("messages")
@@ -2066,7 +2081,7 @@ export const getConversation = createServerFn({ method: "POST" })
         id: otherId,
         username: p?.username ?? "someone",
         displayName: p?.display_name ?? p?.username ?? "Someone",
-        avatarUrl: p?.avatar_url ? (avatars[p.avatar_url] ?? p.avatar_url) : null,
+        avatarUrl: chosenImage(p) ? (avatars[chosenImage(p)!] ?? chosenImage(p)!) : null,
       },
       messages: (msgs ?? []).map((m) => ({
         id: m.id,
