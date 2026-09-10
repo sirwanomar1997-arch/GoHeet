@@ -641,10 +641,10 @@ export function MomentStage({
           label="Views"
           count={formatCount(moment.viewCount)}
           color="var(--nav-reelz)"
-          clean
+          unlit
           onClick={() => undefined}
         >
-          <Eye className="size-5" strokeWidth={2} />
+          <Eye className="size-5" strokeWidth={1.8} />
         </RailAction>
 
         <RailAction
@@ -1012,7 +1012,7 @@ function RailAction({
   active,
   color,
   activeColor,
-  clean = false,
+  unlit = false,
   onClick,
   children,
 }: {
@@ -1021,7 +1021,7 @@ function RailAction({
   active?: boolean;
   color: string;
   activeColor?: string;
-  clean?: boolean;
+  unlit?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -1034,7 +1034,7 @@ function RailAction({
         aria-pressed={active}
         onClick={onClick}
         className="grid size-7 place-items-center rounded-full bg-transparent shadow-none transition-transform active:scale-90"
-        style={{ color: core, filter: clean ? "none" : softNeonFilter(core) }}
+        style={{ color: core, filter: unlit ? "none" : softNeonFilter(core) }}
       >
         {children}
       </button>
