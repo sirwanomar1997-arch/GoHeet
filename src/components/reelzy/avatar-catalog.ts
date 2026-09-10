@@ -1,4 +1,5 @@
 import hairMaleSheet from "@/assets/av2/hair-male.png";
+import hairMaleSheet2 from "@/assets/av2/hair-male-2.png";
 import hairFemaleSheet from "@/assets/av2/hair-female.png";
 import outfitMaleSheet from "@/assets/av2/outfit-male.png";
 import outfitFemaleSheet from "@/assets/av2/outfit-female.png";
@@ -28,6 +29,7 @@ export const STYLE_REFERENCE = styleReference;
 
 export const SHEETS = {
   hairMale: { src: hairMaleSheet, cols: 5, rows: 4 },
+  hairMale2: { src: hairMaleSheet2, cols: 5, rows: 4 },
   hairFemale: { src: hairFemaleSheet, cols: 5, rows: 4 },
   outfitMale: { src: outfitMaleSheet, cols: 5, rows: 4 },
   outfitFemale: { src: outfitFemaleSheet, cols: 5, rows: 4 },
@@ -101,9 +103,44 @@ export const EYE_COLORS: Swatch[] = [
   { name: "Violet", hex: "#7a5f9e" },
 ];
 
+/** Exclusive colourways any outfit can be recoloured to. */
+export const OUTFIT_COLORS: Swatch[] = [
+  { name: "As shown", hex: "linear-gradient(135deg,#7a7a7a,#e6e6e6)" },
+  { name: "Midnight black", hex: "#15161a" },
+  { name: "Pure white", hex: "#f7f7f5" },
+  { name: "Ivory cream", hex: "#efe4d1" },
+  { name: "Champagne", hex: "#e3cfa8" },
+  { name: "Camel", hex: "#c89a63" },
+  { name: "Cognac brown", hex: "#8a4f2b" },
+  { name: "Espresso", hex: "#4a3529" },
+  { name: "Sand beige", hex: "#d9c3a5" },
+  { name: "Dove grey", hex: "#b3b6bb" },
+  { name: "Charcoal", hex: "#3c3f45" },
+  { name: "Navy", hex: "#1e2a4a" },
+  { name: "Royal blue", hex: "#2a4fbf" },
+  { name: "Powder blue", hex: "#a9c8e6" },
+  { name: "Teal", hex: "#146b70" },
+  { name: "Emerald", hex: "#116a4a" },
+  { name: "Sage green", hex: "#9aae8e" },
+  { name: "Olive", hex: "#6a6a35" },
+  { name: "Forest green", hex: "#26402a" },
+  { name: "Mustard gold", hex: "#c99a25" },
+  { name: "Burnt orange", hex: "#c0562a" },
+  { name: "Terracotta", hex: "#b26a4f" },
+  { name: "Crimson red", hex: "#a51c30" },
+  { name: "Burgundy", hex: "#5c1a2b" },
+  { name: "Blush pink", hex: "#e8b7bd" },
+  { name: "Hot pink", hex: "#d63f80" },
+  { name: "Lilac", hex: "#b9a5dd" },
+  { name: "Deep purple", hex: "#4b2a6b" },
+  { name: "Ice silver", hex: "#d7dbe0" },
+  { name: "Metallic gold", hex: "#c9a227" },
+];
+
 /* ---------------- picture options ---------------- */
 
-export const HAIR_MALE = pics(SHEETS.hairMale, [
+export const HAIR_MALE: Pic[] = [
+  ...pics(SHEETS.hairMale, [
   "short crop",
   "buzz cut",
   "textured fade",
@@ -124,7 +161,30 @@ export const HAIR_MALE = pics(SHEETS.hairMale, [
   "shaggy fringe",
   "bald head",
   "swept back waves",
-]);
+  ]),
+  ...pics(SHEETS.hairMale2, [
+    "crew cut",
+    "caesar cut with a straight fringe",
+    "high and tight military cut",
+    "comb over fade",
+    "curtain fringe",
+    "long layered surfer hair",
+    "wolf cut",
+    "low taper fade with waves",
+    "twisted sponge curls",
+    "braided cornrow ponytail",
+    "short dreadlock top knot",
+    "shoulder length straight hair tucked behind the ears",
+    "messy bedhead fringe",
+    "flat top",
+    "curly fringe with faded sides",
+    "slicked wet look side part",
+    "half up top knot with loose sides",
+    "shoulder length curly hair",
+    "buzz cut with a hard side part line",
+    "long wavy hair tied in a low ponytail",
+  ]),
+];
 
 export const HAIR_FEMALE = pics(SHEETS.hairFemale, [
   "long waves",
@@ -477,6 +537,7 @@ export type Traits = {
   beard: string;
   piercing: string;
   outfit: string;
+  outfitColor: string;
   accessories: string[];
 };
 
@@ -492,6 +553,7 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     beard: "clean shaven",
     piercing: "no piercings",
     outfit: female ? "pink knit sweater" : "white t-shirt",
+    outfitColor: "As shown",
     accessories: [],
   };
 }

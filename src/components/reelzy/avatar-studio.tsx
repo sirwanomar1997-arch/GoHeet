@@ -13,6 +13,7 @@ import {
   BEARDS,
   EYE_COLORS,
   HAIR_COLORS,
+  OUTFIT_COLORS,
   WRINKLES,
   SKINS,
   STYLE_REFERENCE,
@@ -52,7 +53,9 @@ function describe(t: Traits) {
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
     t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
 
-    `wearing a ${t.outfit}`,
+    t.outfitColor && t.outfitColor !== "As shown"
+      ? `wearing a ${t.outfit} recoloured entirely in ${t.outfitColor.toLowerCase()}`
+      : `wearing a ${t.outfit}`,
     t.accessories.length ? `wearing ${t.accessories.join(" and ")}` : "no accessories at all",
   ];
   return bits.join(", ");
@@ -89,6 +92,12 @@ function changeLabels(prev: Traits, next: Traits): string[] {
 
     );
   if (prev.outfit !== next.outfit) out.push(`clothing is now a ${next.outfit}`);
+  if (prev.outfitColor !== next.outfitColor)
+    out.push(
+      next.outfitColor === "As shown"
+        ? "the clothing keeps its own original colours"
+        : `the entire outfit is now ${next.outfitColor.toLowerCase()} in colour, recolour every part of the clothing`,
+    );
   if (prev.accessories.join("|") !== next.accessories.join("|")) {
     out.push(
       next.accessories.length
@@ -687,11 +696,23 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
         ) : null}
 
         {category === "Outfits" ? (
-          <PictureGrid
-            opts={outfits}
-            value={traits.outfit}
-            onPick={(o) => updateFromPicture({ outfit: o.name }, o.sheet, o.index)}
-          />
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Outfit colour
+              </p>
+              <SwatchGrid
+                opts={OUTFIT_COLORS}
+                value={traits.outfitColor}
+                onPick={(v) => update({ outfitColor: v })}
+              />
+            </div>
+            <PictureGrid
+              opts={outfits}
+              value={traits.outfit}
+              onPick={(o) => updateFromPicture({ outfit: o.name }, o.sheet, o.index)}
+            />
+          </div>
         ) : null}
 
         {category === "Extras" ? (
