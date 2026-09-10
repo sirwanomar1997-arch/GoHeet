@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const searchSchema = z.object({
   mode: z.enum(["signup", "signin"]).optional(),
@@ -33,7 +40,76 @@ function passwordProblem(value: string): string | null {
   return `Password needs: ${failed.map((r) => r.label.toLowerCase()).join(", ")}.`;
 }
 
+function PasswordChecklist({ value }: { value: string }) {
+  if (!value) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {PASSWORD_RULES.map((rule) => {
+        const ok = rule.test(value);
+        return (
+          <li
+            key={rule.label}
+            className={`flex items-center gap-1.5 text-xs ${
+              ok ? "text-green-500" : "text-muted-foreground"
+            }`}
+          >
+            {ok ? (
+              <Check className="size-3.5" />
+            ) : (
+              <span className="size-3.5 rounded-full border border-current opacity-50" />
+            )}
+            {rule.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  autoComplete = "new-password",
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative mt-1.5">
+        <Input
+          id={id}
+          type={show ? "text" : "password"}
+          autoComplete={autoComplete}
+          required
+          minLength={8}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-12 bg-surface-raised pr-11"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((v) => !v)}
+          aria-label={show ? "Hide password" : "Show password"}
+          aria-pressed={show}
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+        >
+          {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: searchSchema,
   head: () => ({
     meta: [
@@ -53,14 +129,15 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const search = Route.useSearch();
-  const [mode, setMode] = useState<"signup" | "signin">(search.mode ?? "signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [code, setCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
+
+  const [signupOpen, setSignupOpen] = useState(search.mode === "signup");
+  const [resetOpen, setResetOpen] = useState(false);
 
   // A leading "+" means the user is signing in with a phone number (SMS code),
   // which keeps it unambiguous from a username.
@@ -110,77 +187,10 @@ function AuthPage() {
     });
   }, [goToExistingProfileOrSetup, dest]);
 
-  async function sendReset() {
-    const id = identifier.trim();
-    if (!id || !id.includes("@")) {
-      toast.error("Enter the email address on your account first.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(id, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      toast.success("Check your email for a link to set a new password.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === "signup" && !otpSent) {
-      const problem = passwordProblem(password);
-      if (problem) {
-        toast.error(problem);
-        return;
-      }
-    }
     setBusy(true);
     try {
-      if (mode === "signup") {
-        const id = identifier.trim();
-
-        // Phone sign-up must be verified with an SMS code before the account
-        // can continue. Email sign-up goes straight through; verifying the
-        // address later in Settings is the person's own responsibility.
-        if (id.startsWith("+")) {
-          const phone = "+" + id.replace(/[^\d]/g, "");
-          if (!otpSent) {
-            const { error } = await supabase.auth.signUp({ phone, password });
-            if (error) throw error;
-            setOtpSent(true);
-            toast("We sent a code to your phone.");
-            return;
-          }
-          const { error } = await supabase.auth.verifyOtp({
-            phone,
-            token: code.trim(),
-            type: "sms",
-          });
-          if (error) throw error;
-          goAuthed("/onboarding");
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signUp({
-          email: id,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}${dest}` },
-        });
-        if (error) throw error;
-        if (!data.session) {
-          setSent(true);
-          return;
-        }
-         goAuthed("/onboarding");
-        return;
-      }
-
-      // Sign in
       const id = identifier.trim();
       if (id.startsWith("+")) {
         const phone = "+" + id.replace(/[^\d]/g, "");
@@ -197,7 +207,7 @@ function AuthPage() {
           type: "sms",
         });
         if (error) throw error;
-         await goToExistingProfileOrSetup(dest);
+        await goToExistingProfileOrSetup(dest);
         return;
       }
 
@@ -210,7 +220,7 @@ function AuthPage() {
         refresh_token: res.refreshToken,
       });
       if (error) throw error;
-       await goToExistingProfileOrSetup(dest);
+      await goToExistingProfileOrSetup(dest);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -233,21 +243,6 @@ function AuthPage() {
     }
     if (result.redirected) return;
     await goToExistingProfileOrSetup(dest);
-  }
-
-  if (sent) {
-    return (
-      <main className="grid min-h-svh place-items-center bg-background px-6 text-center">
-        <div className="max-w-sm">
-          <GoHeetMark className="mx-auto size-10" />
-          <h1 className="mt-6 font-display text-2xl font-semibold">Check your email</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            We sent a confirmation link to {identifier}. Tap it and come back to finish setting up
-            your profile.
-          </p>
-        </div>
-      </main>
-    );
   }
 
   return (
@@ -307,11 +302,9 @@ function AuthPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
 
-        {mode === "signin" && (
-          <p className="mb-4 text-xs text-muted-foreground">
-            Log in with your email, phone number or username.
-          </p>
-        )}
+        <p className="mb-4 text-xs text-muted-foreground">
+          Log in with your email, phone number or username.
+        </p>
 
         <form onSubmit={submit} className="space-y-4">
           {isPhone && otpSent ? (
@@ -345,19 +338,13 @@ function AuthPage() {
             <>
               <div>
                 <Label htmlFor="identifier">
-                  {mode === "signin"
-                    ? isPhone
-                      ? "Phone number"
-                      : "Email or username"
-                    : isPhone
-                      ? "Phone number"
-                      : "Email or phone number"}
+                  {isPhone ? "Phone number" : "Email or username"}
                 </Label>
                 <Input
                   id="identifier"
                   type="text"
                   inputMode={isPhone ? "tel" : undefined}
-                  autoComplete={mode === "signup" ? "email" : isPhone ? "tel" : "username"}
+                  autoComplete={isPhone ? "tel" : "username"}
                   required
                   value={identifier}
                   onChange={(e) => {
@@ -366,23 +353,16 @@ function AuthPage() {
                   }}
                   className="mt-1.5 h-12 bg-surface-raised"
                 />
-                {mode === "signup" && (
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    {isPhone
-                      ? "We'll text you a code to confirm this number."
-                      : "Start with + to use a phone number instead."}
-                  </p>
-                )}
               </div>
 
-              {(mode === "signup" || (mode === "signin" && !isPhone)) && (
+              {!isPhone && (
                 <div>
                   <Label htmlFor="password">Password</Label>
                   <div className="relative mt-1.5">
                     <Input
                       id="password"
                       type={showPw ? "text" : "password"}
-                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      autoComplete="current-password"
                       required
                       minLength={8}
                       value={password}
@@ -399,28 +379,6 @@ function AuthPage() {
                       {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
-                  {mode === "signup" && password.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {PASSWORD_RULES.map((rule) => {
-                        const ok = rule.test(password);
-                        return (
-                          <li
-                            key={rule.label}
-                            className={`flex items-center gap-1.5 text-xs ${
-                              ok ? "text-green-500" : "text-muted-foreground"
-                            }`}
-                          >
-                            {ok ? (
-                              <Check className="size-3.5" />
-                            ) : (
-                              <span className="size-3.5 rounded-full border border-current opacity-50" />
-                            )}
-                            {rule.label}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
                 </div>
               )}
             </>
@@ -430,38 +388,24 @@ function AuthPage() {
             disabled={busy}
             className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
           >
-            {busy
-              ? "One moment…"
-              : mode === "signup"
-                ? isPhone
-                  ? otpSent
-                    ? "Verify & continue"
-                    : "Send code"
-                  : "Create account"
-                : isPhone
-                  ? otpSent
-                    ? "Verify & log in"
-                    : "Send code"
-                  : "Log in"}
+            {busy ? "One moment…" : isPhone ? (otpSent ? "Verify & log in" : "Send code") : "Log in"}
           </Button>
-          {mode === "signin" && !isPhone && (
-            <button
-              type="button"
-              onClick={sendReset}
-              disabled={busy}
-              className="w-full text-center text-sm text-muted-foreground underline"
-            >
-              Forgot password?
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setResetOpen(true)}
+            disabled={busy}
+            className="w-full text-center text-sm text-muted-foreground underline"
+          >
+            Forgot password?
+          </button>
         </form>
 
         <button
           type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          onClick={() => setSignupOpen(true)}
           className="mt-6 w-full text-center text-sm text-muted-foreground underline"
         >
-          {mode === "signin" ? "Create account" : "Log in"}
+          Create account
         </button>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
@@ -481,6 +425,398 @@ function AuthPage() {
           people — reports are actioned within 24 hours.
         </p>
       </div>
+
+      <SignUpDialog open={signupOpen} onOpenChange={setSignupOpen} goAuthed={goAuthed} />
+      <ResetDialog open={resetOpen} onOpenChange={setResetOpen} />
     </main>
+  );
+}
+
+function SignUpDialog({
+  open,
+  onOpenChange,
+  goAuthed,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  goAuthed: (to: string) => void;
+}) {
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [code, setCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const isPhone = identifier.trim().startsWith("+");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const id = identifier.trim();
+
+      if (isPhone && otpSent) {
+        const phone = "+" + id.replace(/[^\d]/g, "");
+        const { error } = await supabase.auth.verifyOtp({
+          phone,
+          token: code.trim(),
+          type: "sms",
+        });
+        if (error) throw error;
+        goAuthed("/onboarding");
+        return;
+      }
+
+      const problem = passwordProblem(password);
+      if (problem) {
+        toast.error(problem);
+        return;
+      }
+      if (password !== confirm) {
+        toast.error("The two passwords don't match.");
+        return;
+      }
+
+      // Phone sign-up is verified with an SMS code before the account can
+      // continue. Email sign-up goes straight through.
+      if (isPhone) {
+        const phone = "+" + id.replace(/[^\d]/g, "");
+        const { error } = await supabase.auth.signUp({ phone, password });
+        if (error) throw error;
+        setOtpSent(true);
+        toast("We sent a code to your phone.");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: id,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+      });
+      if (error) throw error;
+      if (!data.session) {
+        setEmailSent(true);
+        return;
+      }
+      goAuthed("/onboarding");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm rounded-3xl">
+        <DialogHeader>
+          <DialogTitle>Create your account</DialogTitle>
+          <DialogDescription>
+            {emailSent
+              ? "Almost there."
+              : otpSent
+                ? "Enter the code we texted you."
+                : "Sign up with your email or phone number."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {emailSent ? (
+          <div className="space-y-4 text-center">
+            <GoHeetMark className="mx-auto size-10" />
+            <p className="text-sm text-muted-foreground">
+              We sent a confirmation link to {identifier}. Tap it and come back to finish setting up
+              your profile.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            {otpSent ? (
+              <div>
+                <Label htmlFor="su-code">Enter the code</Label>
+                <Input
+                  id="su-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="mt-1.5 h-12 bg-surface-raised"
+                />
+                <button
+                  type="button"
+                  className="mt-2 text-xs text-muted-foreground underline"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setCode("");
+                  }}
+                >
+                  Change number
+                </button>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label htmlFor="su-id">Email or phone number</Label>
+                  <Input
+                    id="su-id"
+                    type="text"
+                    inputMode={isPhone ? "tel" : undefined}
+                    autoComplete="email"
+                    required
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    className="mt-1.5 h-12 bg-surface-raised"
+                  />
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {isPhone
+                      ? "We'll text you a code to confirm this number."
+                      : "Start with + to use a phone number instead."}
+                  </p>
+                </div>
+                <div>
+                  <PasswordField
+                    id="su-pw"
+                    label="Password"
+                    value={password}
+                    onChange={setPassword}
+                  />
+                  <PasswordChecklist value={password} />
+                </div>
+                <PasswordField
+                  id="su-pw2"
+                  label="Repeat password"
+                  value={confirm}
+                  onChange={setConfirm}
+                />
+              </>
+            )}
+            <Button
+              type="submit"
+              disabled={busy}
+              className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
+            >
+              {busy
+                ? "One moment…"
+                : otpSent
+                  ? "Verify & continue"
+                  : isPhone
+                    ? "Send code"
+                    : "Create account"}
+            </Button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ResetDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const [step, setStep] = useState<"identifier" | "code" | "password">("identifier");
+  const [identifier, setIdentifier] = useState("");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const isPhone = identifier.trim().startsWith("+");
+
+  function close() {
+    onOpenChange(false);
+    setStep("identifier");
+    setCode("");
+    setPassword("");
+    setConfirm("");
+  }
+
+  async function sendCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const id = identifier.trim();
+      if (id.startsWith("+")) {
+        const phone = "+" + id.replace(/[^\d]/g, "");
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          options: { shouldCreateUser: false },
+        });
+        if (error) throw error;
+      } else {
+        if (!id.includes("@")) {
+          toast.error("Enter the email address or phone number on your account.");
+          return;
+        }
+        const { error } = await supabase.auth.signInWithOtp({
+          email: id,
+          options: { shouldCreateUser: false },
+        });
+        if (error) throw error;
+      }
+      setStep("code");
+      toast("We sent you a verification code.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function verify(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const id = identifier.trim();
+      const { error } = id.startsWith("+")
+        ? await supabase.auth.verifyOtp({
+            phone: "+" + id.replace(/[^\d]/g, ""),
+            token: code.trim(),
+            type: "sms",
+          })
+        : await supabase.auth.verifyOtp({
+            email: id,
+            token: code.trim(),
+            type: "email",
+          });
+      if (error) throw error;
+      setStep("password");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That code didn't work.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    if (password !== confirm) {
+      toast.error("The two passwords don't match.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      await supabase.auth.signOut();
+      toast.success("Password updated. Log in with your new password.");
+      close();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
+      <DialogContent className="max-w-sm rounded-3xl">
+        <DialogHeader>
+          <DialogTitle>Reset your password</DialogTitle>
+          <DialogDescription>
+            {step === "identifier"
+              ? "Enter the email or phone number on your account."
+              : step === "code"
+                ? `Enter the code we sent to ${identifier.trim()}.`
+                : "Choose a new password."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === "identifier" && (
+          <form onSubmit={sendCode} className="space-y-4">
+            <div>
+              <Label htmlFor="rs-id">Email or phone number</Label>
+              <Input
+                id="rs-id"
+                type="text"
+                inputMode={isPhone ? "tel" : undefined}
+                autoComplete="username"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="mt-1.5 h-12 bg-surface-raised"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={busy}
+              className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
+            >
+              {busy ? "Sending…" : "Send code"}
+            </Button>
+          </form>
+        )}
+
+        {step === "code" && (
+          <form onSubmit={verify} className="space-y-4">
+            <div>
+              <Label htmlFor="rs-code">Verification code</Label>
+              <Input
+                id="rs-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="mt-1.5 h-12 bg-surface-raised"
+              />
+              <button
+                type="button"
+                className="mt-2 text-xs text-muted-foreground underline"
+                onClick={() => setStep("identifier")}
+              >
+                Use a different email or number
+              </button>
+            </div>
+            <Button
+              type="submit"
+              disabled={busy}
+              className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
+            >
+              {busy ? "Checking…" : "Verify code"}
+            </Button>
+          </form>
+        )}
+
+        {step === "password" && (
+          <form onSubmit={save} className="space-y-4">
+            <div>
+              <PasswordField
+                id="rs-pw"
+                label="New password"
+                value={password}
+                onChange={setPassword}
+              />
+              <PasswordChecklist value={password} />
+            </div>
+            <PasswordField
+              id="rs-pw2"
+              label="Repeat new password"
+              value={confirm}
+              onChange={setConfirm}
+            />
+            <Button
+              type="submit"
+              disabled={busy}
+              className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
+            >
+              {busy ? "Saving…" : "Save new password"}
+            </Button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
