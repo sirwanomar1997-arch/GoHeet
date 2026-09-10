@@ -1038,7 +1038,7 @@ function RailAction({
       </button>
       {count ? (
         <span
-          className="data-figure whitespace-nowrap text-center text-[11px] font-bold leading-none text-foreground"
+          className="data-figure whitespace-nowrap bg-transparent text-center text-[11px] font-bold leading-none text-foreground shadow-none [filter:none]"
         >
           {count}
         </span>
