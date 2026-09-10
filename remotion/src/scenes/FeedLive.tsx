@@ -13,7 +13,7 @@ const MOMENTS: Moment[] = [
     heets: 512,
     views: "2,8 tn",
     comments: "184",
-    avatar: "img/avatar-1.jpg",
+    avatar: "img/avatar-2.jpg",
     tapAt: 62,
   },
   {
@@ -24,7 +24,7 @@ const MOMENTS: Moment[] = [
     heets: 1249,
     views: "7,1 tn",
     comments: "302",
-    avatar: "img/avatar-2.jpg",
+    avatar: "img/avatar-1.jpg",
     tapAt: 58,
   },
   {

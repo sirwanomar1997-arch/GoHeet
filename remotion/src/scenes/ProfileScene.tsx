@@ -47,7 +47,7 @@ export const ProfileScene: React.FC = () => {
         <AbsoluteFill style={{ background: "linear-gradient(180deg,#170F08,#0A0705)", fontFamily, color: "#fff" }}>
           <div style={{ paddingTop: 56, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <Img
-              src={staticFile("img/avatar-2.jpg")}
+              src={staticFile("img/avatar-1.jpg")}
               style={{
                 width: 190,
                 height: 190,
