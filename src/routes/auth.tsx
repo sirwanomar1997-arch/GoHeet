@@ -89,7 +89,7 @@ function PasswordChecklist({ value }: { value: string }) {
             ) : (
               <span className="size-3.5 rounded-full border border-current opacity-50" />
             )}
-            {rule.label === "At least 8 characters" ? copy.min8 : rule.label === "One capital letter" ? copy.capital : rule.label === "One number" ? copy.number : copy.special}
+            {rule.label === "At least 8 characters" ? copy.min8 : copy.number}
           </li>
         );
       })}
