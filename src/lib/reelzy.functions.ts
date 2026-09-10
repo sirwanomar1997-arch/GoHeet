@@ -211,6 +211,31 @@ function track(userId: string | null, name: string, props: Record<string, unknow
   if (!flushTimer) flushTimer = setTimeout(() => void flushEvents(), EVENT_FLUSH_MS);
 }
 
+/* ------------------------------------------------------------------ */
+/* Burst protection                                                    */
+/*                                                                     */
+/* A cheap in-memory guard that stops a runaway client, script or bug  */
+/* from hammering an action hundreds of times a second. Slower, longer */
+/* limits that must survive restarts stay in the database.             */
+/* ------------------------------------------------------------------ */
+
+const burstBuckets = new Map<string, number[]>();
+const BURST_KEYS_MAX = 20_000;
+
+function guardBurst(userId: string, action: string, max: number, windowMs: number) {
+  const key = `${action}:${userId}`;
+  const now = Date.now();
+  const hits = (burstBuckets.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (hits.length >= max) {
+    throw new Error("Slow down a little — try again in a moment.");
+  }
+  hits.push(now);
+  if (burstBuckets.size >= BURST_KEYS_MAX) burstBuckets.clear();
+  burstBuckets.set(key, hits);
+}
+
+
+
 function ageFrom(birthDate: string) {
   const dob = new Date(birthDate);
   const now = new Date();
