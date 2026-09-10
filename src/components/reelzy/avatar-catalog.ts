@@ -1,4 +1,5 @@
 import hairMaleSheet from "@/assets/av2/hair-male.png";
+import hairMaleSheet2 from "@/assets/av2/hair-male-2.png";
 import hairFemaleSheet from "@/assets/av2/hair-female.png";
 import outfitMaleSheet from "@/assets/av2/outfit-male.png";
 import outfitFemaleSheet from "@/assets/av2/outfit-female.png";
@@ -28,6 +29,7 @@ export const STYLE_REFERENCE = styleReference;
 
 export const SHEETS = {
   hairMale: { src: hairMaleSheet, cols: 5, rows: 4 },
+  hairMale2: { src: hairMaleSheet2, cols: 5, rows: 4 },
   hairFemale: { src: hairFemaleSheet, cols: 5, rows: 4 },
   outfitMale: { src: outfitMaleSheet, cols: 5, rows: 4 },
   outfitFemale: { src: outfitFemaleSheet, cols: 5, rows: 4 },
