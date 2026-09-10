@@ -162,6 +162,40 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const search = Route.useSearch();
   const router = useRouter();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [code, setCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const [signupOpen, setSignupOpen] = useState(search.mode === "signup");
+  const [resetOpen, setResetOpen] = useState(false);
+
+  // A leading "+" means the user is signing in with a phone number (SMS code),
+  // which keeps it unambiguous from a username.
+  const isPhone = identifier.trim().startsWith("+");
+
+  const dest = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/feed";
+
+  // Move into the app with the in-app router instead of reloading the page.
+  // A full document reload inside the native shell can paint a blank screen
+  // until the user pulls to refresh.
+  const goAuthed = useCallback(
+    (to: string) => {
+      void (async () => {
+        try {
+          await supabase.auth.getSession();
+          await router.invalidate();
+          await router.navigate({ to: to as never, replace: true });
+        } catch {
+          window.location.replace(to);
+        }
+      })();
+    },
+    [router],
+  );
+
 
   const goToExistingProfileOrSetup = useCallback(
     async (fallback: string) => {
