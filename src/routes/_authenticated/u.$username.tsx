@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
+import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoProfile } from "@/lib/demo-data";
@@ -78,6 +79,7 @@ function ProfilePage() {
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageBody, setMessageBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -96,9 +98,12 @@ function ProfilePage() {
       demo
         ? getDemoProfile(username, sort)
         : fetchProfile({ data: { username, sort } }),
-    staleTime: 30_000,
+    // Profile pictures must reflect the very latest choice (avatar ↔ photo),
+    // so this always revalidates on mount and on focus.
+    staleTime: 0,
     gcTime: 10 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -250,9 +255,17 @@ function ProfilePage() {
         )}
 
         <div className="relative flex flex-col items-center">
-          <div className="key-glow relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface">
+          <div
+            className="key-glow untouchable-photo relative size-44 overflow-hidden rounded-[44px] border border-border bg-surface"
+            onContextMenu={(e) => e.preventDefault()}
+          >
             {p.avatarUrl ? (
-              <img src={p.avatarUrl} alt={`${p.username}'s profile`} className="size-full object-cover" />
+              <img
+                src={p.avatarUrl}
+                alt={`${p.username}'s profile`}
+                draggable={false}
+                className="untouchable-photo size-full object-cover"
+              />
             ) : (
               <span className="grid size-full place-items-center font-display text-6xl font-extrabold uppercase text-muted-foreground">
                 {p.username.slice(0, 1)}
@@ -269,6 +282,15 @@ function ProfilePage() {
               <Sparkles className="size-3" /> Manage profile picture
             </Link>
           ) : null}
+
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Share2 className="size-3" />
+            {data.isSelf ? "Share your profile · QR" : "Share this profile"}
+          </button>
 
           {/* nickname + username — compact, tight under the avatar button */}
           <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground" data-no-translate>
@@ -671,6 +693,15 @@ function ProfilePage() {
           </div>
         </div>
       ) : null}
+
+      <ShareSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={`https://goheet.lovable.app/u/${p.username}`}
+        text={`${p.displayName || p.username} on GoHeet`}
+        title={data.isSelf ? "Share your profile" : "Share this profile"}
+        qr
+      />
     </AppShell>
   );
 }

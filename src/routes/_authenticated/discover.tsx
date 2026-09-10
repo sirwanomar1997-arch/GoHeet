@@ -61,15 +61,25 @@ function DiscoverPage() {
       ) : (
         <div className="px-4 pb-8">
           <h2 className="data-figure mt-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-            {term ? "People" : "Worth following"}
+            {term ? "People" : "Recommended people"}
           </h2>
+          {!term ? (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              People you might know, and others worth a look.
+            </p>
+          ) : null}
           <ul className="mt-3 divide-y divide-border">
             {(data?.people ?? []).map((p) => (
               <li key={p.id} className="flex items-center gap-3 py-3">
                 <Link to="/u/$username" params={{ username: p.username }} className="shrink-0">
                   <span className="grid size-11 place-items-center overflow-hidden rounded-2xl bg-surface-raised font-display text-sm font-bold uppercase">
                     {p.avatarUrl ? (
-                      <img src={p.avatarUrl} alt="" className="size-full object-cover" />
+                      <img
+                        src={p.avatarUrl}
+                        alt=""
+                        draggable={false}
+                        className="untouchable-photo size-full object-cover"
+                      />
                     ) : (
                       p.username.slice(0, 1)
                     )}
@@ -80,10 +90,11 @@ function DiscoverPage() {
                     to="/u/$username"
                     params={{ username: p.username }}
                     className="block truncate font-semibold"
+                    data-no-translate
                   >
                     {p.displayName || p.username}
                   </Link>
-                  <p className="data-figure truncate text-[11px] text-muted-foreground">
+                  <p className="data-figure truncate text-[11px] text-muted-foreground" data-no-translate>
                     @{p.username} · {formatCount(p.followerCount)} followers ·{" "}
                     {formatCount(p.momentCount)} moments
                   </p>

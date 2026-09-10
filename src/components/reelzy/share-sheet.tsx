@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Copy, Link2, Mail, MessageSquare, Send, Share2 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Sheet,
   SheetContent,
@@ -66,11 +67,18 @@ export function ShareSheet({
   onOpenChange,
   url,
   text,
+  title = "Share this reel",
+  description = "Send it to someone on GoHeet, or out to any other app.",
+  qr = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   url: string;
   text: string;
+  title?: string;
+  description?: string;
+  /** Show a scannable code for this link. */
+  qr?: boolean;
 }) {
   const fetchConversations = useServerFn(listConversations);
   const send = useServerFn(sendMessage);
@@ -102,11 +110,19 @@ export function ShareSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl border-border bg-surface pb-8">
         <SheetHeader className="text-left">
-          <SheetTitle className="font-display text-lg">Share this reel</SheetTitle>
-          <SheetDescription className="text-xs">
-            Send it to someone on GoHeet, or out to any other app.
-          </SheetDescription>
+          <SheetTitle className="font-display text-lg">{title}</SheetTitle>
+          <SheetDescription className="text-xs">{description}</SheetDescription>
         </SheetHeader>
+
+        {qr ? (
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="rounded-2xl bg-white p-3">
+              <QRCodeSVG value={url} size={132} level="M" />
+            </div>
+            <p className="text-[11px] text-muted-foreground">Scan this code to open the profile.</p>
+          </div>
+        ) : null}
+
 
         {people.length > 0 ? (
           <div className="mt-4">

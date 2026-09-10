@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Pause, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun } from "lucide-react";
+import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Pause, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
@@ -162,6 +162,8 @@ function CameraPage() {
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  /** Optional self-timer: off by default so the record button films right away. */
+  const [timerSec, setTimerSec] = useState<0 | 3 | 5 | 10>(0);
   const [elapsed, setElapsed] = useState(0);
   const [captured, setCaptured] = useState<Captured | null>(null);
   /** Proof that what is about to be published was filmed live in this app. */
@@ -400,11 +402,11 @@ function CameraPage() {
     engineRef.current?.stopRecording();
   }
 
-  /** 3 · 2 · 1 before the first frame, so you can get in place. */
-  function startCountdown() {
+  /** Optional 3 / 5 / 10 second lead-in before the first frame. */
+  function startCountdown(seconds: number) {
     if (countdown !== null) return;
     primeCaptureSounds();
-    setCountdown(3);
+    setCountdown(seconds);
     playCountdownTick(3);
     countdownRef.current = setInterval(() => {
       setCountdown((n) => {
@@ -1194,6 +1196,23 @@ function CameraPage() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
+          {!recording && countdown === null ? (
+            <button
+              type="button"
+              onClick={() => setTimerSec((t) => (t === 0 ? 3 : t === 3 ? 5 : t === 5 ? 10 : 0))}
+              aria-label={timerSec === 0 ? "Self-timer off" : `Self-timer ${timerSec} seconds`}
+              className={`relative grid size-10 place-items-center rounded-full backdrop-blur-md transition-transform active:scale-90 ${
+                timerSec > 0 ? "bg-white text-black" : "bg-black/35 text-white"
+              }`}
+            >
+              <Timer className="size-5" />
+              {timerSec > 0 ? (
+                <span className="data-figure absolute -bottom-1 rounded-full bg-black/80 px-1.5 text-[10px] font-semibold text-white">
+                  {timerSec}s
+                </span>
+              ) : null}
+            </button>
+          ) : null}
           {torchAvailable && !mirrored ? (
             <button
               type="button"
@@ -1299,7 +1318,13 @@ function CameraPage() {
               type="button"
               aria-label={recording ? "Finish recording" : "Record a moment"}
               disabled={!ready || countdown !== null}
-              onClick={() => (recording ? finishRecording() : startCountdown())}
+              onClick={() =>
+                recording
+                  ? finishRecording()
+                  : timerSec > 0
+                    ? startCountdown(timerSec)
+                    : void beginRecording()
+              }
               className="relative grid size-[78px] place-items-center rounded-full border-[3px] border-white/85 transition-transform duration-200 active:scale-95 disabled:opacity-40"
             >
               <span
