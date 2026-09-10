@@ -402,11 +402,11 @@ function CameraPage() {
     engineRef.current?.stopRecording();
   }
 
-  /** 3 · 2 · 1 before the first frame, so you can get in place. */
-  function startCountdown() {
+  /** Optional 3 / 5 / 10 second lead-in before the first frame. */
+  function startCountdown(seconds: number) {
     if (countdown !== null) return;
     primeCaptureSounds();
-    setCountdown(3);
+    setCountdown(seconds);
     playCountdownTick(3);
     countdownRef.current = setInterval(() => {
       setCountdown((n) => {
@@ -1301,7 +1301,13 @@ function CameraPage() {
               type="button"
               aria-label={recording ? "Finish recording" : "Record a moment"}
               disabled={!ready || countdown !== null}
-              onClick={() => (recording ? finishRecording() : startCountdown())}
+              onClick={() =>
+                recording
+                  ? finishRecording()
+                  : timerSec > 0
+                    ? startCountdown(timerSec)
+                    : void beginRecording()
+              }
               className="relative grid size-[78px] place-items-center rounded-full border-[3px] border-white/85 transition-transform duration-200 active:scale-95 disabled:opacity-40"
             >
               <span
