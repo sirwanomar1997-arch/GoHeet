@@ -1,4 +1,4 @@
-import { Link, useBlocker, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -175,25 +175,32 @@ function useSwipeNav() {
   const touch = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const onFeed = pathname === "/feed";
-  const onProfile = pathname.startsWith("/u/");
   const onOwnProfile = !!username && pathname === `/u/${username}`;
   const enabled = onFeed || onOwnProfile;
 
-  // A phone-edge swipe is browser history, not a React touch gesture. Never
-  // allow it to uncover Discover, Activity, Settings, or Edit behind any
-  // profile; make Home every profile's only browser-swipe destination.
-  const historyBlocker = useBlocker({
-    shouldBlockFn: ({ action, next }) =>
-      onProfile && action === "BACK" && next.pathname !== "/feed",
-    enableBeforeUnload: false,
-    withResolver: true,
-  });
-
+  // Keep one same-URL entry behind every signed-in screen. An iPhone edge
+  // swipe then consumes this harmless entry instead of revealing an older
+  // tab from browser history. Explicit app links still navigate normally.
   useEffect(() => {
-    if (historyBlocker.status !== "blocked") return;
-    historyBlocker.reset();
-    void navigate({ to: "/feed", replace: true });
-  }, [historyBlocker, navigate]);
+    const guardKey = "__goheetSwipeGuard";
+    const arm = () => {
+      const state = window.history.state as Record<string, unknown> | null;
+      if (state?.[guardKey] === pathname) return;
+      window.history.pushState(
+        { ...(state ?? {}), [guardKey]: pathname },
+        "",
+        window.location.href,
+      );
+    };
+
+    const absorbBrowserSwipe = () => {
+      window.setTimeout(arm, 0);
+    };
+
+    arm();
+    window.addEventListener("popstate", absorbBrowserSwipe);
+    return () => window.removeEventListener("popstate", absorbBrowserSwipe);
+  }, [pathname]);
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
