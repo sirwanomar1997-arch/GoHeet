@@ -156,40 +156,55 @@ export function GoHeetNav() {
 }
 
 
-/** Swipe only moves between the home feed and your own profile. Everything else is tap-only. */
+/**
+ * Swipe is a two-stop shuttle: Home feed <-> your own profile, nothing else.
+ * Discover, Activity and every other surface are tap-only, and a swipe there
+ * is swallowed so it can never walk backwards through history either.
+ */
 function useSwipeNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { data } = useMe();
   const username = data?.profile?.username;
-  const touch = useRef<{ x: number; y: number } | null>(null);
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  const onFeed = pathname === "/feed";
+  const onOwnProfile = !!username && pathname === `/u/${username}`;
+  const enabled = onFeed || onOwnProfile;
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
+      if (!enabled) {
+        touch.current = null;
+        return;
+      }
+      if (e.touches.length !== 1) {
+        touch.current = null;
+        return;
+      }
       const t = e.touches[0];
-      if (t) touch.current = { x: t.clientX, y: t.clientY };
+      if (t) touch.current = { x: t.clientX, y: t.clientY, t: Date.now() };
     },
     onTouchEnd: (e: React.TouchEvent) => {
       const start = touch.current;
       touch.current = null;
+      if (!enabled || !start || !username) return;
       const t = e.changedTouches[0];
-      if (!start || !t || !username) return;
-      const onFeed = pathname === "/feed";
-      const onProfile = pathname.startsWith("/u/");
-      if (!onFeed && !onProfile) return;
+      if (!t) return;
       const dx = t.clientX - start.x;
       const dy = t.clientY - start.y;
+      // Must be a deliberate, mostly-horizontal flick.
+      if (Date.now() - start.t > 800) return;
       if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      if (onFeed) {
-        void navigate({
-          to: "/u/$username",
-          params: { username },
-          replace: true,
-        });
+
+      // Home swipes left to the profile; profile swipes right back home.
+      if (onFeed && dx < 0) {
+        void navigate({ to: "/u/$username", params: { username }, replace: true });
         return;
       }
-
-      void navigate({ to: "/feed", replace: true });
+      if (onOwnProfile && dx > 0) {
+        void navigate({ to: "/feed", replace: true });
+      }
     },
   };
 }
