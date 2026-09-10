@@ -635,7 +635,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
-      <div className="absolute bottom-[26px] right-0.5 z-20 flex flex-col items-center gap-2">
+      <div className="absolute bottom-[26px] right-0.5 z-20 flex w-10 flex-col items-center gap-2">
 
         <RailAction
           label="Views"
@@ -1025,7 +1025,7 @@ function RailAction({
 }) {
   const core = active ? (activeColor ?? color) : color;
   return (
-    <div className="flex flex-col items-center gap-0">
+    <div className="flex w-10 flex-col items-center gap-1">
       <button
         type="button"
         aria-label={label}
@@ -1038,7 +1038,7 @@ function RailAction({
       </button>
       {count ? (
         <span
-          className="data-figure -mt-0.5 text-[11px] font-bold leading-none text-foreground"
+          className="data-figure whitespace-nowrap text-center text-[11px] font-bold leading-none text-foreground"
           style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
         >
           {count}
