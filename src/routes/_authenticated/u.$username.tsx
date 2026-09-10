@@ -96,9 +96,12 @@ function ProfilePage() {
       demo
         ? getDemoProfile(username, sort)
         : fetchProfile({ data: { username, sort } }),
-    staleTime: 30_000,
+    // Profile pictures must reflect the very latest choice (avatar ↔ photo),
+    // so this always revalidates on mount and on focus.
+    staleTime: 0,
     gcTime: 10 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
