@@ -1039,7 +1039,6 @@ function RailAction({
       {count ? (
         <span
           className="data-figure whitespace-nowrap text-center text-[11px] font-bold leading-none text-foreground"
-          style={{ filter: "drop-shadow(0 1px 2px oklch(0 0 0 / 85%))" }}
         >
           {count}
         </span>
