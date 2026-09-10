@@ -1196,6 +1196,23 @@ function CameraPage() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
+          {!recording && countdown === null ? (
+            <button
+              type="button"
+              onClick={() => setTimerSec((t) => (t === 0 ? 3 : t === 3 ? 5 : t === 5 ? 10 : 0))}
+              aria-label={timerSec === 0 ? "Self-timer off" : `Self-timer ${timerSec} seconds`}
+              className={`relative grid size-10 place-items-center rounded-full backdrop-blur-md transition-transform active:scale-90 ${
+                timerSec > 0 ? "bg-white text-black" : "bg-black/35 text-white"
+              }`}
+            >
+              <Timer className="size-5" />
+              {timerSec > 0 ? (
+                <span className="data-figure absolute -bottom-1 rounded-full bg-black/80 px-1.5 text-[10px] font-semibold text-white">
+                  {timerSec}s
+                </span>
+              ) : null}
+            </button>
+          ) : null}
           {torchAvailable && !mirrored ? (
             <button
               type="button"
