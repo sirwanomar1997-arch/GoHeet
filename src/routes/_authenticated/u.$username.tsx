@@ -361,9 +361,9 @@ function ProfilePage() {
 
           {/* Heet total — exact reference treatment: flame and bold total on one baseline. */}
           <div className="mt-5 flex items-center justify-center gap-2">
-            <HeetFlame className="size-24 shrink-0" glow />
+            <HeetFlame className="size-16 shrink-0" glow />
             <span
-              className="font-display text-[64px] font-extrabold leading-none tracking-normal text-foreground"
+              className="font-display text-[40px] font-extrabold leading-none tracking-normal text-foreground"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {formatCount(p.totalLikes)}
