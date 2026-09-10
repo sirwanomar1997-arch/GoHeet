@@ -11,6 +11,9 @@ const TILES = [
   "img/city.jpg",
   "img/mountain.jpg",
   "img/sunset.jpg",
+  "img/skate-bowl.jpg",
+  "img/avatar-4.jpg",
+  "img/avatar-3.jpg",
 ];
 
 function sv(n: number) {
