@@ -59,4 +59,5 @@
 - [x] Prevent Settings from reappearing after returning to Profile and swiping Home
 - [x] Block iPhone browser-history swipes so only GoHeet Home/Profile navigation runs
 - [x] Remove Discover and Activity from tab history and force profile back-swipes to Home
+- [x] Remove Discover, Notice, messages, and feed from beneath every opened profile
 - [ ] Verify sign-in, profile controls, settings, and swipes on a real device (needs device testing)

@@ -175,15 +175,16 @@ function useSwipeNav() {
   const touch = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const onFeed = pathname === "/feed";
+  const onProfile = pathname.startsWith("/u/");
   const onOwnProfile = !!username && pathname === `/u/${username}`;
   const enabled = onFeed || onOwnProfile;
 
   // A phone-edge swipe is browser history, not a React touch gesture. Never
-  // allow it to uncover Discover, Activity, Settings, or Edit behind the
-  // signed-in user's profile; make Home the profile's only swipe destination.
+  // allow it to uncover Discover, Activity, Settings, or Edit behind any
+  // profile; make Home every profile's only browser-swipe destination.
   const historyBlocker = useBlocker({
     shouldBlockFn: ({ action, next }) =>
-      onOwnProfile && action === "BACK" && next.pathname !== "/feed",
+      onProfile && action === "BACK" && next.pathname !== "/feed",
     enableBeforeUnload: false,
     withResolver: true,
   });

@@ -152,6 +152,7 @@ function ActivityPage() {
                   <Link
                     to="/u/$username"
                     params={{ username: n.actor.username }}
+                    replace
                     className="font-semibold"
                   >
                     @{n.actor.username}

@@ -80,6 +80,7 @@ function ThreadPage() {
           <Link
             to="/u/$username"
             params={{ username: data.person.username }}
+            replace
             className="flex min-w-0 items-center gap-3"
           >
             <span className="size-9 shrink-0 overflow-hidden rounded-xl bg-surface-raised">

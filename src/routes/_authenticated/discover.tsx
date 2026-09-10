@@ -71,7 +71,7 @@ function DiscoverPage() {
           <ul className="mt-3 divide-y divide-border">
             {(data?.people ?? []).map((p) => (
               <li key={p.id} className="flex items-center gap-3 py-3">
-                <Link to="/u/$username" params={{ username: p.username }} className="shrink-0">
+                <Link to="/u/$username" params={{ username: p.username }} replace className="shrink-0">
                   <span className="grid size-11 place-items-center overflow-hidden rounded-2xl bg-surface-raised font-display text-sm font-bold uppercase">
                     {p.avatarUrl ? (
                       <img
@@ -89,6 +89,7 @@ function DiscoverPage() {
                   <Link
                     to="/u/$username"
                     params={{ username: p.username }}
+                    replace
                     className="block truncate font-semibold"
                     data-no-translate
                   >
@@ -125,6 +126,7 @@ function DiscoverPage() {
                     key={m.id}
                     to="/u/$username"
                     params={{ username: m.author.username }}
+                    replace
                     className="relative aspect-[9/14] overflow-hidden rounded-2xl bg-surface"
                   >
                     {m.posterUrl || m.mediaUrl ? (
