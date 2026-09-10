@@ -537,6 +537,7 @@ export type Traits = {
   beard: string;
   piercing: string;
   outfit: string;
+  outfitColor: string;
   accessories: string[];
 };
 
@@ -552,6 +553,7 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     beard: "clean shaven",
     piercing: "no piercings",
     outfit: female ? "pink knit sweater" : "white t-shirt",
+    outfitColor: "As shown",
     accessories: [],
   };
 }
