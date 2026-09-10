@@ -112,6 +112,21 @@ async function signAvatars(paths: (string | null)[]) {
   return map;
 }
 
+/** The picture a person actually chose to show: personal photo or avatar. */
+function chosenImage(
+  p?: {
+    avatar_url?: string | null;
+    personal_photo_url?: string | null;
+    profile_image_type?: string | null;
+  } | null,
+): string | null {
+  if (!p) return null;
+  return p.profile_image_type === "photo" && p.personal_photo_url
+    ? p.personal_photo_url
+    : (p.avatar_url ?? null);
+}
+
+
 async function track(userId: string | null, name: string, props: Record<string, unknown> = {}) {
   try {
     const sb = await admin();
