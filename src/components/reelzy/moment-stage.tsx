@@ -486,10 +486,17 @@ export function MomentStage({
         <span
           key={b.id}
           aria-hidden
-          className="animate-heet-burst pointer-events-none absolute z-20"
-          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+          className="animate-heet-float pointer-events-none absolute z-20"
+          style={
+            {
+              left: b.x,
+              top: b.y,
+              "--heet-dx": `${b.dx}px`,
+              "--heet-rot": `${b.rot}deg`,
+            } as React.CSSProperties
+          }
         >
-          <HeetFlame className="size-28" glow />
+          <HeetFlame style={{ width: b.size, height: b.size }} glow />
         </span>
       ))}
 
