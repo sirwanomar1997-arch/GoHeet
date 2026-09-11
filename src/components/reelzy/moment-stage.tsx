@@ -239,28 +239,17 @@ export function MomentStage({
   const onMediaTap = (e: React.PointerEvent) => {
     endPointer(e);
     if (movedRef.current) return;
-    const now = Date.now();
-    if (now - lastTapRef.current < 280) {
-      lastTapRef.current = 0;
-      const el = zoomWrapRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      if (zoomStateRef.current.zoom > 1) {
-        setZoom(1);
-        setOffset({ x: 0, y: 0 });
-        return;
-      }
-      // Double tap anywhere on the frame = heet it, with the flame popping up.
-      heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    // A tap while zoomed in resets the zoom instead of heeting.
+    if (zoomStateRef.current.zoom > 1) {
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
       return;
     }
-    lastTapRef.current = now;
-    window.setTimeout(() => {
-      if (lastTapRef.current && Date.now() - lastTapRef.current >= 280) {
-        lastTapRef.current = 0;
-        if (moment.kind === "video") togglePlayback();
-      }
-    }, 300);
+    // Every tap on the frame = heet it, flames float up where the finger landed.
+    const rect = el.getBoundingClientRect();
+    heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
   };
 
   const resetZoom = () => {
