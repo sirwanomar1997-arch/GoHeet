@@ -496,7 +496,9 @@ export function MomentStage({
             } as React.CSSProperties
           }
         >
-          <HeetFlame style={{ width: b.size, height: b.size }} glow />
+          <span style={{ display: "block", width: b.size, height: b.size }}>
+            <HeetFlame className="size-full" glow />
+          </span>
         </span>
       ))}
 
