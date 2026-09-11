@@ -1,9 +1,9 @@
 export function formatCount(n: number): string {
-  // Compact counts: 12,8 tn for thousands, 1,3M / 27M for millions.
+  // Compact counts: 12,8 tn for thousands, 1,3 mn / 27 mn for millions.
   const comma = (v: number) => v.toFixed(1).replace(".", ",").replace(/,0$/, "");
   if (n < 1000) return String(n);
   if (n < 1_000_000) return `${comma(n / 1000)} tn`;
-  return `${comma(n / 1_000_000)}M`;
+  return `${comma(n / 1_000_000)} mn`;
 }
 
 export function timeAgo(iso: string): string {
