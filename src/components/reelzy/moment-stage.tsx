@@ -353,8 +353,14 @@ export function MomentStage({
 
   heetRef.current = (x: number, y: number) => {
     const id = Date.now() + Math.random();
-    setBursts((b) => [...b, { id, x, y }]);
-    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 900);
+    // Each flame drifts its own way so a burst of taps looks alive, not stamped.
+    const dx = Math.round((Math.random() - 0.5) * 90);
+    const rot = Math.round((Math.random() - 0.5) * 40);
+    const size = 88 + Math.round(Math.random() * 40);
+    setBursts((b) => [...b, { id, x, y, dx, rot, size }]);
+    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 1000);
+    setHeetPop(true);
+    window.setTimeout(() => setHeetPop(false), 560);
     if (!liked) likeMutation.mutate();
   };
 
