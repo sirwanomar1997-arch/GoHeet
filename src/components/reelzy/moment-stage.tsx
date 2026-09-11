@@ -98,7 +98,9 @@ export function MomentStage({
   const [shareOpen, setShareOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [bursts, setBursts] = useState<
+    Array<{ id: number; x: number; y: number; dx: number; rot: number; size: number }>
+  >([]);
   const [heetPop, setHeetPop] = useState(false);
 
   const look = filterCss(moment.styleFilter);
@@ -124,7 +126,7 @@ export function MomentStage({
   zoomStateRef.current = { zoom, offset };
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null);
-  const lastTapRef = useRef(0);
+  
   const movedRef = useRef(false);
 
   const MIN_ZOOM = 1;
