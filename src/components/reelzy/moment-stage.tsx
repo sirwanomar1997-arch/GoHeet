@@ -98,7 +98,9 @@ export function MomentStage({
   const [shareOpen, setShareOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [bursts, setBursts] = useState<
+    Array<{ id: number; x: number; y: number; dx: number; rot: number; size: number }>
+  >([]);
   const [heetPop, setHeetPop] = useState(false);
 
   const look = filterCss(moment.styleFilter);
@@ -124,7 +126,7 @@ export function MomentStage({
   zoomStateRef.current = { zoom, offset };
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null);
-  const lastTapRef = useRef(0);
+  
   const movedRef = useRef(false);
 
   const MIN_ZOOM = 1;
@@ -239,28 +241,17 @@ export function MomentStage({
   const onMediaTap = (e: React.PointerEvent) => {
     endPointer(e);
     if (movedRef.current) return;
-    const now = Date.now();
-    if (now - lastTapRef.current < 280) {
-      lastTapRef.current = 0;
-      const el = zoomWrapRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      if (zoomStateRef.current.zoom > 1) {
-        setZoom(1);
-        setOffset({ x: 0, y: 0 });
-        return;
-      }
-      // Double tap anywhere on the frame = heet it, with the flame popping up.
-      heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    // A tap while zoomed in resets the zoom instead of heeting.
+    if (zoomStateRef.current.zoom > 1) {
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
       return;
     }
-    lastTapRef.current = now;
-    window.setTimeout(() => {
-      if (lastTapRef.current && Date.now() - lastTapRef.current >= 280) {
-        lastTapRef.current = 0;
-        if (moment.kind === "video") togglePlayback();
-      }
-    }, 300);
+    // Every tap on the frame = heet it, flames float up where the finger landed.
+    const rect = el.getBoundingClientRect();
+    heetRef.current(e.clientX - rect.left, e.clientY - rect.top);
   };
 
   const resetZoom = () => {
@@ -362,8 +353,14 @@ export function MomentStage({
 
   heetRef.current = (x: number, y: number) => {
     const id = Date.now() + Math.random();
-    setBursts((b) => [...b, { id, x, y }]);
-    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 900);
+    // Each flame drifts its own way so a burst of taps looks alive, not stamped.
+    const dx = Math.round((Math.random() - 0.5) * 90);
+    const rot = Math.round((Math.random() - 0.5) * 40);
+    const size = 88 + Math.round(Math.random() * 40);
+    setBursts((b) => [...b, { id, x, y, dx, rot, size }]);
+    window.setTimeout(() => setBursts((b) => b.filter((v) => v.id !== id)), 1000);
+    setHeetPop(true);
+    window.setTimeout(() => setHeetPop(false), 560);
     if (!liked) likeMutation.mutate();
   };
 
@@ -489,10 +486,19 @@ export function MomentStage({
         <span
           key={b.id}
           aria-hidden
-          className="animate-heet-burst pointer-events-none absolute z-20"
-          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+          className="animate-heet-float pointer-events-none absolute z-20"
+          style={
+            {
+              left: b.x,
+              top: b.y,
+              "--heet-dx": `${b.dx}px`,
+              "--heet-rot": `${b.rot}deg`,
+            } as React.CSSProperties
+          }
         >
-          <HeetFlame className="size-28" glow />
+          <span style={{ display: "block", width: b.size, height: b.size }}>
+            <HeetFlame className="size-full" glow />
+          </span>
         </span>
       ))}
 
