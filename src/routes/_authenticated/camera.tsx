@@ -900,6 +900,9 @@ function CameraPage() {
                 data-no-translate
                 translate="no"
                 onPointerDown={startDrag}
+                onPointerMove={onDragMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
                 onClick={onTextTap}
                 role="button"
                 tabIndex={0}
