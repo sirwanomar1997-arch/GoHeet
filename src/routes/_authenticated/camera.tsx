@@ -226,6 +226,8 @@ function CameraPage() {
           size: overlay?.size ?? DEFAULT_OVERLAY.size,
           rotate: overlay?.rotate ?? 0,
         };
+        setPinchingText(true);
+        setTextOpen(false);
       }
       return;
     }
