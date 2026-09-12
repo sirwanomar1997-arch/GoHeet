@@ -1033,7 +1033,7 @@ function CameraPage() {
           <div
             ref={stageRef}
             className="absolute inset-0 z-30 touch-none overscroll-none"
-            style={{ pointerEvents: draggingText || pinchingText ? "auto" : "none" }}
+            style={{ pointerEvents: "auto" }}
             onPointerDown={startDrag}
             onPointerMove={onDragMove}
             onPointerUp={endDrag}
