@@ -985,15 +985,17 @@ function CameraPage() {
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
-                onChange={(e) =>
-                  setOverlay((o) => ({
-                    ...(o ?? { ...DEFAULT_OVERLAY }),
-                    text: e.target.value.slice(0, 120),
-                  }))
-                }
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={120}
+                onChange={(e) => setOverlayText(e.target.value)}
+                onInput={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
+                onCompositionEnd={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
                 placeholder="Say it in a few words"
                 className="h-11 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/50"
               />
+
               <button
                 type="button"
                 onClick={() => {
