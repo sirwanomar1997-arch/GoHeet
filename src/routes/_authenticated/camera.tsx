@@ -919,8 +919,9 @@ function CameraPage() {
                 onClick: () => {
                   setFilterOpen(false);
                   if (!overlay) setOverlay({ ...DEFAULT_OVERLAY, text: "" });
-                  setTextOpen(true);
+                  openTextEditor();
                 },
+
               },
             ].map((tool) => (
               <button
