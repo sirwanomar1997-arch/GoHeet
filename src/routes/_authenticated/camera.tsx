@@ -219,8 +219,7 @@ function CameraPage() {
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
 
-    setOverlay((o) => (o ? { ...o, x, y } : o));
-  };
+
   const endDrag = () => {
     if (draggingRef.current && trashHotRef.current) {
       setOverlay(null);
