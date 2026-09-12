@@ -189,11 +189,13 @@ function AuthPage() {
         for (let i = 0; i < 20; i++) {
           const { data } = await supabase.auth.getSession();
           if (data.session) break;
-          await new Promise((r) => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 50));
         }
         try {
-          await router.invalidate();
+          // Move first so the home screen paints straight away; refresh cached
+          // data in the background instead of holding the user on a blank page.
           await router.navigate({ to: to as never, replace: true });
+          void router.invalidate();
         } catch {
           window.location.replace(to);
           return;
