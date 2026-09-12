@@ -193,12 +193,13 @@ function CameraPage() {
 
   // Multi-touch: one finger moves the text, two fingers resize and turn it.
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
-  const pinchRef = useRef<{ dist: number; angle: number; size: number; rotate: number } | null>(null);
+  const textPinchRef = useRef<{ dist: number; angle: number; size: number; rotate: number } | null>(null);
 
   const twoFingerGeometry = () => {
     const pts = [...pointersRef.current.values()];
     if (pts.length < 2) return null;
-    const [a, b] = pts;
+    const a = pts[0]!;
+    const b = pts[1]!;
     return {
       dist: Math.hypot(b.x - a.x, b.y - a.y),
       angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI,
@@ -218,7 +219,7 @@ function CameraPage() {
       setDraggingText(false);
       setTrashHot(false);
       if (geo) {
-        pinchRef.current = {
+        textPinchRef.current = {
           dist: geo.dist,
           angle: geo.angle,
           size: overlay?.size ?? DEFAULT_OVERLAY.size,
@@ -242,7 +243,7 @@ function CameraPage() {
       pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
 
-    const pinch = pinchRef.current;
+    const pinch = textPinchRef.current;
     if (pinch && pointersRef.current.size >= 2) {
       const geo = twoFingerGeometry();
       if (!geo || pinch.dist <= 0) return;
@@ -277,7 +278,7 @@ function CameraPage() {
     if (e) pointersRef.current.delete(e.pointerId);
     else pointersRef.current.clear();
 
-    if (pointersRef.current.size < 2) pinchRef.current = null;
+    if (pointersRef.current.size < 2) textPinchRef.current = null;
     if (pointersRef.current.size > 0) return;
 
     if (draggingRef.current && trashHotRef.current) {
