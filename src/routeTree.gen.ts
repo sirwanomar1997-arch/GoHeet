@@ -20,6 +20,7 @@ import { Route as AuthenticatedCameraRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedEditProfileRouteImport } from './routes/_authenticated/edit-profile'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
@@ -85,6 +86,11 @@ const AuthenticatedEditProfileRoute =
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/edit-profile': typeof AuthenticatedEditProfileRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/edit-profile': typeof AuthenticatedEditProfileRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/edit-profile': typeof AuthenticatedEditProfileRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/edit-profile'
     | '/feed'
+    | '/history'
     | '/messages'
     | '/onboarding'
     | '/saved'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/edit-profile'
     | '/feed'
+    | '/history'
     | '/messages'
     | '/onboarding'
     | '/saved'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/_authenticated/discover'
     | '/_authenticated/edit-profile'
     | '/_authenticated/feed'
+    | '/_authenticated/history'
     | '/_authenticated/messages'
     | '/_authenticated/onboarding'
     | '/_authenticated/saved'
@@ -374,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/messages': {
@@ -478,6 +497,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedEditProfileRoute: typeof AuthenticatedEditProfileRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
@@ -496,6 +516,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedEditProfileRoute: AuthenticatedEditProfileRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
