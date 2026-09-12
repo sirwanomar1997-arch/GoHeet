@@ -188,6 +188,7 @@ function CameraPage() {
   const dragMovedRef = useRef(false);
 
   const [draggingText, setDraggingText] = useState(false);
+  const [pinchingText, setPinchingText] = useState(false);
   const [trashHot, setTrashHot] = useState(false);
   const trashHotRef = useRef(false);
 
