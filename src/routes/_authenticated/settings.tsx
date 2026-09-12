@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -24,9 +24,6 @@ import {
 import {
   deleteAccount,
   exportMyData,
-  listBlocked,
-  listMyComments,
-  toggleBlock,
   updateBirthDate,
   updateProfile,
 } from "@/lib/reelzy.functions";
@@ -60,9 +57,6 @@ function SettingsPage() {
   const save = useServerFn(updateProfile);
   const exportData = useServerFn(exportMyData);
   const removeAccount = useServerFn(deleteAccount);
-  const fetchBlocked = useServerFn(listBlocked);
-  const fetchMyComments = useServerFn(listMyComments);
-  const unblock = useServerFn(toggleBlock);
   const saveBirthDate = useServerFn(updateBirthDate);
 
   const [email, setEmail] = useState("");
@@ -83,8 +77,6 @@ function SettingsPage() {
   const [birthDate, setBirthDate] = useState("");
   const [clearing, setClearing] = useState(false);
   const [confirm, setConfirm] = useState("");
-  const [showComments, setShowComments] = useState(false);
-  const [showBlocked, setShowBlocked] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
@@ -124,17 +116,6 @@ function SettingsPage() {
     setShowReposts(p.show_reposts !== false);
     setBirthDate(p.birth_date ?? "");
   }, [me]);
-
-  const blocked = useQuery({
-    queryKey: ["blocked"],
-    queryFn: () => fetchBlocked({ data: undefined as never }),
-  });
-
-  const myComments = useQuery({
-    queryKey: ["my-comments"],
-    enabled: showComments,
-    queryFn: () => fetchMyComments({ data: undefined as never }),
-  });
 
   const privacyMutation = useMutation({
     mutationFn: () =>
@@ -364,12 +345,7 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Your activity</h2>
           <div className="mt-2 divide-y divide-border">
-            <Link
-              to="/u/$username"
-              params={{ username: me?.profile?.username ?? "" }}
-              replace
-              className={row}
-            >
+            <Link to="/history" className={row}>
               <span className="flex items-center gap-3">
                 <History className="size-4 text-amber-400" /> Your history
               </span>
@@ -381,62 +357,20 @@ function SettingsPage() {
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
-            <button type="button" className={row} onClick={() => setShowComments((v) => !v)}>
+            <Link to="/my-comments" className={row}>
               <span className="flex items-center gap-3">
                 <MessageCircle className="size-4 text-sky-400" /> Comments you wrote
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
-            </button>
-            <button type="button" className={row} onClick={() => setShowBlocked((v) => !v)}>
+            </Link>
+            <Link to="/blocked" className={row}>
               <span className="flex items-center gap-3">
                 <Ban className="size-4 text-rose-500" /> Blocked people
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
-            </button>
+            </Link>
+
           </div>
-          {showComments ? (
-            myComments.isLoading ? (
-              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
-            ) : (myComments.data?.comments.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">You haven't commented yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {myComments.data?.comments.map((c) => (
-                  <li key={c.id} className="py-2.5 text-sm">
-                    <p>{c.body}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : null}
-          {showBlocked ? (
-            blocked.isLoading ? (
-              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
-            ) : (blocked.data?.blocked.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">You haven't blocked anyone.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {blocked.data?.blocked.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between py-2.5">
-                    <span className="text-sm">@{b.username}</span>
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={async () => {
-                        await unblock({ data: { userId: b.id } });
-                        void blocked.refetch();
-                      }}
-                    >
-                      Unblock
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : null}
         </section>
 
         <section className={section}>

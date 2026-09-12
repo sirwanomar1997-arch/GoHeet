@@ -16,6 +16,7 @@ import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { timeAgo } from "@/components/reelzy/format";
+import { ChevronLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -106,6 +107,12 @@ function AdminPage() {
   return (
     <AppShell>
       <header className="px-5 pb-3 pt-6">
+        <Link
+          to="/settings"
+          className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground"
+        >
+          <ChevronLeft className="size-3.5" /> Settings
+        </Link>
         <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Moderation</h1>
         <div className="mt-4 grid grid-cols-4 gap-2 rounded-2xl border border-border bg-surface p-3">
           {[
