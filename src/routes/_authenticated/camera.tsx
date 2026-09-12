@@ -198,6 +198,8 @@ function CameraPage() {
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggingText(true);
     setTrashHot(false);
+    // The editing tray would sit over the bin, so step out of it while dragging.
+    setTextOpen(false);
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -209,11 +211,14 @@ function CameraPage() {
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
     const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
-    const overTrash = y > 84 && x > 28 && x < 72;
+    const overTrash = y > 80 && x > 22 && x < 78;
     if (overTrash !== trashHotRef.current) {
       trashHotRef.current = overTrash;
       setTrashHot(overTrash);
     }
+    setOverlay((o) => (o ? { ...o, x, y } : o));
+  };
+
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
   const endDrag = () => {
