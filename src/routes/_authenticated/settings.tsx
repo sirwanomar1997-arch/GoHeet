@@ -24,9 +24,6 @@ import {
 import {
   deleteAccount,
   exportMyData,
-  listBlocked,
-  listMyComments,
-  toggleBlock,
   updateBirthDate,
   updateProfile,
 } from "@/lib/reelzy.functions";
@@ -60,9 +57,6 @@ function SettingsPage() {
   const save = useServerFn(updateProfile);
   const exportData = useServerFn(exportMyData);
   const removeAccount = useServerFn(deleteAccount);
-  const fetchBlocked = useServerFn(listBlocked);
-  const fetchMyComments = useServerFn(listMyComments);
-  const unblock = useServerFn(toggleBlock);
   const saveBirthDate = useServerFn(updateBirthDate);
 
   const [email, setEmail] = useState("");
@@ -83,8 +77,6 @@ function SettingsPage() {
   const [birthDate, setBirthDate] = useState("");
   const [clearing, setClearing] = useState(false);
   const [confirm, setConfirm] = useState("");
-  const [showComments, setShowComments] = useState(false);
-  const [showBlocked, setShowBlocked] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
@@ -124,17 +116,6 @@ function SettingsPage() {
     setShowReposts(p.show_reposts !== false);
     setBirthDate(p.birth_date ?? "");
   }, [me]);
-
-  const blocked = useQuery({
-    queryKey: ["blocked"],
-    queryFn: () => fetchBlocked({ data: undefined as never }),
-  });
-
-  const myComments = useQuery({
-    queryKey: ["my-comments"],
-    enabled: showComments,
-    queryFn: () => fetchMyComments({ data: undefined as never }),
-  });
 
   const privacyMutation = useMutation({
     mutationFn: () =>
