@@ -231,14 +231,22 @@ function CameraPage() {
     setDraggingText(false);
     setTrashHot(false);
   };
+  // Each time the editor opens we remount the field, so the keyboard never
+  // fights a controlled value while typing.
+  const [textSession, setTextSession] = useState(0);
+  const openTextEditor = () => {
+    setTextSession((n) => n + 1);
+    setTextOpen(true);
+  };
   const setOverlayText = (value: string) => {
-    const text = value.slice(0, 120);
+    const text = value.slice(0, 200);
     setOverlay((o) => (o && o.text === text ? o : { ...(o ?? { ...DEFAULT_OVERLAY }), text }));
   };
   const onTextTap = () => {
     // A tap without a drag opens the editor; a drag just moves the text.
-    if (!dragMovedRef.current) setTextOpen(true);
+    if (!dragMovedRef.current) openTextEditor();
   };
+
 
 
 
