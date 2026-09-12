@@ -13,6 +13,8 @@ import {
   Volume2,
   VolumeX,
   Play,
+  ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Sheet,
