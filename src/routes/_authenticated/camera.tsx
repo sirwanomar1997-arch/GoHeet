@@ -845,8 +845,9 @@ function CameraPage() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setTextOpen(true);
+                  if (e.key === "Enter" || e.key === " ") openTextEditor();
                 }}
+
                 aria-label="Tap to edit, hold and drag to move or bin your text"
                 className={`max-w-full cursor-grab touch-none select-none whitespace-pre-wrap break-words text-center leading-tight active:cursor-grabbing ${
                   overlayStyleProps(overlay.style, overlay.color).className
