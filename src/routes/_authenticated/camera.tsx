@@ -1191,7 +1191,7 @@ function CameraPage() {
           </span>
 
           {paused ? (
-            <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Paused</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">On hold</span>
           ) : null}
         </div>
 
