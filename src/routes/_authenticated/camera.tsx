@@ -281,7 +281,10 @@ function CameraPage() {
     if (e) pointersRef.current.delete(e.pointerId);
     else pointersRef.current.clear();
 
-    if (pointersRef.current.size < 2) textPinchRef.current = null;
+    if (pointersRef.current.size < 2) {
+      textPinchRef.current = null;
+      setPinchingText(false);
+    }
     if (pointersRef.current.size > 0) return;
 
     if (draggingRef.current && trashHotRef.current) {
