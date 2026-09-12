@@ -191,7 +191,43 @@ function CameraPage() {
   const [trashHot, setTrashHot] = useState(false);
   const trashHotRef = useRef(false);
 
+  // Multi-touch: one finger moves the text, two fingers resize and turn it.
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; angle: number; size: number; rotate: number } | null>(null);
+
+  const twoFingerGeometry = () => {
+    const pts = [...pointersRef.current.values()];
+    if (pts.length < 2) return null;
+    const [a, b] = pts;
+    return {
+      dist: Math.hypot(b.x - a.x, b.y - a.y),
+      angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI,
+    };
+  };
+
   const startDrag = (e: React.PointerEvent<HTMLElement>) => {
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+
+    if (pointersRef.current.size >= 2) {
+      // Second finger down: stop moving, start pinching.
+      const geo = twoFingerGeometry();
+      draggingRef.current = false;
+      dragMovedRef.current = true;
+      trashHotRef.current = false;
+      setDraggingText(false);
+      setTrashHot(false);
+      if (geo) {
+        pinchRef.current = {
+          dist: geo.dist,
+          angle: geo.angle,
+          size: overlay?.size ?? DEFAULT_OVERLAY.size,
+          rotate: overlay?.rotate ?? 0,
+        };
+      }
+      return;
+    }
+
     draggingRef.current = true;
     dragMovedRef.current = false;
     trashHotRef.current = false;
@@ -200,9 +236,26 @@ function CameraPage() {
     setTrashHot(false);
     // The editing tray would sit over the bin, so step out of it while dragging.
     setTextOpen(false);
-    e.currentTarget.setPointerCapture?.(e.pointerId);
   };
-  const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const onDragMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    const pinch = pinchRef.current;
+    if (pinch && pointersRef.current.size >= 2) {
+      const geo = twoFingerGeometry();
+      if (!geo || pinch.dist <= 0) return;
+      const scale = geo.dist / pinch.dist;
+      const size = Math.min(140, Math.max(14, Math.round(pinch.size * scale)));
+      let turn = geo.angle - pinch.angle;
+      while (turn > 180) turn -= 360;
+      while (turn < -180) turn += 360;
+      const rotate = Math.max(-180, Math.min(180, Math.round(pinch.rotate + turn)));
+      setOverlay((o) => (o ? { ...o, size, rotate } : o));
+      return;
+    }
+
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
@@ -220,7 +273,13 @@ function CameraPage() {
   };
 
 
-  const endDrag = () => {
+  const endDrag = (e?: React.PointerEvent<HTMLElement>) => {
+    if (e) pointersRef.current.delete(e.pointerId);
+    else pointersRef.current.clear();
+
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+    if (pointersRef.current.size > 0) return;
+
     if (draggingRef.current && trashHotRef.current) {
       setOverlay(null);
       setTextOpen(false);
@@ -231,6 +290,7 @@ function CameraPage() {
     setDraggingText(false);
     setTrashHot(false);
   };
+
   const openTextEditor = () => {
     setTextOpen(true);
   };
