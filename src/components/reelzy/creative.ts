@@ -670,7 +670,7 @@ export function parseOverlay(value: unknown): MomentOverlay | null {
   const place = (v.place ?? "middle") as OverlayPlace;
   const fallbackY = place === "top" ? 18 : place === "bottom" ? 80 : 50;
   return {
-    text: v.text.slice(0, 120),
+    text: v.text.slice(0, 200),
     font: (v.font ?? DEFAULT_OVERLAY.font) as OverlayFont,
     style: (v.style ?? DEFAULT_OVERLAY.style) as OverlayStyle,
     place,
