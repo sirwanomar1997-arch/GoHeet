@@ -258,6 +258,42 @@ const DOCS: Record<string, Doc> = {
       },
     ],
   },
+  "child-safety": {
+    title: "Child Safety Standards",
+    summary:
+      "GoHeet's standards and measures against child sexual abuse and exploitation (CSAE).",
+    sections: [
+      {
+        h: "Zero tolerance",
+        p: [
+          "GoHeet has zero tolerance for child sexual abuse and exploitation (CSAE). This includes any sexual content involving minors, grooming, sexualisation of minors, or content that endangers children. Such content is prohibited and is removed immediately upon detection.",
+          "GoHeet is not intended for anyone under 13. If we learn that an account belongs to someone under 13, we remove it.",
+        ],
+      },
+      {
+        h: "How we prevent CSAE content",
+        p: [
+          "All content on GoHeet must be captured through the GoHeet camera during an active capture session; uploads from a camera roll or another app are not supported, and we validate capture origin on our servers.",
+          "Captions, on-screen text, comments, display names and bios are screened automatically for sexual content involving minors and other prohibited material, and are blocked before they are posted.",
+          "A human moderation team reviews reported content and accounts and acts within 24 hours of a report being filed.",
+        ],
+      },
+      {
+        h: "Reporting CSAE content",
+        p: [
+          "Anyone can report a post, comment or profile from the ••• menu on that content. Reports go to a review queue handled by our safety team.",
+          "Urgent child safety concerns can also be sent through Settings \u2192 Help & support, choosing \"Safety or abuse\". These are actioned within 24 hours.",
+          "When we become aware of CSAE content, we remove it, suspend or remove the account responsible, and report it to the appropriate authorities, including the National Center for Missing & Exploited Children (NCMEC) CyberTipline where applicable.",
+        ],
+      },
+      {
+        h: "Contact",
+        p: [
+          `For questions about our child safety standards, contact our safety team at ${SUPPORT_CHANNEL}, or email sirwanomar1997@gmail.com. Our safety contact can discuss preventative measures regarding child sexual abuse material and responds to child safety reports within 24 hours.`,
+        ],
+      },
+    ],
+  },
 };
 
 export const Route = createFileRoute("/legal/$doc")({
