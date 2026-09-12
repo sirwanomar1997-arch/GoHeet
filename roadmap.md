@@ -68,3 +68,5 @@
 - [x] Batch usage statistics instead of writing one row per action
 - [x] Burst protection on posting, reactions, follows, search and messages
 - [x] Smarter client caching and retry back-off
+
+- [ ] Keep camera-editor text exactly as typed and verify it on screen
