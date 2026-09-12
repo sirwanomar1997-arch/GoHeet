@@ -1937,6 +1937,75 @@ export const listMyComments = createServerFn({ method: "POST" })
     return { comments: data ?? [] };
   });
 
+/** Everything the signed-in person has watched, most recent first. */
+export const listWatchHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: views } = await context.supabase
+      .from("moment_views")
+      .select("moment_id, created_at, watched_ms, completed")
+      .eq("viewer_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    const seen = new Map<string, { at: string; watchedMs: number; completed: boolean }>();
+    for (const v of views ?? []) {
+      if (seen.has(v.moment_id)) continue;
+      seen.set(v.moment_id, {
+        at: v.created_at,
+        watchedMs: v.watched_ms ?? 0,
+        completed: !!v.completed,
+      });
+    }
+    const ids = [...seen.keys()].slice(0, 100);
+    if (!ids.length) return { items: [] };
+
+    const sb = await admin();
+    const { data: rows } = await sb
+      .from("moments")
+      .select("id, caption, kind, media_path, thumbnail_path, created_at, author_id, deleted_at")
+      .in("id", ids)
+      .is("deleted_at", null);
+    const list = rows ?? [];
+
+    const { data: people } = await sb
+      .from("profiles")
+      .select("id, username, display_name, avatar_url")
+      .in("id", [...new Set(list.map((r) => r.author_id))]);
+    const byId = new Map((people ?? []).map((p) => [p.id, p]));
+
+    const media = await signMedia(list.flatMap((r) => [r.media_path, r.thumbnail_path]));
+
+    const items = list
+      .map((r) => {
+        const view = seen.get(r.id)!;
+        const author = byId.get(r.author_id);
+        return {
+          id: r.id,
+          caption: r.caption,
+          kind: r.kind,
+          createdAt: r.created_at,
+          watchedAt: view.at,
+          watchedMs: view.watchedMs,
+          completed: view.completed,
+          mediaUrl: media[r.media_path] ?? null,
+          thumbnailUrl: r.thumbnail_path ? (media[r.thumbnail_path] ?? null) : null,
+          author: author
+            ? {
+                username: author.username,
+                displayName: author.display_name,
+                avatarUrl: author.avatar_url ?? null,
+              }
+            : null,
+        };
+      })
+      .sort((a, b) => (a.watchedAt < b.watchedAt ? 1 : -1));
+
+    return { items };
+  });
+
+
+
 /* ------------------------------------------------------------------ */
 /* Direct messages — requests first when you aren't mutual follows     */
 /* ------------------------------------------------------------------ */
