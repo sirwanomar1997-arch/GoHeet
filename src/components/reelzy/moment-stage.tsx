@@ -58,18 +58,15 @@ import {
 
 
 const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
-  { value: "harassment", label: "Harassment" },
-  { value: "bullying", label: "Bullying" },
-  { value: "hate", label: "Hate" },
+  { value: "not_interested", label: "I just don't like it" },
   { value: "sexual", label: "Sexual content" },
-  { value: "violence", label: "Violence" },
-  { value: "dangerous", label: "Dangerous behaviour" },
-  { value: "spam", label: "Spam" },
-  { value: "impersonation", label: "Impersonation" },
-  { value: "ai_generated", label: "AI-generated / not real" },
-  { value: "illegal", label: "Illegal content" },
-  { value: "self_harm", label: "Self-harm" },
-  { value: "other", label: "Something else" },
+  { value: "hate", label: "Hate and harassment" },
+  { value: "violence", label: "Violence or abuse" },
+  { value: "child_safety", label: "Child safety" },
+  { value: "ai_generated", label: "False information or AI-generated content" },
+  { value: "self_harm", label: "Suicide and self-harm" },
+  { value: "branded_content", label: "Undisclosed branded content" },
+  { value: "other", label: "More reasons" },
 ];
 
 export function MomentStage({
