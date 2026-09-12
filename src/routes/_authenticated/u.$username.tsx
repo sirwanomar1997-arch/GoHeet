@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
@@ -170,15 +170,25 @@ function ProfilePage() {
     <AppShell hideNav>
       {/* --- Profile image stage --- */}
       <section className="relative overflow-hidden px-5 pb-2 pt-8">
-        {/* Share profile — top-left */}
-        <button
-          type="button"
-          onClick={() => setShareOpen(true)}
-          aria-label={data.isSelf ? "Share your profile" : "Share this profile"}
-          className="tap-target absolute left-4 top-4 z-20 grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
-        >
-          <Share2 className="pointer-events-none size-5" />
-        </button>
+        {/* Back + Share profile — top-left */}
+        <div className="absolute left-4 top-4 z-20 flex gap-2">
+          <Link
+            to="/feed"
+            replace
+            aria-label="Back"
+            className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
+          >
+            <ArrowLeft className="pointer-events-none size-5" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            aria-label={data.isSelf ? "Share your profile" : "Share this profile"}
+            className="tap-target grid size-12 touch-manipulation select-none place-items-center rounded-full border border-border bg-surface-raised text-foreground shadow-lg transition-transform active:scale-90"
+          >
+            <Share2 className="pointer-events-none size-5" />
+          </button>
+        </div>
         <div
           aria-hidden
           className="ember-fill pointer-events-none absolute left-1/2 top-4 size-72 -translate-x-1/2 rounded-full opacity-25 blur-[90px]"
