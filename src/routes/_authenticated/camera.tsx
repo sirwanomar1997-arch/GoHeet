@@ -1294,11 +1294,11 @@ function CameraPage() {
             {recording ? (
               <button
                 type="button"
-                onClick={togglePause}
-                aria-label={paused ? "Resume recording" : "Pause recording"}
-                className="grid size-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition-transform active:scale-90"
+                onClick={finishRecording}
+                aria-label="Done recording"
+                className="grid size-12 place-items-center rounded-full bg-white text-black backdrop-blur-md transition-transform active:scale-90"
               >
-                {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+                <Check className="size-6" strokeWidth={2.5} />
               </button>
             ) : (
               <button
@@ -1316,11 +1316,13 @@ function CameraPage() {
           <div className="flex justify-center">
             <button
               type="button"
-              aria-label={recording ? "Finish recording" : "Record a moment"}
+              aria-label={
+                !recording ? "Record a moment" : paused ? "Record another clip" : "Stop this clip"
+              }
               disabled={!ready || countdown !== null}
               onClick={() =>
                 recording
-                  ? finishRecording()
+                  ? togglePause()
                   : timerSec > 0
                     ? startCountdown(timerSec)
                     : void beginRecording()
@@ -1329,7 +1331,7 @@ function CameraPage() {
             >
               <span
                 className={`bg-[image:var(--gradient-ember)] transition-all duration-300 ease-out ${
-                  recording ? "size-7 rounded-[9px]" : "size-[60px] rounded-full"
+                  recording && !paused ? "size-7 rounded-[9px]" : "size-[60px] rounded-full"
                 }`}
               />
               {recording && !paused ? (
@@ -1337,6 +1339,7 @@ function CameraPage() {
               ) : null}
             </button>
           </div>
+
 
           <div className="flex justify-end">
             <button
