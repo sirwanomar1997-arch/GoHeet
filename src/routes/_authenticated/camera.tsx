@@ -198,6 +198,8 @@ function CameraPage() {
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggingText(true);
     setTrashHot(false);
+    // The editing tray would sit over the bin, so step out of it while dragging.
+    setTextOpen(false);
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -209,13 +211,15 @@ function CameraPage() {
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
     const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
-    const overTrash = y > 84 && x > 28 && x < 72;
+    const overTrash = y > 80 && x > 22 && x < 78;
     if (overTrash !== trashHotRef.current) {
       trashHotRef.current = overTrash;
       setTrashHot(overTrash);
     }
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
+
+
   const endDrag = () => {
     if (draggingRef.current && trashHotRef.current) {
       setOverlay(null);
@@ -227,10 +231,15 @@ function CameraPage() {
     setDraggingText(false);
     setTrashHot(false);
   };
+  const setOverlayText = (value: string) => {
+    const text = value.slice(0, 120);
+    setOverlay((o) => (o && o.text === text ? o : { ...(o ?? { ...DEFAULT_OVERLAY }), text }));
+  };
   const onTextTap = () => {
     // A tap without a drag opens the editor; a drag just moves the text.
     if (!dragMovedRef.current) setTextOpen(true);
   };
+
 
 
   const openSession = useServerFn(startCapture);
@@ -806,50 +815,60 @@ function CameraPage() {
         {overlay?.text ? (
           <div
             ref={stageRef}
-            className="absolute inset-0 touch-none"
+            className="absolute inset-0 z-50 touch-none"
+            style={{ pointerEvents: draggingText ? "auto" : "none" }}
             onPointerMove={onDragMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
           >
-            <p
-              onPointerDown={startDrag}
-              onClick={onTextTap}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setTextOpen(true);
-              }}
-              aria-label="Tap to edit, drag to move your text"
-              className={`absolute max-w-[80%] cursor-grab touch-none select-none whitespace-pre-wrap text-center leading-tight active:cursor-grabbing ${
-                overlayStyleProps(overlay.style, overlay.color).className
-              }`}
+            <div
+              className="absolute flex justify-center"
               style={{
                 left: `${overlay.x}%`,
                 top: `${overlay.y}%`,
+                width: "88%",
                 transform: `translate(-50%, -50%) rotate(${overlay.rotate}deg)`,
-                fontSize: `${overlay.size}px`,
-                ...overlayFontStyle(overlay.font),
-                ...overlayStyleProps(overlay.style, overlay.color).style,
+                pointerEvents: "auto",
               }}
             >
-              {overlay.text}
-            </p>
+              <p
+                onPointerDown={startDrag}
+                onClick={onTextTap}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setTextOpen(true);
+                }}
+                aria-label="Tap to edit, hold and drag to move or bin your text"
+                className={`max-w-full cursor-grab touch-none select-none whitespace-pre-wrap break-words text-center leading-tight active:cursor-grabbing ${
+                  overlayStyleProps(overlay.style, overlay.color).className
+                }`}
+                style={{
+                  fontSize: `${overlay.size}px`,
+                  ...overlayFontStyle(overlay.font),
+                  ...overlayStyleProps(overlay.style, overlay.color).style,
+                }}
+              >
+                {overlay.text}
+              </p>
+            </div>
             {draggingText ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-8">
                 <div
-                  className={`flex size-14 items-center justify-center rounded-full border-2 transition-all duration-150 ${
+                  className={`flex size-16 items-center justify-center rounded-full border-2 transition-all duration-150 ${
                     trashHot
                       ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
                       : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
                   }`}
                   aria-hidden
                 >
-                  <Trash2 className="size-6" />
+                  <Trash2 className="size-7" />
                 </div>
               </div>
             ) : null}
           </div>
         ) : null}
+
 
         {/* Top bar: leave, or move on to the details step. */}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
@@ -971,15 +990,17 @@ function CameraPage() {
               <Input
                 value={overlay?.text ?? ""}
                 autoFocus
-                onChange={(e) =>
-                  setOverlay((o) => ({
-                    ...(o ?? { ...DEFAULT_OVERLAY }),
-                    text: e.target.value.slice(0, 120),
-                  }))
-                }
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={120}
+                onChange={(e) => setOverlayText(e.target.value)}
+                onInput={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
+                onCompositionEnd={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
                 placeholder="Say it in a few words"
                 className="h-11 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/50"
               />
+
               <button
                 type="button"
                 onClick={() => {
