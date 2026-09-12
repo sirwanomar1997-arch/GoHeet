@@ -231,10 +231,15 @@ function CameraPage() {
     setDraggingText(false);
     setTrashHot(false);
   };
+  const setOverlayText = (value: string) => {
+    const text = value.slice(0, 120);
+    setOverlay((o) => (o && o.text === text ? o : { ...(o ?? { ...DEFAULT_OVERLAY }), text }));
+  };
   const onTextTap = () => {
     // A tap without a drag opens the editor; a drag just moves the text.
     if (!dragMovedRef.current) setTextOpen(true);
   };
+
 
 
   const openSession = useServerFn(startCapture);
