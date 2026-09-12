@@ -70,3 +70,5 @@
 - [x] Smarter client caching and retry back-off
 
 - [x] Keep camera-editor text exactly as typed and verify the update path
+- [x] Make camera text move, pinch-resize, and rotate reliably on iPhone
+- [x] Make camera editing tools react immediately to one tap

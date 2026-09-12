@@ -191,10 +191,14 @@ function CameraPage() {
   const [pinchingText, setPinchingText] = useState(false);
   const [trashHot, setTrashHot] = useState(false);
   const trashHotRef = useRef(false);
+  const overlayRef = useRef<MomentOverlay | null>(null);
+  overlayRef.current = overlay;
 
-  // Multi-touch: one finger moves the text, two fingers resize and turn it.
+  // Pointer input is kept for mouse/pen. iPhone text gestures use native touch
+  // events below so Safari cannot turn a two-finger pinch into page zoom.
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const textPinchRef = useRef<{ dist: number; angle: number; size: number; rotate: number } | null>(null);
+  const touchDragRef = useRef<{ x: number; y: number } | null>(null);
 
   const twoFingerGeometry = () => {
     const pts = [...pointersRef.current.values()];
@@ -208,6 +212,7 @@ function CameraPage() {
   };
 
   const startDrag = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType === "touch") return;
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     e.currentTarget.setPointerCapture?.(e.pointerId);
 
@@ -242,6 +247,7 @@ function CameraPage() {
     setTextOpen(false);
   };
   const onDragMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType === "touch") return;
     if (pointersRef.current.has(e.pointerId)) {
       pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
@@ -278,6 +284,7 @@ function CameraPage() {
 
 
   const endDrag = (e?: React.PointerEvent<HTMLElement>) => {
+    if (e?.pointerType === "touch") return;
     if (e) pointersRef.current.delete(e.pointerId);
     else pointersRef.current.clear();
 
@@ -309,6 +316,145 @@ function CameraPage() {
     // A tap without a drag opens the editor; a drag just moves the text.
     if (!dragMovedRef.current) openTextEditor();
   };
+
+  useEffect(() => {
+    const stageEl = stageRef.current;
+    if (!stageEl || !overlay?.text) return;
+
+    const point = (touch: Touch) => ({ x: touch.clientX, y: touch.clientY });
+    const geometry = (touches: TouchList) => {
+      if (touches.length < 2) return null;
+      const a = touches.item(0);
+      const b = touches.item(1);
+      if (!a || !b) return null;
+      return {
+        dist: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+        angle: (Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX) * 180) / Math.PI,
+      };
+    };
+
+    const start = (event: TouchEvent) => {
+      event.preventDefault();
+      dragMovedRef.current = false;
+      trashHotRef.current = false;
+      setTrashHot(false);
+      setTextOpen(false);
+
+      if (event.touches.length >= 2) {
+        const geo = geometry(event.touches);
+        const current = overlayRef.current;
+        if (!geo || !current) return;
+        textPinchRef.current = {
+          dist: Math.max(1, geo.dist),
+          angle: geo.angle,
+          size: current.size,
+          rotate: current.rotate,
+        };
+        touchDragRef.current = null;
+        dragMovedRef.current = true;
+        setDraggingText(false);
+        setPinchingText(true);
+        return;
+      }
+
+      const touch = event.touches.item(0);
+      if (!touch) return;
+      touchDragRef.current = point(touch);
+      setDraggingText(true);
+    };
+
+    const move = (event: TouchEvent) => {
+      event.preventDefault();
+      const current = overlayRef.current;
+      if (!current) return;
+
+      if (event.touches.length >= 2) {
+        const geo = geometry(event.touches);
+        if (!geo) return;
+        if (!textPinchRef.current) {
+          textPinchRef.current = {
+            dist: Math.max(1, geo.dist),
+            angle: geo.angle,
+            size: current.size,
+            rotate: current.rotate,
+          };
+          touchDragRef.current = null;
+          setDraggingText(false);
+          setPinchingText(true);
+          return;
+        }
+        const pinch = textPinchRef.current;
+        const scale = geo.dist / pinch.dist;
+        let turn = geo.angle - pinch.angle;
+        while (turn > 180) turn -= 360;
+        while (turn < -180) turn += 360;
+        dragMovedRef.current = true;
+        setOverlay((value) =>
+          value
+            ? {
+                ...value,
+                size: Math.min(140, Math.max(14, Math.round(pinch.size * scale))),
+                rotate: Math.max(-180, Math.min(180, Math.round(pinch.rotate + turn))),
+              }
+            : value,
+        );
+        return;
+      }
+
+      const touch = event.touches.item(0);
+      const startPoint = touchDragRef.current;
+      const box = stageEl.getBoundingClientRect();
+      if (!touch || !startPoint || box.width <= 0 || box.height <= 0) return;
+      if (Math.hypot(touch.clientX - startPoint.x, touch.clientY - startPoint.y) > 5) {
+        dragMovedRef.current = true;
+      }
+      const x = Math.min(96, Math.max(4, ((touch.clientX - box.left) / box.width) * 100));
+      const y = Math.min(96, Math.max(4, ((touch.clientY - box.top) / box.height) * 100));
+      const overTrash = y > 80 && x > 22 && x < 78;
+      trashHotRef.current = overTrash;
+      setTrashHot(overTrash);
+      setOverlay((value) => (value ? { ...value, x, y } : value));
+    };
+
+    const end = (event: TouchEvent) => {
+      event.preventDefault();
+      if (event.touches.length >= 2) return;
+      if (event.touches.length === 1 && textPinchRef.current) {
+        const touch = event.touches.item(0);
+        textPinchRef.current = null;
+        setPinchingText(false);
+        touchDragRef.current = touch ? point(touch) : null;
+        setDraggingText(Boolean(touch));
+        return;
+      }
+      if (event.touches.length > 0) return;
+
+      if (trashHotRef.current) {
+        setOverlay(null);
+        setTextOpen(false);
+        toast("Text binned.", { duration: 1500 });
+      } else if (!dragMovedRef.current) {
+        openTextEditor();
+      }
+      touchDragRef.current = null;
+      textPinchRef.current = null;
+      trashHotRef.current = false;
+      setDraggingText(false);
+      setPinchingText(false);
+      setTrashHot(false);
+    };
+
+    stageEl.addEventListener("touchstart", start, { passive: false });
+    stageEl.addEventListener("touchmove", move, { passive: false });
+    stageEl.addEventListener("touchend", end, { passive: false });
+    stageEl.addEventListener("touchcancel", end, { passive: false });
+    return () => {
+      stageEl.removeEventListener("touchstart", start);
+      stageEl.removeEventListener("touchmove", move);
+      stageEl.removeEventListener("touchend", end);
+      stageEl.removeEventListener("touchcancel", end);
+    };
+  }, [overlay?.text]);
 
 
 
@@ -886,8 +1032,8 @@ function CameraPage() {
         {overlay?.text ? (
           <div
             ref={stageRef}
-            className="absolute inset-0 z-50 touch-none"
-            style={{ pointerEvents: draggingText || pinchingText ? "auto" : "none" }}
+            className="absolute inset-0 z-30 touch-none overscroll-none"
+            style={{ pointerEvents: "auto" }}
             onPointerDown={startDrag}
             onPointerMove={onDragMove}
             onPointerUp={endDrag}
@@ -906,10 +1052,6 @@ function CameraPage() {
               <p
                 data-no-translate
                 translate="no"
-                onPointerDown={startDrag}
-                onPointerMove={onDragMove}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
                 onClick={onTextTap}
                 role="button"
                 tabIndex={0}
@@ -949,7 +1091,7 @@ function CameraPage() {
 
 
         {/* Top bar: leave, or move on to the details step. */}
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
+        <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between px-4 pt-4">
           <button
             type="button"
             onClick={retake}
@@ -972,7 +1114,7 @@ function CameraPage() {
 
         {/* Side rail of tools, so nothing covers the frame. */}
         {!textOpen ? (
-          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-3">
+          <div className="absolute right-3 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3">
             {[
               {
                 key: "filter",
@@ -999,7 +1141,7 @@ function CameraPage() {
                 type="button"
                 aria-label={tool.label}
                 onClick={tool.onClick}
-                className={`grid size-12 place-items-center rounded-full backdrop-blur transition-colors ${
+                className={`grid size-12 touch-manipulation place-items-center rounded-full backdrop-blur transition-colors active:scale-90 ${
                   tool.active
                     ? "bg-[image:var(--gradient-ember)] text-primary-foreground"
                     : "bg-black/55 text-white"
@@ -1013,7 +1155,7 @@ function CameraPage() {
 
         {/* Filter tray, right on the frame. */}
         {filterOpen && !textOpen ? (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-8 pt-10">
+          <div className="absolute inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black/85 to-transparent px-4 pb-8 pt-10">
             <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
               {FILTER_CATEGORIES.map((cat) => (
                 <button
@@ -1067,7 +1209,7 @@ function CameraPage() {
           <div
             data-no-translate
             translate="no"
-            className="absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6"
+            className="absolute inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6 [&_button]:touch-manipulation"
           >
             <div className="flex items-center gap-2">
               <Textarea
