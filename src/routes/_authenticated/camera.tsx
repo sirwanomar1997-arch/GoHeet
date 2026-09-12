@@ -995,19 +995,17 @@ function CameraPage() {
         {textOpen ? (
           <div className="absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6">
             <div className="flex items-center gap-2">
-              <Input
-                value={overlay?.text ?? ""}
+              <Textarea
+                key={textSession}
+                defaultValue={overlay?.text ?? ""}
                 autoFocus
-                autoCorrect="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                maxLength={120}
+                rows={2}
+                maxLength={200}
                 onChange={(e) => setOverlayText(e.target.value)}
-                onInput={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
-                onCompositionEnd={(e) => setOverlayText((e.currentTarget as HTMLInputElement).value)}
                 placeholder="Say it in a few words"
-                className="h-11 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/50"
+                className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl border-white/20 bg-white/10 py-2.5 text-white placeholder:text-white/50"
               />
+
 
               <button
                 type="button"
