@@ -390,49 +390,6 @@ function SettingsPage() {
             </Link>
 
           </div>
-          {showComments ? (
-            myComments.isLoading ? (
-              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
-            ) : (myComments.data?.comments.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">You haven't commented yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {myComments.data?.comments.map((c) => (
-                  <li key={c.id} className="py-2.5 text-sm">
-                    <p>{c.body}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : null}
-          {showBlocked ? (
-            blocked.isLoading ? (
-              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
-            ) : (blocked.data?.blocked.length ?? 0) === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">You haven't blocked anyone.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {blocked.data?.blocked.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between py-2.5">
-                    <span className="text-sm">@{b.username}</span>
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={async () => {
-                        await unblock({ data: { userId: b.id } });
-                        void blocked.refetch();
-                      }}
-                    >
-                      Unblock
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : null}
         </section>
 
         <section className={section}>
