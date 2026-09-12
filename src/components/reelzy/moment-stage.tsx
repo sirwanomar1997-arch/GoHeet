@@ -13,6 +13,8 @@ import {
   Volume2,
   VolumeX,
   Play,
+  ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Sheet,
@@ -58,18 +60,15 @@ import {
 
 
 const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
-  { value: "harassment", label: "Harassment" },
-  { value: "bullying", label: "Bullying" },
-  { value: "hate", label: "Hate" },
+  { value: "not_interested", label: "I just don't like it" },
   { value: "sexual", label: "Sexual content" },
-  { value: "violence", label: "Violence" },
-  { value: "dangerous", label: "Dangerous behaviour" },
-  { value: "spam", label: "Spam" },
-  { value: "impersonation", label: "Impersonation" },
-  { value: "ai_generated", label: "AI-generated / not real" },
-  { value: "illegal", label: "Illegal content" },
-  { value: "self_harm", label: "Self-harm" },
-  { value: "other", label: "Something else" },
+  { value: "hate", label: "Hate and harassment" },
+  { value: "violence", label: "Violence or abuse" },
+  { value: "child_safety", label: "Child safety" },
+  { value: "ai_generated", label: "False information or AI-generated content" },
+  { value: "self_harm", label: "Suicide and self-harm" },
+  { value: "branded_content", label: "Undisclosed branded content" },
+  { value: "other", label: "More reasons" },
 ];
 
 export function MomentStage({
@@ -742,24 +741,34 @@ export function MomentStage({
       <Sheet open={reportOpen} onOpenChange={setReportOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
           <SheetHeader className="px-0">
-            <SheetTitle className="font-display">Report this moment</SheetTitle>
-            <SheetDescription>
-              Tell us what&apos;s wrong. Reports are reviewed by the GoHeet safety team.
-            </SheetDescription>
+            <SheetTitle className="text-center font-display text-xl">Why are you reporting this?</SheetTitle>
           </SheetHeader>
-          <div className="grid max-h-[50vh] grid-cols-2 gap-2 overflow-y-auto pb-6">
+          <div className="mb-3 flex items-start gap-2.5 rounded-2xl bg-primary/10 px-4 py-3">
+            <ShieldAlert className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <p className="text-sm font-medium text-foreground">
+              Your report stays anonymous to others, and we review every report against our rules.
+            </p>
+          </div>
+          <div className="max-h-[55vh] divide-y divide-border overflow-y-auto rounded-2xl bg-surface-raised pb-1">
             {REPORT_CATEGORIES.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 disabled={reportMutation.isPending}
                 onClick={() => reportMutation.mutate(c.value)}
-                className="tap-target rounded-xl border border-border bg-surface-raised px-3 text-sm"
+                className="tap-target flex w-full items-center justify-between gap-3 px-4 text-left text-[15px] font-semibold"
               >
-                {c.label}
+                <span>{c.label}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               </button>
             ))}
           </div>
+          <p className="pb-4 pt-3 text-center text-xs text-muted-foreground">
+            Reports are reviewed within 24 hours.{" "}
+            <Link to="/legal/$doc" params={{ doc: "reporting" }} className="underline">
+              Read our report &amp; safety policy
+            </Link>
+          </p>
         </SheetContent>
       </Sheet>
     </section>

@@ -201,6 +201,45 @@ const DOCS: Record<string, Doc> = {
       },
     ],
   },
+  reporting: {
+    title: "Report & Safety Policy",
+    summary: "How reporting works on GoHeet and what you can report.",
+    sections: [
+      {
+        h: "How to report",
+        p: [
+          "Tap the ••• menu on any video, comment or profile and choose Report. You then choose the reason that best matches the problem.",
+          "Your report stays anonymous to other users. The person you report is never told who reported them.",
+        ],
+      },
+      {
+        h: "What you can report",
+        p: [
+          "When you report, you can choose from: I just don't like it, Sexual content, Hate and harassment, Violence or abuse, Child safety, False information or AI-generated content, Suicide and self-harm, Undisclosed branded content, and More reasons.",
+          "Every category is reviewed against the same Community Guidelines. Child safety reports are treated with the highest priority and handled under our child safety standards.",
+        ],
+      },
+      {
+        h: "What happens next",
+        p: [
+          "Reports are reviewed by the GoHeet safety team within 24 hours. Content that breaks our rules is removed, and accounts that break the rules are suspended or permanently removed.",
+          "Content reported as false information or AI-generated is re-checked automatically and removed immediately if it fails our capture verification.",
+        ],
+      },
+      {
+        h: "Zero tolerance",
+        p: [
+          "There is no tolerance for objectionable content or abusive users on GoHeet. This includes sexual content involving minors, hate speech, harassment, graphic violence, and content promoting self-harm or dangerous acts.",
+        ],
+      },
+      {
+        h: "If someone is in danger",
+        p: [
+          "If you or someone else is at immediate risk, contact your local emergency services. GoHeet is not an emergency service.",
+        ],
+      },
+    ],
+  },
   support: {
     title: "Support",
     summary: "How to reach a human.",
