@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAvatarRouteImport } from './routes/_authenticated/avatar'
+import { Route as AuthenticatedBlockedRouteImport } from './routes/_authenticated/blocked'
 import { Route as AuthenticatedCameraRouteImport } from './routes/_authenticated/camera'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedEditProfileRouteImport } from './routes/_authenticated/edit-profile'
@@ -66,6 +67,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedAvatarRoute = AuthenticatedAvatarRouteImport.update({
   id: '/avatar',
   path: '/avatar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBlockedRoute = AuthenticatedBlockedRouteImport.update({
+  id: '/blocked',
+  path: '/blocked',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCameraRoute = AuthenticatedCameraRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/avatar': typeof AuthenticatedAvatarRoute
+  '/blocked': typeof AuthenticatedBlockedRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/edit-profile': typeof AuthenticatedEditProfileRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/avatar': typeof AuthenticatedAvatarRoute
+  '/blocked': typeof AuthenticatedBlockedRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/edit-profile': typeof AuthenticatedEditProfileRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/avatar': typeof AuthenticatedAvatarRoute
+  '/_authenticated/blocked': typeof AuthenticatedBlockedRoute
   '/_authenticated/camera': typeof AuthenticatedCameraRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/edit-profile': typeof AuthenticatedEditProfileRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/admin'
     | '/avatar'
+    | '/blocked'
     | '/camera'
     | '/discover'
     | '/edit-profile'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/admin'
     | '/avatar'
+    | '/blocked'
     | '/camera'
     | '/discover'
     | '/edit-profile'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/activity'
     | '/_authenticated/admin'
     | '/_authenticated/avatar'
+    | '/_authenticated/blocked'
     | '/_authenticated/camera'
     | '/_authenticated/discover'
     | '/_authenticated/edit-profile'
@@ -370,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/avatar'
       fullPath: '/avatar'
       preLoaderRoute: typeof AuthenticatedAvatarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/blocked': {
+      id: '/_authenticated/blocked'
+      path: '/blocked'
+      fullPath: '/blocked'
+      preLoaderRoute: typeof AuthenticatedBlockedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/camera': {
@@ -512,6 +531,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAvatarRoute: typeof AuthenticatedAvatarRoute
+  AuthenticatedBlockedRoute: typeof AuthenticatedBlockedRoute
   AuthenticatedCameraRoute: typeof AuthenticatedCameraRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedEditProfileRoute: typeof AuthenticatedEditProfileRoute
@@ -532,6 +552,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAvatarRoute: AuthenticatedAvatarRoute,
+  AuthenticatedBlockedRoute: AuthenticatedBlockedRoute,
   AuthenticatedCameraRoute: AuthenticatedCameraRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedEditProfileRoute: AuthenticatedEditProfileRoute,

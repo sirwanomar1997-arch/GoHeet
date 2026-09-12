@@ -364,12 +364,7 @@ function SettingsPage() {
         <section className={section}>
           <h2 className="font-display text-base font-semibold">Your activity</h2>
           <div className="mt-2 divide-y divide-border">
-            <Link
-              to="/u/$username"
-              params={{ username: me?.profile?.username ?? "" }}
-              replace
-              className={row}
-            >
+            <Link to="/history" className={row}>
               <span className="flex items-center gap-3">
                 <History className="size-4 text-amber-400" /> Your history
               </span>
@@ -381,18 +376,19 @@ function SettingsPage() {
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
-            <button type="button" className={row} onClick={() => setShowComments((v) => !v)}>
+            <Link to="/my-comments" className={row}>
               <span className="flex items-center gap-3">
                 <MessageCircle className="size-4 text-sky-400" /> Comments you wrote
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
-            </button>
-            <button type="button" className={row} onClick={() => setShowBlocked((v) => !v)}>
+            </Link>
+            <Link to="/blocked" className={row}>
               <span className="flex items-center gap-3">
                 <Ban className="size-4 text-rose-500" /> Blocked people
               </span>
               <ChevronRight className="size-4 text-muted-foreground" />
-            </button>
+            </Link>
+
           </div>
           {showComments ? (
             myComments.isLoading ? (
