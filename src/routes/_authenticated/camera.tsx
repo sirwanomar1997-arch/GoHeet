@@ -188,6 +188,7 @@ function CameraPage() {
   const dragMovedRef = useRef(false);
 
   const [draggingText, setDraggingText] = useState(false);
+  const [pinchingText, setPinchingText] = useState(false);
   const [trashHot, setTrashHot] = useState(false);
   const trashHotRef = useRef(false);
 
@@ -225,6 +226,8 @@ function CameraPage() {
           size: overlay?.size ?? DEFAULT_OVERLAY.size,
           rotate: overlay?.rotate ?? 0,
         };
+        setPinchingText(true);
+        setTextOpen(false);
       }
       return;
     }
@@ -278,7 +281,10 @@ function CameraPage() {
     if (e) pointersRef.current.delete(e.pointerId);
     else pointersRef.current.clear();
 
-    if (pointersRef.current.size < 2) textPinchRef.current = null;
+    if (pointersRef.current.size < 2) {
+      textPinchRef.current = null;
+      setPinchingText(false);
+    }
     if (pointersRef.current.size > 0) return;
 
     if (draggingRef.current && trashHotRef.current) {
@@ -881,7 +887,8 @@ function CameraPage() {
           <div
             ref={stageRef}
             className="absolute inset-0 z-50 touch-none"
-            style={{ pointerEvents: draggingText ? "auto" : "none" }}
+            style={{ pointerEvents: draggingText || pinchingText ? "auto" : "none" }}
+            onPointerDown={startDrag}
             onPointerMove={onDragMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
