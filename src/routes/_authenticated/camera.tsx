@@ -199,6 +199,7 @@ function CameraPage() {
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const textPinchRef = useRef<{ dist: number; angle: number; size: number; rotate: number } | null>(null);
   const touchDragRef = useRef<{ x: number; y: number } | null>(null);
+  const toolTouchAtRef = useRef(0);
 
   const twoFingerGeometry = () => {
     const pts = [...pointersRef.current.values()];
@@ -1114,7 +1115,7 @@ function CameraPage() {
 
         {/* Side rail of tools, so nothing covers the frame. */}
         {!textOpen ? (
-          <div className="absolute right-3 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3">
+          <div className="pointer-events-auto absolute right-3 top-1/2 z-[70] flex -translate-y-1/2 flex-col gap-3">
             {[
               {
                 key: "filter",
@@ -1140,7 +1141,17 @@ function CameraPage() {
                 key={tool.key}
                 type="button"
                 aria-label={tool.label}
-                onClick={tool.onClick}
+                onTouchStart={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  toolTouchAtRef.current = Date.now();
+                  tool.onClick();
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (Date.now() - toolTouchAtRef.current < 700) return;
+                  tool.onClick();
+                }}
                 className={`grid size-12 touch-manipulation place-items-center rounded-full backdrop-blur transition-colors active:scale-90 ${
                   tool.active
                     ? "bg-[image:var(--gradient-ember)] text-primary-foreground"
