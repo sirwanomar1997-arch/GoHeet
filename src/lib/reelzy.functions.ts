@@ -1663,11 +1663,15 @@ export const submitReport = createServerFn({ method: "POST" })
     targetId: z.string().uuid().parse(d.targetId),
     category: z
       .enum([
+        "not_interested",
         "harassment",
         "bullying",
         "hate",
         "sexual",
         "violence",
+        "child_safety",
+        "misinformation",
+        "branded_content",
         "dangerous",
         "spam",
         "impersonation",
