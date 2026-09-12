@@ -231,11 +231,7 @@ function CameraPage() {
     setDraggingText(false);
     setTrashHot(false);
   };
-  // Each time the editor opens we remount the field, so the keyboard never
-  // fights a controlled value while typing.
-  const [textSession, setTextSession] = useState(0);
   const openTextEditor = () => {
-    setTextSession((n) => n + 1);
     setTextOpen(true);
   };
   const setOverlayText = (value: string) => {
@@ -840,6 +836,8 @@ function CameraPage() {
               }}
             >
               <p
+                data-no-translate
+                translate="no"
                 onPointerDown={startDrag}
                 onClick={onTextTap}
                 role="button"
@@ -995,15 +993,19 @@ function CameraPage() {
         ) : null}
 
         {textOpen ? (
-          <div className="absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6">
+          <div
+            data-no-translate
+            translate="no"
+            className="absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pb-4 pt-6"
+          >
             <div className="flex items-center gap-2">
               <Textarea
-                key={textSession}
-                defaultValue={overlay?.text ?? ""}
+                value={overlay?.text ?? ""}
                 autoFocus
                 rows={2}
                 maxLength={200}
                 onChange={(e) => setOverlayText(e.target.value)}
+                onCompositionEnd={(e) => setOverlayText(e.currentTarget.value)}
                 placeholder="Say it in a few words"
                 className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl border-white/20 bg-white/10 py-2.5 text-white placeholder:text-white/50"
               />
@@ -1052,7 +1054,7 @@ function CameraPage() {
                     <button
                       key={f.id}
                       type="button"
-                      onClick={() => overlay && setOverlay({ ...overlay, font: f.id })}
+                      onClick={() => setOverlay((current) => (current ? { ...current, font: f.id } : current))}
                       className={`h-11 shrink-0 rounded-xl border px-3.5 text-base text-white ${
                         overlay?.font === f.id ? "border-primary" : "border-white/25"
                       }`}
@@ -1071,7 +1073,7 @@ function CameraPage() {
                       key={c.id}
                       type="button"
                       aria-label={c.label}
-                      onClick={() => overlay && setOverlay({ ...overlay, color: c.value })}
+                      onClick={() => setOverlay((current) => (current ? { ...current, color: c.value } : current))}
                       className={`size-9 shrink-0 rounded-full border-2 transition-transform ${
                         overlay?.color === c.value ? "border-primary scale-110" : "border-white/40"
                       }`}
@@ -1087,7 +1089,7 @@ function CameraPage() {
                     <button
                       key={st.id}
                       type="button"
-                      onClick={() => overlay && setOverlay({ ...overlay, style: st.id })}
+                      onClick={() => setOverlay((current) => (current ? { ...current, style: st.id } : current))}
                       className={`h-10 shrink-0 rounded-xl border px-3.5 text-[11px] uppercase tracking-[0.14em] ${
                         overlay?.style === st.id ? "border-primary text-primary" : "border-white/25 text-white/80"
                       }`}
@@ -1107,7 +1109,9 @@ function CameraPage() {
                     min={14}
                     max={64}
                     step={1}
-                    onValueChange={([v]) => overlay && setOverlay({ ...overlay, size: v ?? overlay.size })}
+                    onValueChange={([v]) =>
+                      setOverlay((current) => (current ? { ...current, size: v ?? current.size } : current))
+                    }
                   />
                   <span className="w-10 text-[10px] uppercase tracking-[0.14em] text-white/60">Tilt</span>
                   <Slider
@@ -1116,7 +1120,9 @@ function CameraPage() {
                     min={-30}
                     max={30}
                     step={1}
-                    onValueChange={([v]) => overlay && setOverlay({ ...overlay, rotate: v ?? overlay.rotate })}
+                    onValueChange={([v]) =>
+                      setOverlay((current) => (current ? { ...current, rotate: v ?? current.rotate } : current))
+                    }
                   />
                 </div>
               ) : null}
