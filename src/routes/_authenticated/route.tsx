@@ -46,6 +46,16 @@ function AuthenticatedLayout() {
     const blockBrowserEdgeSwipe = (event: TouchEvent) => {
       const touch = event.touches[0];
       if (!touch) return;
+      // Never swallow a tap that lands on something interactive — buttons and
+      // controls near the screen edge (like the editor's Done key) must work.
+      const target = event.target as Element | null;
+      if (
+        target &&
+        typeof target.closest === "function" &&
+        target.closest("button, a, input, textarea, select, label, [role='button'], [contenteditable='true']")
+      ) {
+        return;
+      }
       const edgeWidth = 36;
       if (touch.clientX <= edgeWidth || touch.clientX >= window.innerWidth - edgeWidth) {
         event.preventDefault();
