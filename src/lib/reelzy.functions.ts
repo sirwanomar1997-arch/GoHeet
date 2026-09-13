@@ -1313,11 +1313,13 @@ export const toggleFollow = createServerFn({ method: "POST" })
       .eq("following_id", data.userId)
       .maybeSingle();
     if (!data.following && existing) {
-      await context.supabase.from("follows").delete().eq("id", existing.id);
+      const { error } = await context.supabase.from("follows").delete().eq("id", existing.id);
+      if (error) throw new Error(error.message);
       await track(context.userId, "unfollow");
       return { following: false };
     }
-    if (!data.following || existing) return { following: data.following };
+    if (!data.following) return { following: false };
+    if (existing) return { following: true };
     const { error } = await context.supabase
       .from("follows")
       .insert({ follower_id: context.userId, following_id: data.userId });

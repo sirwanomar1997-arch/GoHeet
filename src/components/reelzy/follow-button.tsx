@@ -48,10 +48,7 @@ export function FollowButton({
   const run = async (target: boolean) => {
     setConfirmOpen(false);
     setFollowing(target); // instant feedback
-    if (demo) {
-      onChange?.(target);
-      return; // preview mode: local only
-    }
+    if (demo) return; // preview mode: local only
     setBusy(true);
     try {
       const result = await toggle({ data: { userId, following: target } });
