@@ -82,11 +82,13 @@ function EditProfilePage() {
   const mutation = useMutation({
     mutationFn: () =>
       save({ data: { username, displayName, bio, socialLinks: links } }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Profile updated.");
-      void navigate({ to: "/u/$username", params: { username }, replace: true });
-      void qc.invalidateQueries({ queryKey: ["me"] });
-      void qc.invalidateQueries({ queryKey: ["profile", username] });
+      qc.removeQueries({ queryKey: ["profile"] });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      await qc.invalidateQueries({ queryKey: ["feed"] });
+      await navigate({ to: "/u/$username", params: { username }, replace: true });
     },
     onError: (e: Error) => toast.error(e.message),
   });
