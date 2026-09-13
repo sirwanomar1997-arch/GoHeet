@@ -189,8 +189,22 @@ function EditProfilePage() {
                 onChange={(e) => setUsername(e.target.value.toLowerCase())}
                 className="mt-1.5 h-11 bg-surface-raised"
               />
+              <p className="mt-1 h-4 text-xs">
+                {unameStatus === "checking" && (
+                  <span className="text-muted-foreground">Checking…</span>
+                )}
+                {unameStatus === "free" && (
+                  <span className="text-primary">@{username} is available.</span>
+                )}
+                {unameStatus === "taken" && (
+                  <span className="text-destructive">That one is already taken.</span>
+                )}
+                {unameStatus === "invalid" && (
+                  <span className="text-destructive">3–20 letters, numbers, dot or underscore.</span>
+                )}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Letters, numbers, dots and underscores. Must be unique.
+                Every username is unique. You can change yours once every 30 days.
               </p>
             </div>
             <div>
