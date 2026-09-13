@@ -335,7 +335,13 @@ function EditProfilePage() {
 
         <Button
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !username}
+          disabled={
+            mutation.isPending ||
+            !username ||
+            unameStatus === "taken" ||
+            unameStatus === "invalid" ||
+            unameStatus === "checking"
+          }
           className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
         >
           {mutation.isPending ? "Saving…" : "Save profile"}
