@@ -60,10 +60,10 @@ function BlockedPage() {
               className="flex items-center justify-between rounded-2xl border border-border bg-surface p-3"
             >
               <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold">
+                <span className="block truncate text-sm font-semibold" data-no-translate translate="no">
                   {b.displayName || `@${b.username}`}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">@{b.username}</span>
+                <span className="block truncate text-xs text-muted-foreground" data-no-translate translate="no">@{b.username}</span>
               </span>
               <button
                 type="button"

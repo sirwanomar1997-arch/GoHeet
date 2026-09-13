@@ -89,7 +89,7 @@ function ThreadPage() {
               ) : null}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold">{data.person.displayName}</span>
+              <span className="block truncate text-sm font-semibold" data-no-translate translate="no">{data.person.displayName}</span>
               <span className="block truncate text-xs text-muted-foreground">
                 <span data-no-translate>@{data.person.username}</span>
               </span>
