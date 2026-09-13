@@ -463,13 +463,25 @@ export const updateProfile = createServerFn({ method: "POST" })
     if (data.username) {
       const { data: current } = await sb
         .from("profiles")
-        .select("username")
+        .select("username, username_changed_at")
         .eq("id", context.userId)
         .maybeSingle();
       if (current?.username?.toLowerCase() !== data.username.toLowerCase()) {
+        const changedAt = (current as { username_changed_at?: string | null } | null)
+          ?.username_changed_at;
+        if (changedAt) {
+          const days = (Date.now() - new Date(changedAt).getTime()) / 86_400_000;
+          if (days < 30) {
+            const left = Math.max(1, Math.ceil(30 - days));
+            throw new Error(
+              `You can change your username again in ${left} day${left === 1 ? "" : "s"}.`,
+            );
+          }
+        }
         const { data: taken } = await sb.rpc("username_taken", { _username: data.username });
         if (taken) throw new Error("That username is taken.");
         patch["username"] = data.username;
+        patch["username_changed_at"] = new Date().toISOString();
       }
     }
     if (Object.keys(patch).length === 0) return { ok: true };
