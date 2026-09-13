@@ -12,11 +12,13 @@ export function FollowButton({
   userId,
   isFollowing,
   className = "",
+  demo = false,
   onChange,
 }: {
   userId: string;
   isFollowing: boolean;
   className?: string;
+  demo?: boolean;
   onChange?: (following: boolean) => void;
 }) {
   const toggle = useServerFn(toggleFollow);
@@ -41,6 +43,7 @@ export function FollowButton({
   const run = async (target: boolean) => {
     setConfirmOpen(false);
     setFollowing(target); // instant feedback
+    if (demo) return; // preview mode: local only
     setBusy(true);
     try {
       await toggle({ data: { userId } });
