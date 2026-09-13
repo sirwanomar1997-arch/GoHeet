@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 
 type Doc = { title: string; summary: string; sections: Array<{ h: string; p: string[] }> };
 
@@ -360,12 +360,20 @@ export const Route = createFileRoute("/legal/$doc")({
 
 function LegalPage() {
   const { doc } = Route.useLoaderData();
+  const router = useRouter();
   return (
     <main className="min-h-svh bg-background px-6 pb-20 pt-10">
       <div className="mx-auto max-w-lg">
-        <Link to="/" className="data-figure text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-          ← GoHeet
-        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) router.history.back();
+            else router.navigate({ to: "/" });
+          }}
+          className="data-figure text-[11px] uppercase tracking-[0.3em] text-muted-foreground"
+        >
+          ← Back
+        </button>
         <h1 className="mt-6 font-display text-3xl font-extrabold tracking-[-0.04em]">{doc.title}</h1>
         <p className="data-figure mt-2 text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
           Updated {UPDATED}
