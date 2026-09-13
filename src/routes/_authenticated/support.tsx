@@ -115,6 +115,9 @@ function SupportPage() {
   return (
     <AppShell>
       <header className="px-5 pb-3 pt-6">
+        <div className="mb-3">
+          <BackLink to="/settings" label="Back to settings" />
+        </div>
         <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Help &amp; support</h1>
         <p className="text-sm text-muted-foreground">
           Write to the GoHeet team. Safety reports are actioned within 24 hours.

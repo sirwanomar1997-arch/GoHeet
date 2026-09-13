@@ -9,6 +9,7 @@ import { useMe } from "@/lib/use-me";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { BirthDateFields } from "@/components/reelzy/birth-date-fields";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
