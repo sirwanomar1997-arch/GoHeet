@@ -325,7 +325,9 @@ export async function getDemoProfile(
     profile,
     moments,
     reposts: sort === "new" ? demoMoments.slice(2, 4) : [],
-    isFollowing: username.toLowerCase() !== "yasmin",
+    // Demo profiles start unfollowed, just like a relationship that does not
+    // exist in the saved follows table. FollowButton owns instant demo changes.
+    isFollowing: false,
     isSelf: false,
   };
 }

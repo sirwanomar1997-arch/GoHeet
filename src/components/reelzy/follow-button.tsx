@@ -83,7 +83,7 @@ export function FollowButton({
       >
         {following ? "Following" : "Follow"}
       </button>
-      {confirmOpen ? (
+      {confirmOpen && following ? (
         <div
           role="menu"
           className="absolute bottom-[calc(100%+8px)] left-0 z-[100] w-full min-w-32 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-lg"
