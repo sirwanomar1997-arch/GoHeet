@@ -144,15 +144,9 @@ function Onboarding() {
 
           <div>
             <Label htmlFor="dob">Date of birth</Label>
-            <Input
-              id="dob"
-              type="date"
-              required
-              value={birthDate}
-              max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => setBirthDate(e.target.value)}
-              className="mt-1.5 h-12 bg-surface-raised"
-            />
+            <div className="mt-1.5">
+              <BirthDateFields value={birthDate} onChange={setBirthDate} />
+            </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {tooYoung
                 ? "You need to be 13 or older to use GoHeet."
