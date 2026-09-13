@@ -486,7 +486,10 @@ export const updateProfile = createServerFn({ method: "POST" })
     }
     if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await sb.from("profiles").update(patch as never).eq("id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (/duplicate key|unique/i.test(error.message)) throw new Error("That username is taken.");
+      throw new Error(error.message);
+    }
     return { ok: true };
   });
 
