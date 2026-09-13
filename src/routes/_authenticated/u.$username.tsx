@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
-import { getProfile, getFeed, toggleFollow, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { getProfile, getFeed, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { FollowButton } from "@/components/reelzy/follow-button";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoProfile } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
@@ -75,7 +76,6 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const demo = useDemoMode();
   const fetchProfile = useServerFn(getProfile);
-  const follow = useServerFn(toggleFollow);
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
@@ -123,13 +123,8 @@ function ProfilePage() {
     if (i >= 0) setOpenIndex(i);
   }, [data]);
 
-  const followMutation = useMutation({
-    mutationFn: () => follow({ data: { userId: data!.profile!.id } }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["profile", username] });
-      void qc.invalidateQueries({ queryKey: ["feed"] });
-    },
-  });
+
+
 
   const [tab, setTab] = useState<"reelz" | "liked" | "saved" | "reposted">("reelz");
   const fetchFeed = useServerFn(getFeed);
@@ -449,17 +444,16 @@ function ProfilePage() {
             </div>
           ) : (
             <div className="mt-4 flex w-full items-center gap-2">
-              <button
-                type="button"
-                onClick={() => followMutation.mutate()}
-                className={`tap-target flex-1 rounded-full text-sm font-semibold ${
-                  data.isFollowing
-                    ? "border border-border text-foreground"
-                    : "ember-fill text-primary-foreground"
-                }`}
-              >
-                {data.isFollowing ? "Following" : "Follow"}
-              </button>
+              <FollowButton
+                userId={p.id}
+                isFollowing={data.isFollowing}
+                demo={demo}
+                className="w-full flex-1"
+                onChange={() => {
+                  void qc.invalidateQueries({ queryKey: ["profile", username] });
+                  void qc.invalidateQueries({ queryKey: ["feed"] });
+                }}
+              />
               <button
                 type="button"
                 onClick={() => setMessageOpen(true)}

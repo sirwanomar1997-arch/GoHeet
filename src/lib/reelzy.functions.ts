@@ -1564,6 +1564,15 @@ export const searchGoHeet = createServerFn({ method: "POST" })
 
     const rows = people.data ?? [];
     const avatars = await signAvatars(rows.map((p) => chosenImage(p)));
+    const ids = rows.map((p) => p.id);
+    const { data: followRows } = ids.length
+      ? await context.supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", context.userId)
+          .in("following_id", ids)
+      : { data: [] as Array<{ following_id: string }> };
+    const followingSet = new Set((followRows ?? []).map((f) => f.following_id));
 
     let moments: MomentCard[] = [];
     if (term) {
@@ -1594,6 +1603,7 @@ export const searchGoHeet = createServerFn({ method: "POST" })
         avatarUrl: chosenImage(p) ? (avatars[chosenImage(p)!] ?? null) : null,
         followerCount: p.follower_count,
         momentCount: p.moment_count,
+        isFollowing: followingSet.has(p.id),
       })),
       moments,
     };

@@ -331,16 +331,21 @@ export async function getDemoProfile(
 }
 
 export async function getDemoSearch(q: string): Promise<{
-  people: typeof demoPeople;
+  people: Array<(typeof demoPeople)[number] & { isFollowing: boolean }>;
   moments: MomentCard[];
 }> {
   const term = q.trim().toLowerCase();
   if (!term) {
-    return { people: demoPeople, moments: demoMoments.slice(0, 6) };
+    return {
+      people: demoPeople.map((p) => ({ ...p, isFollowing: false })),
+      moments: demoMoments.slice(0, 6),
+    };
   }
-  const people = demoPeople.filter(
-    (p) => p.username.toLowerCase().includes(term) || p.displayName.toLowerCase().includes(term),
-  );
+  const people = demoPeople
+    .filter(
+      (p) => p.username.toLowerCase().includes(term) || p.displayName.toLowerCase().includes(term),
+    )
+    .map((p) => ({ ...p, isFollowing: false }));
   const moments = demoMoments.filter((m) => (m.caption ?? "").toLowerCase().includes(term));
   return { people, moments };
 }
