@@ -712,6 +712,7 @@ export type Database = {
           total_views: number
           updated_at: string
           username: string
+          username_changed_at: string | null
         }
         Insert: {
           allow_comments?: string
@@ -741,6 +742,7 @@ export type Database = {
           total_views?: number
           updated_at?: string
           username: string
+          username_changed_at?: string | null
         }
         Update: {
           allow_comments?: string
@@ -770,6 +772,7 @@ export type Database = {
           total_views?: number
           updated_at?: string
           username?: string
+          username_changed_at?: string | null
         }
         Relationships: []
       }

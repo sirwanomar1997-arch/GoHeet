@@ -1,3 +1,4 @@
+import { BirthDateFields } from "@/components/reelzy/birth-date-fields";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -564,13 +565,9 @@ function SettingsPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             Used for age checks. You must be 13 or over to use GoHeet.
           </p>
-          <Input
-            type="date"
-            value={birthDate}
-            max={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setBirthDate(e.target.value)}
-            className="mt-3 h-11 bg-surface-raised"
-          />
+          <div className="mt-3">
+            <BirthDateFields value={birthDate} onChange={setBirthDate} />
+          </div>
           <Button
             variant="secondary"
             disabled={!birthDate || birthDateMutation.isPending}

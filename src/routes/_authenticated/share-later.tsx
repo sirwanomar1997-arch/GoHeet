@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/reelzy/back-link";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -101,6 +102,9 @@ function ShareLaterPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 bg-background/90 px-4 py-4 backdrop-blur-xl">
+        <div className="mb-3">
+          <BackLink />
+        </div>
         <div className="flex items-end justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Share later</h1>

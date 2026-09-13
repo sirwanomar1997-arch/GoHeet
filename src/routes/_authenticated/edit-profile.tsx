@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Camera, Check, Facebook, Ghost, Globe, Instagram, MessageCircle, Music2, Sparkles, Twitter, Youtube } from "lucide-react";
-import { saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
+import { checkUsername, saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,30 @@ function EditProfilePage() {
   const [links, setLinks] = useState<Record<string, string>>({});
   const [imageType, setImageType] = useState<"avatar" | "photo">("avatar");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [unameStatus, setUnameStatus] = useState<"idle" | "checking" | "free" | "taken" | "invalid">("idle");
+  const checkName = useServerFn(checkUsername);
+
+  useEffect(() => {
+    const currentName = me?.profile?.username ?? "";
+    if (!username || username.toLowerCase() === currentName.toLowerCase()) {
+      setUnameStatus("idle");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_.]{3,20}$/.test(username)) {
+      setUnameStatus("invalid");
+      return;
+    }
+    setUnameStatus("checking");
+    const t = setTimeout(async () => {
+      try {
+        const res = await checkName({ data: { username } });
+        setUnameStatus(res.available ? "free" : "taken");
+      } catch {
+        setUnameStatus("invalid");
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [username, me, checkName]);
 
   useEffect(() => {
     const p = me?.profile as
@@ -189,8 +213,22 @@ function EditProfilePage() {
                 onChange={(e) => setUsername(e.target.value.toLowerCase())}
                 className="mt-1.5 h-11 bg-surface-raised"
               />
+              <p className="mt-1 h-4 text-xs">
+                {unameStatus === "checking" && (
+                  <span className="text-muted-foreground">Checking…</span>
+                )}
+                {unameStatus === "free" && (
+                  <span className="text-primary">@{username} is available.</span>
+                )}
+                {unameStatus === "taken" && (
+                  <span className="text-destructive">That one is already taken.</span>
+                )}
+                {unameStatus === "invalid" && (
+                  <span className="text-destructive">3–20 letters, numbers, dot or underscore.</span>
+                )}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Letters, numbers, dots and underscores. Must be unique.
+                Every username is unique. You can change yours once every 30 days.
               </p>
             </div>
             <div>
@@ -297,7 +335,13 @@ function EditProfilePage() {
 
         <Button
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !username}
+          disabled={
+            mutation.isPending ||
+            !username ||
+            unameStatus === "taken" ||
+            unameStatus === "invalid" ||
+            unameStatus === "checking"
+          }
           className="ember-fill h-12 w-full rounded-2xl text-base font-semibold text-primary-foreground"
         >
           {mutation.isPending ? "Saving…" : "Save profile"}

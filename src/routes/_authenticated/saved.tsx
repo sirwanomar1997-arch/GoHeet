@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/reelzy/back-link";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +21,9 @@ function SavedPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 bg-background/90 px-4 py-4 backdrop-blur-xl">
+        <div className="mb-3">
+          <BackLink />
+        </div>
         <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Kept</h1>
         <p className="text-sm text-muted-foreground">Moments you wanted to come back to.</p>
       </header>
