@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { searchGoHeet, toggleFollow } from "@/lib/reelzy.functions";
+import { searchGoHeet } from "@/lib/reelzy.functions";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoSearch } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
+import { FollowButton } from "@/components/reelzy/follow-button";
 import { formatCount } from "@/components/reelzy/format";
 import { Input } from "@/components/ui/input";
 
@@ -20,17 +21,11 @@ function DiscoverPage() {
   const [q, setQ] = useState("");
   const [term, setTerm] = useState("");
   const search = useServerFn(searchGoHeet);
-  const follow = useServerFn(toggleFollow);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["search", term, demo],
     queryFn: () => (demo ? getDemoSearch(term) : search({ data: { q: term } })),
-  });
-
-  const followMutation = useMutation({
-    mutationFn: (userId: string) => follow({ data: { userId } }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["search"] }),
   });
 
   return (
@@ -100,13 +95,13 @@ function DiscoverPage() {
                     {formatCount(p.momentCount)} moments
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => followMutation.mutate(p.id)}
-                  className="tap-target rounded-full border border-border px-4 text-xs font-semibold"
-                >
-                  Follow
-                </button>
+                <FollowButton
+                  userId={p.id}
+                  isFollowing={p.isFollowing}
+                  demo={demo}
+                  className="px-4 text-xs"
+                  onChange={() => void qc.invalidateQueries({ queryKey: ["search"] })}
+                />
               </li>
             ))}
           </ul>
