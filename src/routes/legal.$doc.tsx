@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 
 type Doc = { title: string; summary: string; sections: Array<{ h: string; p: string[] }> };
 
