@@ -448,7 +448,8 @@ function ProfilePage() {
                 userId={p.id}
                 isFollowing={data.isFollowing}
                 demo={demo}
-                className="w-full flex-1"
+                wrapperClassName="min-w-0 flex-1"
+                className="w-full"
                 onChange={() => {
                   void qc.invalidateQueries({ queryKey: ["profile", username] });
                   void qc.invalidateQueries({ queryKey: ["feed"] });
