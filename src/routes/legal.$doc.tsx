@@ -360,6 +360,7 @@ export const Route = createFileRoute("/legal/$doc")({
 
 function LegalPage() {
   const { doc } = Route.useLoaderData();
+  const router = useRouter();
   return (
     <main className="min-h-svh bg-background px-6 pb-20 pt-10">
       <div className="mx-auto max-w-lg">
