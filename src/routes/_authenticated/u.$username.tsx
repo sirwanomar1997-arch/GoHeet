@@ -123,13 +123,8 @@ function ProfilePage() {
     if (i >= 0) setOpenIndex(i);
   }, [data]);
 
-  const followMutation = useMutation({
-    mutationFn: () => follow({ data: { userId: data!.profile!.id } }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["profile", username] });
-      void qc.invalidateQueries({ queryKey: ["feed"] });
-    },
-  });
+
+
 
   const [tab, setTab] = useState<"reelz" | "liked" | "saved" | "reposted">("reelz");
   const fetchFeed = useServerFn(getFeed);
