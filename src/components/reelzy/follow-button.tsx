@@ -48,7 +48,10 @@ export function FollowButton({
   const run = async (target: boolean) => {
     setConfirmOpen(false);
     setFollowing(target); // instant feedback
-    if (demo) return; // preview mode: local only
+    if (demo) {
+      onChange?.(target);
+      return; // preview mode: local only
+    }
     setBusy(true);
     try {
       const result = await toggle({ data: { userId, following: target } });
@@ -83,7 +86,7 @@ export function FollowButton({
       >
         {following ? "Following" : "Follow"}
       </button>
-      {confirmOpen ? (
+      {confirmOpen && following ? (
         <div
           role="menu"
           className="absolute bottom-[calc(100%+8px)] left-0 z-[100] w-full min-w-32 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-lg"
