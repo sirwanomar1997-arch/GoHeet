@@ -12,12 +12,14 @@ export function FollowButton({
   userId,
   isFollowing,
   className = "",
+  wrapperClassName = "",
   demo = false,
   onChange,
 }: {
   userId: string;
   isFollowing: boolean;
   className?: string;
+  wrapperClassName?: string;
   demo?: boolean;
   onChange?: (following: boolean) => void;
 }) {
@@ -56,7 +58,7 @@ export function FollowButton({
   };
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} className={`relative ${wrapperClassName}`}>
       <button
         type="button"
         disabled={busy}
@@ -78,9 +80,13 @@ export function FollowButton({
         {following ? "Following" : "Follow"}
       </button>
       {confirmOpen ? (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-[80] min-w-32 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-lg">
+        <div
+          role="menu"
+          className="absolute bottom-[calc(100%+8px)] left-0 z-[100] w-full min-w-32 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-lg"
+        >
           <button
             type="button"
+            role="menuitem"
             disabled={busy}
             onClick={() => void run(false)}
             className="tap-target flex w-full items-center justify-center px-4 text-sm font-semibold text-destructive"
