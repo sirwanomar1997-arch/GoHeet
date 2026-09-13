@@ -190,7 +190,7 @@ function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) 
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold">{chat.person.displayName}</span>
+          <span className="truncate text-sm font-semibold" data-no-translate translate="no">{chat.person.displayName}</span>
           <span className="shrink-0 text-[11px] text-muted-foreground">
             {pendingLabel ?? timeAgo(chat.lastMessageAt)}
           </span>

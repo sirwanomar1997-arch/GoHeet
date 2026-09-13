@@ -192,7 +192,29 @@ export const translateUi = createServerFn({ method: "POST" })
     const translations: Record<string, string> = {};
     for (const row of cached ?? []) translations[row.source] = row.translated;
 
-    const missing = unique.filter((t) => !(t in translations));
+    let missing = unique.filter((t) => !(t in translations));
+    if (missing.length === 0) return { translations };
+
+    // Never translate people's usernames or nicknames, in any language.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const lowered = missing.map((t) => t.toLowerCase().replace(/^@/, ""));
+      const { data: names } = await (supabaseAdmin as any)
+        .from("profiles")
+        .select("username, display_name")
+        .or(`username.in.(${lowered.map((n) => JSON.stringify(n)).join(",")}),display_name.in.(${lowered.map((n) => JSON.stringify(n)).join(",")})`)
+        .limit(200);
+      if (names?.length) {
+        const blocked = new Set<string>();
+        for (const row of names as { username?: string; display_name?: string }[]) {
+          if (row.username) blocked.add(row.username.toLowerCase());
+          if (row.display_name) blocked.add(row.display_name.toLowerCase());
+        }
+        missing = missing.filter((t) => !blocked.has(t.toLowerCase().replace(/^@/, "")));
+      }
+    } catch {
+      /* name check unavailable — continue */
+    }
     if (missing.length === 0) return { translations };
 
     const fresh = await machineTranslate(language, missing);

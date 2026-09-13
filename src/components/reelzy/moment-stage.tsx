@@ -871,9 +871,9 @@ function CommentSheet({
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">
-          @{c.username} · {timeAgo(c.createdAt)}
+          <span data-no-translate translate="no">@{c.username}</span> · {timeAgo(c.createdAt)}
         </p>
-        <p className="text-sm text-foreground">{c.body}</p>
+        <p className="text-sm text-foreground" data-no-translate translate="no">{c.body}</p>
         <div className="mt-1 flex items-center gap-3">
           <button
             type="button"
