@@ -29,8 +29,11 @@ export function FollowButton({
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep in sync when the server data refreshes.
-  useEffect(() => setFollowing(isFollowing), [isFollowing]);
+  // Reset for every profile, even when two profiles share the same server state.
+  useEffect(() => {
+    setFollowing(isFollowing);
+    setConfirmOpen(false);
+  }, [userId, isFollowing]);
 
   // Close the unfollow choice when tapping anywhere else.
   useEffect(() => {
@@ -48,8 +51,9 @@ export function FollowButton({
     if (demo) return; // preview mode: local only
     setBusy(true);
     try {
-      await toggle({ data: { userId } });
-      onChange?.(target);
+      const result = await toggle({ data: { userId, following: target } });
+      setFollowing(result.following);
+      onChange?.(result.following);
     } catch {
       setFollowing(!target); // revert on failure
     } finally {

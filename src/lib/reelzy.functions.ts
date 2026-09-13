@@ -1299,7 +1299,10 @@ export const toggleRepost = createServerFn({ method: "POST" })
 
 export const toggleFollow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string }) => ({ userId: z.string().uuid().parse(d.userId) }))
+  .inputValidator((d: { userId: string; following: boolean }) => ({
+    userId: z.string().uuid().parse(d.userId),
+    following: z.boolean().parse(d.following),
+  }))
   .handler(async ({ data, context }) => {
     guardBurst(context.userId, "follow", 60, 60_000);
     if (data.userId === context.userId) throw new Error("You cannot follow yourself.");
@@ -1309,11 +1312,12 @@ export const toggleFollow = createServerFn({ method: "POST" })
       .eq("follower_id", context.userId)
       .eq("following_id", data.userId)
       .maybeSingle();
-    if (existing) {
+    if (!data.following && existing) {
       await context.supabase.from("follows").delete().eq("id", existing.id);
       await track(context.userId, "unfollow");
       return { following: false };
     }
+    if (!data.following || existing) return { following: data.following };
     const { error } = await context.supabase
       .from("follows")
       .insert({ follower_id: context.userId, following_id: data.userId });
