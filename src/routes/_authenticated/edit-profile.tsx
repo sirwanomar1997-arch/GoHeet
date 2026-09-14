@@ -75,7 +75,7 @@ function EditProfilePage() {
     setDisplayName(p.display_name ?? "");
     setBio(p.bio ?? "");
     setLinks(p.social_links ?? {});
-    setImageType(p.profile_image_type === "photo" ? "photo" : "avatar");
+    
     setPhotoPreview(p.personal_photo_url ?? null);
   }, [me]);
 
