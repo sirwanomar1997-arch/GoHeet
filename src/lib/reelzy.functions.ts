@@ -122,7 +122,10 @@ function cacheSet(bucket: string, path: string, url: string) {
   signCache.set(`${bucket}:${path}`, { url, at: Date.now() });
 }
 
-async function signBucket(bucket: "moments" | "avatars", paths: (string | null)[]) {
+async function signBucket(
+  bucket: "moments" | "avatars" | "voice-messages",
+  paths: (string | null)[],
+) {
   const clean = [
     ...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http"))),
   ];
