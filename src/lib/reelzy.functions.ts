@@ -2552,6 +2552,7 @@ export const getConversation = createServerFn({ method: "POST" })
       .from("messages")
       .select("id, body, sender_id, created_at, read_at, audio_path, audio_duration_ms")
       .eq("conversation_id", convo.id)
+      .is("unsent_at", null)
       .order("created_at", { ascending: true })
       .limit(300);
 
