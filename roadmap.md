@@ -84,4 +84,4 @@
 - [x] Publish the updated home feed and prepare new Google Play screenshots
 - [x] Restore the fire-gradient Follow buttons without changing their established design
 - [x] Return the navigation camera button to its original compact round proportions
-- [ ] Match the navigation camera button exactly to the approved original reference and publish it
+- [x] Match the navigation camera button exactly to the approved original reference and publish it
