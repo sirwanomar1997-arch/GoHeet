@@ -129,7 +129,7 @@ function FollowersPage() {
   return (
     <AppShell>
       <header className="sticky top-0 z-30 flex items-center gap-3 bg-background/90 px-4 py-3 backdrop-blur-xl">
-        <BackLink fallback={`/u/${username}`} />
+        <BackLink to={`/u/${username}`} label="Back to profile" />
         <div className="min-w-0">
           <h1 className="font-display text-xl font-extrabold tracking-[-0.04em]">Followers</h1>
           <p className="truncate text-[11px] text-muted-foreground" data-no-translate>
