@@ -72,8 +72,6 @@ function SettingsPage() {
   const [allowComments, setAllowComments] = useState("everyone");
   const [allowMessages, setAllowMessages] = useState("everyone");
   const [showFollowing, setShowFollowing] = useState(true);
-  const [showLikes, setShowLikes] = useState(true);
-  const [showSaves, setShowSaves] = useState(false);
   const [showReposts, setShowReposts] = useState(true);
   const [birthDate, setBirthDate] = useState("");
   const [clearing, setClearing] = useState(false);
@@ -112,8 +110,6 @@ function SettingsPage() {
     setAllowComments(p.allow_comments ?? "everyone");
     setAllowMessages(p.allow_messages ?? "everyone");
     setShowFollowing(p.show_following !== false);
-    setShowLikes(p.show_likes !== false);
-    setShowSaves(!!p.show_saves);
     setShowReposts(p.show_reposts !== false);
     setBirthDate(p.birth_date ?? "");
   }, [me]);
@@ -127,8 +123,6 @@ function SettingsPage() {
           allowComments,
           allowMessages,
           showFollowing,
-          showLikes,
-          showSaves,
           showReposts,
         },
       }),
@@ -522,24 +516,6 @@ function SettingsPage() {
                 </span>
               </span>
               <Switch checked={showFollowing} onCheckedChange={setShowFollowing} />
-            </label>
-            <label className="flex items-center justify-between gap-4">
-              <span className="text-sm">
-                Show what I like
-                <span className="block text-xs text-muted-foreground">
-                  Hide your liked Reelz from everyone else.
-                </span>
-              </span>
-              <Switch checked={showLikes} onCheckedChange={setShowLikes} />
-            </label>
-            <label className="flex items-center justify-between gap-4">
-              <span className="text-sm">
-                Show what I save
-                <span className="block text-xs text-muted-foreground">
-                  Saved Reelz are private unless you turn this on.
-                </span>
-              </span>
-              <Switch checked={showSaves} onCheckedChange={setShowSaves} />
             </label>
             <label className="flex items-center justify-between gap-4">
               <span className="text-sm">
