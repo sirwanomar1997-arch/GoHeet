@@ -2561,6 +2561,8 @@ export const getConversation = createServerFn({ method: "POST" })
       messages: (msgs ?? []).map((m) => ({
         id: m.id,
         body: m.body,
+        audioUrl: m.audio_path ? (voiceUrls[m.audio_path] ?? null) : null,
+        audioDurationMs: m.audio_duration_ms ?? null,
         createdAt: m.created_at,
         mine: m.sender_id === me,
         readByThem: m.sender_id === me ? !!m.read_at : false,
