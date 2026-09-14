@@ -16,7 +16,7 @@ import { formatCount, dayLabel } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
 import { HeetFlame } from "@/components/reelzy/heet-flame";
 
-export const Route = createFileRoute("/_authenticated/u/$username")({
+export const Route = createFileRoute("/_authenticated/u/$username/")({
   component: ProfilePage,
 });
 
