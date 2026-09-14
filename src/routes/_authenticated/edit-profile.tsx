@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Check, Facebook, Ghost, Globe, Instagram, MessageCircle, Music2, Sparkles, Twitter, Youtube } from "lucide-react";
+import { ArrowLeft, Camera, Facebook, Ghost, Globe, Instagram, MessageCircle, Music2, Twitter, Youtube } from "lucide-react";
 import { checkUsername, saveProfilePhoto, updateProfile } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
 import { AppShell } from "@/components/reelzy/nav";
@@ -38,7 +38,7 @@ function EditProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [links, setLinks] = useState<Record<string, string>>({});
-  const [imageType, setImageType] = useState<"avatar" | "photo">("avatar");
+  
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [unameStatus, setUnameStatus] = useState<"idle" | "checking" | "free" | "taken" | "invalid">("idle");
   const checkName = useServerFn(checkUsername);
@@ -97,7 +97,7 @@ function EditProfilePage() {
     mutationFn: (dataUrl: string) => uploadPhoto({ data: { dataUrl } }),
     onSuccess: async (result) => {
       setPhotoPreview(result.url);
-      setImageType("photo");
+      await save({ data: { profileImageType: "photo" } });
       await qc.invalidateQueries({ queryKey: ["me"] });
       await qc.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Profile photo updated.");
@@ -105,20 +105,6 @@ function EditProfilePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  async function chooseImageType(next: "avatar" | "photo") {
-    if (next === "photo" && !photoPreview) {
-      photoInput.current?.click();
-      return;
-    }
-    setImageType(next);
-    try {
-      await save({ data: { profileImageType: next } });
-      await qc.invalidateQueries({ queryKey: ["me"] });
-      await qc.invalidateQueries({ queryKey: ["profile"] });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not switch profile image.");
-    }
-  }
 
   function onPhoto(file?: File) {
     if (!file) return;
