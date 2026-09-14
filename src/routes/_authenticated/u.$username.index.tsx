@@ -80,6 +80,7 @@ function ProfilePage() {
   const report = useServerFn(submitReport);
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageBody, setMessageBody] = useState("");
