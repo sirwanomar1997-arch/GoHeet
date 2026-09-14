@@ -211,14 +211,27 @@ function ThreadPage() {
             }
             className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none"
           />
-          <button
-            type="submit"
-            aria-label={t("common.send")}
-            disabled={!canWrite || !body.trim() || send.isPending}
-            className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
-          >
-            <Send className="size-4" />
-          </button>
+          )}
+          {recording || (!body.trim() && !send.isPending) ? (
+            <button
+              type="button"
+              aria-label={recording ? t("msg.voiceSend") : t("msg.voiceRecord")}
+              disabled={!canWrite || voice.isPending}
+              onClick={() => (recording ? stopRecording(true) : startRecording())}
+              className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
+            >
+              {recording ? <Send className="size-4" /> : <Mic className="size-5" />}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label={t("common.send")}
+              disabled={!canWrite || !body.trim() || send.isPending}
+              className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
+            >
+              <Send className="size-4" />
+            </button>
+          )}
         </form>
       )}
       {pending && data?.isRequester ? (
