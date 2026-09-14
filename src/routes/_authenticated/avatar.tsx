@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AvatarStudio } from "@/components/reelzy/avatar-studio";
+import { useMe } from "@/lib/use-me";
 
 export const Route = createFileRoute("/_authenticated/avatar")({
   ssr: false,
