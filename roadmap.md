@@ -81,4 +81,4 @@
 - [x] Keep demo scrolling unrestricted and refresh the real feed on the second backward step
 - [x] Make demo mode easy to exit and clear it after real sign-in
 - [x] Match the home feed action rail to the clean white reference
-- [ ] Publish the updated home feed and prepare new Google Play screenshots
+- [x] Publish the updated home feed and prepare new Google Play screenshots
