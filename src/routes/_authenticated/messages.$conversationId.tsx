@@ -6,11 +6,15 @@ import { toast } from "sonner";
 import { ArrowLeft, Check, Mic, Send, Trash2, X } from "lucide-react";
 import {
   getConversation,
+  reactToMessage,
   respondToMessageRequest,
   sendMessage,
   sendVoiceMessage,
 } from "@/lib/reelzy.functions";
 import { useI18n } from "@/lib/i18n";
+
+/** Quick reactions offered on long-press; "+" opens the phone's own emoji keyboard. */
+const QUICK_REACTIONS = ["😂", "😍", "😢", "❤️"];
 
 
 export const Route = createFileRoute("/_authenticated/messages/$conversationId")({
