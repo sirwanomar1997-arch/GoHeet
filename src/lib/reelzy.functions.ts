@@ -1328,6 +1328,109 @@ export const toggleFollow = createServerFn({ method: "POST" })
     return { following: true };
   });
 
+export type FollowPerson = {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  followerCount: number;
+  isFollowing: boolean; // does the current user follow this person?
+};
+
+/**
+ * List everyone who follows a profile (newest followers first).
+ * Includes whether the current user already follows each person back.
+ */
+export const listFollowers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { username: string }) => ({
+    username: usernameSchema.parse(d.username),
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("id, username")
+      .ilike("username", data.username)
+      .maybeSingle();
+    if (!profile) return { people: [] as FollowPerson[], isSelf: false };
+
+    const { data: rows } = await context.supabase
+      .from("follows")
+      .select("follower_id, created_at")
+      .eq("following_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const ids = (rows ?? []).map((r) => r.follower_id);
+    if (ids.length === 0) {
+      return { people: [] as FollowPerson[], isSelf: profile.id === context.userId };
+    }
+
+    const { data: profiles } = await context.supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type, follower_count")
+      .in("id", ids);
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+    const { data: myFollows } = await context.supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", context.userId)
+      .in("following_id", ids);
+    const followingSet = new Set((myFollows ?? []).map((f) => f.following_id));
+
+    // Sign the image each profile actually displays (avatar or personal photo).
+    const paths = (profiles ?? []).map((p) =>
+      p.profile_image_type === "photo" && p.personal_photo_url
+        ? p.personal_photo_url
+        : p.avatar_url,
+    );
+    const signed = await signAvatars(paths);
+
+    const people: FollowPerson[] = ids
+      .map((id) => {
+        const p = byId.get(id);
+        if (!p) return null;
+        const path =
+          p.profile_image_type === "photo" && p.personal_photo_url
+            ? p.personal_photo_url
+            : p.avatar_url;
+        return {
+          id: p.id,
+          username: p.username,
+          displayName: p.display_name,
+          avatarUrl: path ? (signed[path] ?? null) : null,
+          followerCount: p.follower_count,
+          isFollowing: followingSet.has(p.id),
+        };
+      })
+      .filter((p): p is FollowPerson => p !== null);
+
+    return { people, isSelf: profile.id === context.userId };
+  });
+
+/**
+ * Remove someone from your own followers list. The deleted follow row is
+ * (them → you); the new follows delete policy allows the followed user to
+ * remove their own followers.
+ */
+export const removeFollower = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => ({
+    userId: z.string().uuid().parse(d.userId),
+  }))
+  .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "remove-follower", 60, 60_000);
+    if (data.userId === context.userId) throw new Error("You cannot remove yourself.");
+    const { error } = await context.supabase
+      .from("follows")
+      .delete()
+      .eq("follower_id", data.userId)
+      .eq("following_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { removed: true };
+  });
+
+
 export const listComments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
