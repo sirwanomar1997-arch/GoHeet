@@ -99,15 +99,13 @@ export function GoHeetNav() {
             to="/camera"
             replace
             aria-label="Open the GoHeet camera"
-            className="capture-key group relative mx-0.5 grid size-16 shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
+            className="capture-orbit group relative mx-0.5 -mt-14 grid size-24 shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
           >
-            <span className="absolute -inset-1 rounded-full bg-ember opacity-30 blur-lg transition-opacity duration-500 group-active:opacity-50" />
-            <span className="capture-face relative grid size-full place-items-center overflow-hidden rounded-full">
-              <svg className="size-7 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <span className="capture-face relative grid size-20 place-items-center overflow-hidden rounded-full">
+              <span className="capture-shine pointer-events-none absolute inset-x-3 top-1.5 h-7 rounded-full" />
+              <svg className="relative size-9 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 4v16M4 12h16" />
               </svg>
-              <span className="capture-shine pointer-events-none absolute inset-x-2 top-1 h-5 rounded-full" />
-              <span className="pointer-events-none absolute inset-0.5 rounded-full border border-foreground/20" />
             </span>
           </Link>
         ) : null}
