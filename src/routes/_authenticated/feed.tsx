@@ -28,8 +28,8 @@ function FeedPage() {
     queryFn: () => (demo ? getDemoFeed(scope) : fetchFeed({ data: { scope } })),
   });
 
-  // Scrolling back up to re-watch is always free. Crossing two full videos
-  // upward in one continuous return refreshes the feed after the gesture ends.
+  // Real accounts may return to the previous video once. A second consecutive
+  // backward step refreshes the feed instead. Demo mode stays freely scrollable.
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const lastTopRef = useRef(0);
   const backStepsRef = useRef(0);
@@ -42,10 +42,15 @@ function FeedPage() {
     const step = el.clientHeight * 0.6;
     const delta = top - lastTopRef.current;
     if (Math.abs(delta) < step) return;
-    lastTopRef.current = top;
 
     if (delta > 0) {
       backStepsRef.current = 0;
+      lastTopRef.current = top;
+      return;
+    }
+
+    if (demo) {
+      lastTopRef.current = top;
       return;
     }
 
@@ -53,13 +58,20 @@ function FeedPage() {
     if (backStepsRef.current >= 2 && !refreshingRef.current) {
       backStepsRef.current = 0;
       refreshingRef.current = true;
+      const previousVideoTop = lastTopRef.current;
+      el.scrollTo({ top: previousVideoTop, behavior: "auto" });
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = setTimeout(() => {
         void refetch().finally(() => {
+          el.scrollTo({ top: 0, behavior: "smooth" });
+          lastTopRef.current = 0;
           refreshingRef.current = false;
         });
       }, 180);
+      return;
     }
+
+    lastTopRef.current = top;
   };
 
 
