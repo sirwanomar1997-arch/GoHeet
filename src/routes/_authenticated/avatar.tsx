@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AvatarStudio } from "@/components/reelzy/avatar-studio";
+import { useMe } from "@/lib/use-me";
 
 export const Route = createFileRoute("/_authenticated/avatar")({
   ssr: false,
@@ -25,13 +26,22 @@ export const Route = createFileRoute("/_authenticated/avatar")({
 
 function AvatarPage() {
   const navigate = useNavigate();
+  const me = useMe();
+  const username = me.data?.profile?.username;
+  const hadAvatar = Boolean(me.data?.profile?.avatar_url);
+
+  const leave = () => {
+    if (hadAvatar && username) {
+      void navigate({ to: "/u/$username", params: { username }, replace: true });
+      return;
+    }
+    void navigate({ to: "/camera" });
+  };
+
   return (
     <main className="min-h-svh bg-background">
       <h1 className="sr-only">Create your GoHeet avatar</h1>
-      <AvatarStudio
-        onDone={() => void navigate({ to: "/camera" })}
-        onSkip={() => void navigate({ to: "/camera" })}
-      />
+      <AvatarStudio onDone={leave} onSkip={leave} />
     </main>
   );
 }
