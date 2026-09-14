@@ -98,7 +98,11 @@ function FeedPage() {
           }
         />
       ) : (
-        <div className="h-[calc(100svh-6.5rem)] snap-y snap-mandatory space-y-3 overflow-y-auto px-3 pb-3">
+        <div
+          ref={scrollerRef}
+          onScroll={onFeedScroll}
+          className="h-[calc(100svh-6.5rem)] snap-y snap-mandatory space-y-3 overflow-y-auto overscroll-contain px-3 pb-3"
+        >
           {data?.moments.map((m) => (
             <MomentStage key={m.id} moment={m} onGone={() => void refetch()} />
           ))}
