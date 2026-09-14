@@ -31,8 +31,9 @@ function AvatarPage() {
   const hadAvatar = Boolean(me.data?.profile?.avatar_url);
 
   const leave = () => {
-    if (hadAvatar && username) {
-      void navigate({ to: "/u/$username", params: { username }, replace: true });
+    // Editing an existing avatar: return to Edit profile (where "Edit avatar" was tapped).
+    if (hadAvatar) {
+      void navigate({ to: "/edit-profile", replace: true });
       return;
     }
     void navigate({ to: "/camera" });
