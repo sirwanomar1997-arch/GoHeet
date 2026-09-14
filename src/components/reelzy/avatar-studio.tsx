@@ -48,9 +48,9 @@ function describe(t: Traits) {
     `${t.skin.toLowerCase()} skin tone`,
     `${t.eyeColor.toLowerCase()} eyes`,
     t.hair.includes("bald") ? "bald head" : `${t.hair} hairstyle in ${t.hairColor.toLowerCase()}`,
-    t.wrinkles.startsWith("smooth skin")
-      ? "smooth youthful skin with no wrinkles"
-      : `visibly aged skin with ${t.wrinkles}`,
+    t.faceDetail === NO_FACE_DETAIL
+      ? "clear smooth skin with no marks, blemishes or wrinkles"
+      : `skin showing ${t.faceDetail}`,
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
     t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
 
@@ -77,11 +77,11 @@ function changeLabels(prev: Traits, next: Traits): string[] {
         : `hairstyle is now ${next.hair}, matching the pictured hairstyle exactly in length, shape, parting and texture`,
     );
   if (prev.hairColor !== next.hairColor) out.push(`hair colour is now ${next.hairColor.toLowerCase()}`);
-  if (prev.wrinkles !== next.wrinkles)
+  if (prev.faceDetail !== next.faceDetail)
     out.push(
-      next.wrinkles.startsWith("smooth skin")
-        ? "skin is now smooth and youthful, all wrinkles removed"
-        : `skin is now visibly aged with ${next.wrinkles}, clearly visible`,
+      next.faceDetail === NO_FACE_DETAIL
+        ? "skin is now clear and smooth, remove every freckle, mole, mark and wrinkle"
+        : `skin now clearly shows ${next.faceDetail}, and no other marks or wrinkles`,
     );
   if (prev.beard !== next.beard)
     out.push(
