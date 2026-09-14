@@ -325,7 +325,7 @@ function ThreadPage() {
                     )}
                     <button
                       type="button"
-                      aria-label={t("common.close")}
+                      aria-label={t("msg.closePicker")}
                       onClick={() => {
                         setPickerFor(null);
                         setCustomFor(null);
