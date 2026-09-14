@@ -28,6 +28,39 @@ function FeedPage() {
     queryFn: () => (demo ? getDemoFeed(scope) : fetchFeed({ data: { scope } })),
   });
 
+  // Scrolling back up to re-watch a moment is free. Two back-steps in a row
+  // refreshes the feed with new moments.
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const lastTopRef = useRef(0);
+  const backStepsRef = useRef(0);
+  const refreshingRef = useRef(false);
+
+  const onFeedScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const top = el.scrollTop;
+    const step = el.clientHeight * 0.6;
+    const delta = top - lastTopRef.current;
+    if (Math.abs(delta) < step) return;
+    lastTopRef.current = top;
+
+    if (delta > 0) {
+      backStepsRef.current = 0;
+      return;
+    }
+
+    backStepsRef.current += 1;
+    if (backStepsRef.current >= 2 && !refreshingRef.current) {
+      backStepsRef.current = 0;
+      refreshingRef.current = true;
+      el.scrollTo({ top: 0, behavior: "smooth" });
+      lastTopRef.current = 0;
+      void refetch().finally(() => {
+        refreshingRef.current = false;
+      });
+    }
+  };
+
+
   return (
     <AppShell>
       <header className="sticky top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-background via-background/90 to-transparent px-4 py-3 backdrop-blur-xl">
