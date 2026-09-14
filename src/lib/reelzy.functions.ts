@@ -2451,8 +2451,17 @@ export const listConversations = createServerFn({ method: "POST" })
       .order("last_message_at", { ascending: false })
       .limit(100);
 
-    const list = rows ?? [];
-    if (list.length === 0) return { chats: [], requests: [] };
+    const { data: hides } = await sb
+      .from("conversation_hides")
+      .select("conversation_id, hidden_at")
+      .eq("user_id", me);
+    const hiddenAt = new Map((hides ?? []).map((h) => [h.conversation_id, h.hidden_at]));
+
+    const list = (rows ?? []).filter((c) => {
+      const at = hiddenAt.get(c.id);
+      return !at || new Date(c.last_message_at).getTime() > new Date(at).getTime();
+    });
+    if (list.length === 0) return { chats: [], requests: [], sent: [] };
 
     const otherIds = list.map((c) => (c.user_a === me ? c.user_b : c.user_a));
     const { data: people } = await sb
