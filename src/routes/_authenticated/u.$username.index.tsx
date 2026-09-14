@@ -7,6 +7,7 @@ import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil,
 import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { FollowButton } from "@/components/reelzy/follow-button";
+import { ProfileReportSheet } from "@/components/reelzy/profile-report-sheet";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoProfile } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
