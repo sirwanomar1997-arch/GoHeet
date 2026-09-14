@@ -15,7 +15,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAvatarRouteImport } from './routes/_authenticated/avatar'
 import { Route as AuthenticatedBlockedRouteImport } from './routes/_authenticated/blocked'
 import { Route as AuthenticatedCameraRouteImport } from './routes/_authenticated/camera'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
@@ -30,7 +29,6 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedShareLaterRouteImport } from './routes/_authenticated/share-later'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
-import { Route as ApiGenerateAvatarRouteImport } from './routes/api/generate-avatar'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
 import { Route as AuthenticatedMessagesConversationIdRouteImport } from './routes/_authenticated/messages.$conversationId'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
@@ -65,11 +63,6 @@ const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAvatarRoute = AuthenticatedAvatarRouteImport.update({
-  id: '/avatar',
-  path: '/avatar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBlockedRoute = AuthenticatedBlockedRouteImport.update({
@@ -143,11 +136,6 @@ const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
   path: '/trash',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiGenerateAvatarRoute = ApiGenerateAvatarRouteImport.update({
-  id: '/api/generate-avatar',
-  path: '/api/generate-avatar',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LegalDocRoute = LegalDocRouteImport.update({
   id: '/legal/$doc',
   path: '/legal/$doc',
@@ -189,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/avatar': typeof AuthenticatedAvatarRoute
   '/blocked': typeof AuthenticatedBlockedRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
@@ -204,7 +191,6 @@ export interface FileRoutesByFullPath {
   '/share-later': typeof AuthenticatedShareLaterRoute
   '/support': typeof AuthenticatedSupportRoute
   '/trash': typeof AuthenticatedTrashRoute
-  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
@@ -218,7 +204,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/avatar': typeof AuthenticatedAvatarRoute
   '/blocked': typeof AuthenticatedBlockedRoute
   '/camera': typeof AuthenticatedCameraRoute
   '/discover': typeof AuthenticatedDiscoverRoute
@@ -233,7 +218,6 @@ export interface FileRoutesByTo {
   '/share-later': typeof AuthenticatedShareLaterRoute
   '/support': typeof AuthenticatedSupportRoute
   '/trash': typeof AuthenticatedTrashRoute
-  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
   '/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
@@ -248,7 +232,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/avatar': typeof AuthenticatedAvatarRoute
   '/_authenticated/blocked': typeof AuthenticatedBlockedRoute
   '/_authenticated/camera': typeof AuthenticatedCameraRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
@@ -263,7 +246,6 @@ export interface FileRoutesById {
   '/_authenticated/share-later': typeof AuthenticatedShareLaterRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
-  '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_authenticated/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
@@ -279,7 +261,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/activity'
     | '/admin'
-    | '/avatar'
     | '/blocked'
     | '/camera'
     | '/discover'
@@ -294,7 +275,6 @@ export interface FileRouteTypes {
     | '/share-later'
     | '/support'
     | '/trash'
-    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/messages/$conversationId'
     | '/u/$username'
@@ -308,7 +288,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/activity'
     | '/admin'
-    | '/avatar'
     | '/blocked'
     | '/camera'
     | '/discover'
@@ -323,7 +302,6 @@ export interface FileRouteTypes {
     | '/share-later'
     | '/support'
     | '/trash'
-    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/messages/$conversationId'
     | '/u/$username/followers'
@@ -337,7 +315,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/activity'
     | '/_authenticated/admin'
-    | '/_authenticated/avatar'
     | '/_authenticated/blocked'
     | '/_authenticated/camera'
     | '/_authenticated/discover'
@@ -352,7 +329,6 @@ export interface FileRouteTypes {
     | '/_authenticated/share-later'
     | '/_authenticated/support'
     | '/_authenticated/trash'
-    | '/api/generate-avatar'
     | '/legal/$doc'
     | '/_authenticated/messages/$conversationId'
     | '/_authenticated/u/$username'
@@ -366,7 +342,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  ApiGenerateAvatarRoute: typeof ApiGenerateAvatarRoute
   LegalDocRoute: typeof LegalDocRoute
 }
 
@@ -412,13 +387,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/avatar': {
-      id: '/_authenticated/avatar'
-      path: '/avatar'
-      fullPath: '/avatar'
-      preLoaderRoute: typeof AuthenticatedAvatarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/blocked': {
@@ -519,13 +487,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTrashRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/generate-avatar': {
-      id: '/api/generate-avatar'
-      path: '/api/generate-avatar'
-      fullPath: '/api/generate-avatar'
-      preLoaderRoute: typeof ApiGenerateAvatarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/legal/$doc': {
       id: '/legal/$doc'
       path: '/legal/$doc'
@@ -606,7 +567,6 @@ const AuthenticatedUUsernameRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAvatarRoute: typeof AuthenticatedAvatarRoute
   AuthenticatedBlockedRoute: typeof AuthenticatedBlockedRoute
   AuthenticatedCameraRoute: typeof AuthenticatedCameraRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
@@ -627,7 +587,6 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAvatarRoute: AuthenticatedAvatarRoute,
   AuthenticatedBlockedRoute: AuthenticatedBlockedRoute,
   AuthenticatedCameraRoute: AuthenticatedCameraRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
@@ -653,7 +612,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  ApiGenerateAvatarRoute: ApiGenerateAvatarRoute,
   LegalDocRoute: LegalDocRoute,
 }
 export const routeTree = rootRouteImport
