@@ -70,7 +70,11 @@ function changeLabels(prev: Traits, next: Traits): string[] {
   if (prev.skin !== next.skin) out.push(`skin tone is now ${next.skin.toLowerCase()}`);
   if (prev.eyeColor !== next.eyeColor) out.push(`eye colour is now ${next.eyeColor.toLowerCase()}`);
   if (prev.hair !== next.hair)
-    out.push(next.hair.includes("bald") ? "completely bald, no hair at all" : `hairstyle is now ${next.hair}`);
+    out.push(
+      next.hair.includes("bald")
+        ? "completely bald, no hair at all"
+        : `hairstyle is now ${next.hair}, matching the pictured hairstyle exactly in length, shape, parting and texture`,
+    );
   if (prev.hairColor !== next.hairColor) out.push(`hair colour is now ${next.hairColor.toLowerCase()}`);
   if (prev.wrinkles !== next.wrinkles)
     out.push(
