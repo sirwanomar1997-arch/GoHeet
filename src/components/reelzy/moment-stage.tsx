@@ -609,8 +609,8 @@ export function MomentStage({
 
       </div>
 
-      {/* Heet flame — separated above the lower rail, bigger symbol + count */}
-      <div className="absolute bottom-[318px] right-2 z-20 flex w-12 flex-col items-center gap-1">
+      {/* Heet flame — intentionally large and clearly separated from the action rail */}
+      <div className="absolute bottom-[360px] right-2 z-20 flex w-12 flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={(e) => {
@@ -627,17 +627,17 @@ export function MomentStage({
           }}
           aria-pressed={liked}
           aria-label={liked ? "Remove your heet" : "Heet this moment"}
-          className="grid size-[72px] place-items-center rounded-full transition-transform active:scale-90"
+          className="grid size-[96px] place-items-center rounded-full transition-transform active:scale-90"
         >
           <HeetFlame
-            className={`size-[72px] transition-transform ${heetPop ? "animate-heet-pop" : ""} ${
+            className={`size-[96px] transition-transform ${heetPop ? "animate-heet-pop" : ""} ${
               liked && !heetPop ? "animate-heet-flicker" : ""
             }`}
             filled
             glow={liked || heetPop}
           />
         </button>
-        <span className="font-sans text-base font-bold leading-none text-foreground">
+        <span className="font-sans text-lg font-bold leading-none text-foreground drop-shadow-[0_1px_2px_var(--background)]">
           {formatCount(likeCount)}
         </span>
       </div>
