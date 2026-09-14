@@ -259,6 +259,83 @@ function ThreadPage() {
                     m.body
                   )}
                 </div>
+
+                {msgReactions.length ? (
+                  <div className="-mt-1 flex gap-1" data-no-translate>
+                    {msgReactions.map((r, idx) => (
+                      <button
+                        key={`${m.id}-${idx}`}
+                        type="button"
+                        aria-label={t("msg.react")}
+                        onClick={() => r.mine && pick(m.id, r.emoji)}
+                        className="rounded-full border border-border bg-surface px-2 py-0.5 text-sm leading-none shadow-sm"
+                      >
+                        {r.emoji}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {pickerFor === m.id ? (
+                  <div
+                    className={`mt-1 flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-lg ${
+                      m.mine ? "self-end" : "self-start"
+                    }`}
+                    data-no-translate
+                  >
+                    {QUICK_REACTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        aria-label={emoji}
+                        disabled={react.isPending}
+                        onClick={() => pick(m.id, emoji)}
+                        className={`grid size-9 place-items-center rounded-full text-xl ${
+                          myReaction === emoji ? "bg-surface-raised" : ""
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                    {customFor === m.id ? (
+                      <input
+                        autoFocus
+                        value={customEmoji}
+                        maxLength={8}
+                        aria-label={t("msg.reactOther")}
+                        onChange={(e) => {
+                          const v = e.target.value.trim();
+                          setCustomEmoji(v);
+                          if (v) pick(m.id, v);
+                        }}
+                        className="h-9 w-16 rounded-full border border-border bg-background px-2 text-center text-xl outline-none"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={t("msg.reactOther")}
+                        onClick={() => {
+                          setCustomFor(m.id);
+                          setCustomEmoji("");
+                        }}
+                        className="grid size-9 place-items-center rounded-full border border-border text-lg"
+                      >
+                        +
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={t("common.close")}
+                      onClick={() => {
+                        setPickerFor(null);
+                        setCustomFor(null);
+                      }}
+                      className="grid size-9 place-items-center rounded-full text-muted-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : null}
                 {lastMine ? (
                   <span className="mt-1 pe-1 text-[11px] text-muted-foreground">
                     {m.readByThem ? t("msg.read") : t("msg.sent")}
