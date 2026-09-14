@@ -708,6 +708,15 @@ function ProfilePage() {
         title={data.isSelf ? "Share your profile" : "Share this profile"}
         qr
       />
+
+      {!data.isSelf ? (
+        <ProfileReportSheet
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          userId={p.id}
+          username={p.username}
+        />
+      ) : null}
     </AppShell>
   );
 }
