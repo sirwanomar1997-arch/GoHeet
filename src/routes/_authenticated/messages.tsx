@@ -2,10 +2,10 @@ import { BackLink } from "@/components/reelzy/back-link";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Check, MailQuestion, MessageCircle, X } from "lucide-react";
-import { listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
+import { Check, MailQuestion, MessageCircle, Trash2, X } from "lucide-react";
+import { deleteConversation, listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { useI18n } from "@/lib/i18n";
 
