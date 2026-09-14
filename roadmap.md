@@ -85,3 +85,4 @@
 - [x] Restore the fire-gradient Follow buttons without changing their established design
 - [x] Return the navigation camera button to its original compact round proportions
 - [x] Match the navigation camera button exactly to the approved original reference and publish it
+- [x] Match every camera and Follow control to the four approved visual references, verify, and republish

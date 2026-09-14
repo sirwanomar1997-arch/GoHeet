@@ -83,7 +83,7 @@ export function FollowButton({
         className={`tap-target rounded-full text-sm font-semibold transition-colors ${
           following
             ? "border border-border text-foreground"
-            : "ember-fill text-primary-foreground"
+            : "follow-fire"
         } ${className}`}
       >
         <span key={following ? "following" : "follow"}>

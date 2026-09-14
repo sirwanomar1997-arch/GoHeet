@@ -221,6 +221,16 @@
   mix-blend-mode: overlay;
 }
 
+/* Approved GoHeet fire finish: orange at left/top into coral-pink at right/bottom. */
+@utility fire-fill {
+  background: linear-gradient(135deg, oklch(0.79 0.19 65) 0%, oklch(0.68 0.25 18) 100%);
+}
+
+@utility follow-fire {
+  background: linear-gradient(135deg, oklch(0.79 0.19 65) 0%, oklch(0.68 0.25 18) 100%);
+  color: var(--primary-foreground);
+}
+
 /* The capture key is the only element allowed to glow. */
 @utility key-glow {
   box-shadow:
@@ -241,14 +251,10 @@
 }
 
 @utility capture-face {
-  background:
-    radial-gradient(circle at 35% 24%, color-mix(in oklab, var(--ember) 70%, var(--foreground) 30%) 0%, transparent 26%),
-    var(--gradient-ember);
+  background: linear-gradient(135deg, oklch(0.79 0.19 65) 0%, oklch(0.68 0.25 18) 100%);
   box-shadow:
-    inset 0 3px 3px color-mix(in oklab, var(--foreground) 38%, transparent),
-    inset 0 -12px 22px color-mix(in oklab, var(--ember-deep) 46%, transparent),
-    0 0 18px color-mix(in oklab, var(--ember) 42%, transparent);
-  animation: capture-breathe 2.8s ease-in-out infinite;
+    inset 0 2px 1px color-mix(in oklab, var(--foreground) 26%, transparent),
+    inset 0 -8px 14px color-mix(in oklab, var(--ember-deep) 20%, transparent);
 }
 
 @utility capture-shine {
@@ -294,7 +300,9 @@
 
 /* Calm ember capture key — a quiet pilot light, not a signal flare. */
 @utility capture-key {
-  box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--ember-deep) 80%, transparent);
+  box-shadow:
+    0 0 20px color-mix(in oklab, var(--ember) 30%, transparent),
+    0 8px 18px -10px color-mix(in oklab, var(--ember-deep) 80%, transparent);
 }
 
 @utility hairline-top {
