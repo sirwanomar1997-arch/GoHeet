@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Send, X } from "lucide-react";
+import { ArrowLeft, Check, Mic, Send, Trash2, X } from "lucide-react";
 import {
   getConversation,
   respondToMessageRequest,
   sendMessage,
+  sendVoiceMessage,
 } from "@/lib/reelzy.functions";
 import { useI18n } from "@/lib/i18n";
 
@@ -66,6 +67,82 @@ function ThreadPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // --- Voice messages: record with the microphone, send as an audio note. ---
+  const postVoice = useServerFn(sendVoiceMessage);
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const keepRef = useRef(true);
+  const startedAtRef = useRef(0);
+
+  const voice = useMutation({
+    mutationFn: (v: { audioBase64: string; mimeType: string; durationMs: number }) =>
+      postVoice({ data: { conversationId, ...v } }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    if (!recording) return;
+    const id = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [recording]);
+
+  async function startRecording() {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast.error(t("msg.voiceMicDenied"));
+      return;
+    }
+    const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+    const rec = new MediaRecorder(stream, { mimeType: mime });
+    chunksRef.current = [];
+    keepRef.current = true;
+    rec.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    rec.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const durationMs = Date.now() - startedAtRef.current;
+      const blob = new Blob(chunksRef.current, { type: mime });
+      chunksRef.current = [];
+      setRecording(false);
+      setElapsed(0);
+      if (!keepRef.current) return;
+      if (durationMs < 700 || blob.size < 1024) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = String(reader.result).split(",")[1] ?? "";
+        voice.mutate({ audioBase64: base64, mimeType: mime, durationMs });
+      };
+      reader.readAsDataURL(blob);
+    };
+    recorderRef.current = rec;
+    startedAtRef.current = Date.now();
+    setElapsed(0);
+    setRecording(true);
+    rec.start();
+    // Keep voice notes short so they upload quickly on mobile networks.
+    window.setTimeout(() => {
+      if (recorderRef.current === rec && rec.state === "recording") rec.stop();
+    }, 120_000);
+  }
+
+  function stopRecording(keep: boolean) {
+    keepRef.current = keep;
+    const rec = recorderRef.current;
+    if (rec && rec.state !== "inactive") rec.stop();
+    else setRecording(false);
+  }
+
   const pending = data?.status === "pending";
   const rejected = data?.status === "rejected";
   const canWrite = data ? data.status === "accepted" || (pending && data.isRequester) : false;
@@ -115,7 +192,24 @@ function ThreadPage() {
                   }`}
                   data-no-translate
                 >
-                  {m.body}
+                  {m.audioUrl ? (
+                    <span className="flex flex-col gap-1">
+                      <audio
+                        src={m.audioUrl}
+                        controls
+                        preload="none"
+                        aria-label={t("msg.voiceNote")}
+                        className="h-10 w-[220px] max-w-full"
+                      />
+                      {m.audioDurationMs ? (
+                        <span className="text-[11px] opacity-80">
+                          {Math.max(1, Math.round(m.audioDurationMs / 1000))}s
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    m.body
+                  )}
                 </div>
                 {lastMine ? (
                   <span className="mt-1 pe-1 text-[11px] text-muted-foreground">
@@ -165,6 +259,23 @@ function ThreadPage() {
           }}
           className="sticky bottom-0 flex items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
         >
+          {recording ? (
+            <div className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+              <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
+              <span className="text-sm font-semibold">{t("msg.voiceRecording")}</span>
+              <span className="text-sm tabular-nums text-muted-foreground">
+                {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+              </span>
+              <button
+                type="button"
+                aria-label={t("msg.voiceDelete")}
+                onClick={() => stopRecording(false)}
+                className="ms-auto grid size-9 place-items-center rounded-xl border border-border"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          ) : (
           <textarea
             value={body}
             rows={1}
@@ -177,14 +288,27 @@ function ThreadPage() {
             }
             className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none"
           />
-          <button
-            type="submit"
-            aria-label={t("common.send")}
-            disabled={!canWrite || !body.trim() || send.isPending}
-            className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
-          >
-            <Send className="size-4" />
-          </button>
+          )}
+          {recording || (!body.trim() && !send.isPending) ? (
+            <button
+              type="button"
+              aria-label={recording ? t("msg.voiceSend") : t("msg.voiceRecord")}
+              disabled={!canWrite || voice.isPending}
+              onClick={() => (recording ? stopRecording(true) : startRecording())}
+              className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
+            >
+              {recording ? <Send className="size-4" /> : <Mic className="size-5" />}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label={t("common.send")}
+              disabled={!canWrite || !body.trim() || send.isPending}
+              className="ember-fill grid size-11 shrink-0 place-items-center rounded-2xl text-primary-foreground disabled:opacity-50"
+            >
+              <Send className="size-4" />
+            </button>
+          )}
         </form>
       )}
       {pending && data?.isRequester ? (

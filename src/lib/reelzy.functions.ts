@@ -122,7 +122,10 @@ function cacheSet(bucket: string, path: string, url: string) {
   signCache.set(`${bucket}:${path}`, { url, at: Date.now() });
 }
 
-async function signBucket(bucket: "moments" | "avatars", paths: (string | null)[]) {
+async function signBucket(
+  bucket: "moments" | "avatars" | "voice-messages",
+  paths: (string | null)[],
+) {
   const clean = [
     ...new Set(paths.filter((p): p is string => !!p && !p.startsWith("http"))),
   ];
@@ -2360,6 +2363,82 @@ export const sendMessage = createServerFn({ method: "POST" })
     return { conversationId: convo.id, status: convo.status, message: msg };
   });
 
+/** Sends a recorded voice note inside an existing conversation. */
+export const sendVoiceMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: { conversationId: string; audioBase64: string; mimeType: string; durationMs: number }) => ({
+      conversationId: z.string().uuid().parse(d.conversationId),
+      audioBase64: z.string().min(100, "That recording was empty.").max(9_000_000).parse(d.audioBase64),
+      mimeType: z
+        .enum(["audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/ogg"])
+        .parse(d.mimeType.split(";")[0] as string),
+      durationMs: z.number().int().min(300).max(120_000).parse(d.durationMs),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "message", 30, 60_000);
+    const me = context.userId;
+    const sb = await admin();
+
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b, requester_id, status")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+
+    const other = convo.user_a === me ? convo.user_b : convo.user_a;
+    if (await blockedBetween(me, other)) throw new Error("You can't message this person.");
+    if (convo.status === "rejected") throw new Error("This person declined your message request.");
+    if (convo.status === "pending") {
+      if (convo.requester_id !== me) throw new Error("Accept the request before replying.");
+      const { count } = await sb
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", convo.id)
+        .eq("sender_id", me);
+      if ((count ?? 0) >= PENDING_MESSAGE_LIMIT) {
+        throw new Error("Wait until your request is accepted before sending more.");
+      }
+    }
+
+    const ext =
+      data.mimeType === "audio/mp4"
+        ? "m4a"
+        : data.mimeType === "audio/mpeg"
+          ? "mp3"
+          : data.mimeType === "audio/wav"
+            ? "wav"
+            : data.mimeType === "audio/ogg"
+              ? "ogg"
+              : "webm";
+    const binary = Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0));
+    if (binary.byteLength < 1024) throw new Error("That recording was too short.");
+    const path = `${me}/${convo.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await sb.storage
+      .from("voice-messages")
+      .upload(path, binary, { contentType: data.mimeType, upsert: false });
+    if (upErr) throw new Error(upErr.message);
+
+    const { data: msg, error: msgErr } = await sb
+      .from("messages")
+      .insert({
+        conversation_id: convo.id,
+        sender_id: me,
+        body: "",
+        audio_path: path,
+        audio_duration_ms: data.durationMs,
+      })
+      .select("id, body, created_at, sender_id")
+      .single();
+    if (msgErr) throw new Error(msgErr.message);
+
+    await track(me, "message_sent", { voice: true });
+    return { conversationId: convo.id, status: convo.status, message: msg };
+  });
+
+
 export const listConversations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -2385,12 +2464,15 @@ export const listConversations = createServerFn({ method: "POST" })
 
     const { data: lastMsgs } = await sb
       .from("messages")
-      .select("id, conversation_id, body, sender_id, created_at, read_at")
+      .select("id, conversation_id, body, sender_id, created_at, read_at, audio_path")
       .in("conversation_id", list.map((c) => c.id))
       .order("created_at", { ascending: false })
       .limit(500);
 
-    const lastByConvo = new Map<string, { body: string; created_at: string; sender_id: string }>();
+    const lastByConvo = new Map<
+      string,
+      { body: string; created_at: string; sender_id: string; audio_path: string | null }
+    >();
     const unreadByConvo = new Map<string, number>();
     for (const m of lastMsgs ?? []) {
       if (!lastByConvo.has(m.conversation_id)) lastByConvo.set(m.conversation_id, m);
@@ -2409,7 +2491,13 @@ export const listConversations = createServerFn({ method: "POST" })
         isRequester: c.requester_id === me,
         lastMessageAt: c.last_message_at,
         unread: unreadByConvo.get(c.id) ?? 0,
-        lastMessage: last ? { body: last.body, createdAt: last.created_at } : null,
+        lastMessage: last
+          ? {
+              body: last.audio_path ? "🎤" : last.body,
+              isVoice: !!last.audio_path,
+              createdAt: last.created_at,
+            }
+          : null,
         person: {
           id: otherId,
           username: p?.username ?? "someone",
@@ -2452,10 +2540,15 @@ export const getConversation = createServerFn({ method: "POST" })
 
     const { data: msgs } = await sb
       .from("messages")
-      .select("id, body, sender_id, created_at, read_at")
+      .select("id, body, sender_id, created_at, read_at, audio_path, audio_duration_ms")
       .eq("conversation_id", convo.id)
       .order("created_at", { ascending: true })
       .limit(300);
+
+    const voiceUrls = await signBucket(
+      "voice-messages",
+      (msgs ?? []).map((m) => m.audio_path),
+    );
 
     await sb
       .from("messages")
@@ -2477,6 +2570,8 @@ export const getConversation = createServerFn({ method: "POST" })
       messages: (msgs ?? []).map((m) => ({
         id: m.id,
         body: m.body,
+        audioUrl: m.audio_path ? (voiceUrls[m.audio_path] ?? null) : null,
+        audioDurationMs: m.audio_duration_ms ?? null,
         createdAt: m.created_at,
         mine: m.sender_id === me,
         readByThem: m.sender_id === me ? !!m.read_at : false,

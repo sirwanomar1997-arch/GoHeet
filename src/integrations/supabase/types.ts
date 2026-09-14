@@ -282,6 +282,8 @@ export type Database = {
       }
       messages: {
         Row: {
+          audio_duration_ms: number | null
+          audio_path: string | null
           body: string
           conversation_id: string
           created_at: string
@@ -290,7 +292,9 @@ export type Database = {
           sender_id: string
         }
         Insert: {
-          body: string
+          audio_duration_ms?: number | null
+          audio_path?: string | null
+          body?: string
           conversation_id: string
           created_at?: string
           id?: string
@@ -298,6 +302,8 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          audio_duration_ms?: number | null
+          audio_path?: string | null
           body?: string
           conversation_id?: string
           created_at?: string
