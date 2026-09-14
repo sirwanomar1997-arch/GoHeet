@@ -1586,17 +1586,17 @@ function CameraPage() {
                     ? startCountdown(timerSec)
                     : void beginRecording()
               }
-              className={`capture-orbit relative grid size-[82px] place-items-center rounded-full transition-transform duration-200 active:scale-95 disabled:opacity-40 ${
+              className={`capture-orbit relative grid size-24 place-items-center rounded-full transition-transform duration-200 active:scale-95 disabled:opacity-40 ${
                 recording && !paused ? "rec-live" : ""
               }`}
             >
               <span
                 className={`capture-face relative overflow-hidden transition-all duration-300 ease-out ${
-                  recording && !paused ? "size-8 rounded-[10px]" : "size-[64px] rounded-full"
+                  recording && !paused ? "size-9 rounded-[11px]" : "size-20 rounded-full"
                 }`}
               >
                 {!recording || paused ? (
-                  <span className="capture-shine pointer-events-none absolute inset-x-2 top-1.5 h-5 rounded-full" />
+                  <span className="capture-shine pointer-events-none absolute inset-x-3 top-1.5 h-7 rounded-full" />
                 ) : null}
               </span>
               {recording && !paused ? (
