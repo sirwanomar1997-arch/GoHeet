@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Eye,
+  MessageCircle,
   Repeat,
   Bookmark,
   MoreHorizontal,
@@ -609,7 +610,7 @@ export function MomentStage({
       </div>
 
       {/* Heet flame — separated above the lower rail, bigger symbol + count */}
-      <div className="absolute bottom-[300px] right-1 z-20 flex flex-col items-center gap-2">
+      <div className="absolute bottom-[318px] right-2 z-20 flex w-12 flex-col items-center gap-1">
         <button
           type="button"
           onClick={(e) => {
@@ -626,78 +627,69 @@ export function MomentStage({
           }}
           aria-pressed={liked}
           aria-label={liked ? "Remove your heet" : "Heet this moment"}
-          className="grid size-20 place-items-center rounded-full transition-transform active:scale-90"
+          className="grid size-[72px] place-items-center rounded-full transition-transform active:scale-90"
         >
           <HeetFlame
-            className={`size-20 transition-transform ${heetPop ? "animate-heet-pop" : ""} ${
+            className={`size-[72px] transition-transform ${heetPop ? "animate-heet-pop" : ""} ${
               liked && !heetPop ? "animate-heet-flicker" : ""
             }`}
             filled
             glow={liked || heetPop}
           />
         </button>
-        <span className="font-sans text-[15px] font-bold leading-tight text-foreground">
+        <span className="font-sans text-base font-bold leading-none text-foreground">
           {formatCount(likeCount)}
         </span>
       </div>
 
       {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
-      <div className="absolute bottom-[26px] right-0.5 z-20 flex w-10 flex-col items-center gap-2">
+      <div className="absolute bottom-[24px] right-2 z-20 flex w-12 flex-col items-center gap-2.5">
 
         <RailAction
           label="Views"
           count={formatCount(moment.viewCount)}
-          color="var(--nav-reelz)"
           onClick={() => undefined}
         >
-          <Eye className="size-5" strokeWidth={1.8} />
+          <Eye className="size-7" strokeWidth={1.8} />
         </RailAction>
 
         <RailAction
           label="Comments"
           count={formatCount(moment.commentCount)}
-          color={NEON_BLUE}
           onClick={() => setCommentsOpen(true)}
         >
-          <NeonComment />
+          <MessageCircle className="size-7" strokeWidth={1.8} />
         </RailAction>
 
         <RailAction
           label="Keep this moment"
           active={saved}
-          color={NEON_GREEN}
           onClick={() => saveMutation.mutate()}
         >
-          <Bookmark className="size-5" strokeWidth={1.8} fill={saved ? "currentColor" : "none"} />
+          <Bookmark className="size-7" strokeWidth={1.8} fill={saved ? "currentColor" : "none"} />
         </RailAction>
 
         <RailAction
           label={reposted ? "Remove repost" : "Repost to your profile"}
           active={reposted}
-          color={NEON_VIOLET}
           onClick={() => repostMutation.mutate()}
         >
-          <Repeat className="size-5" strokeWidth={1.9} />
+          <Repeat className="size-7" strokeWidth={1.9} />
         </RailAction>
 
         <RailAction
           label="Send this moment"
-          color={NEON_CYAN}
           onClick={() => setShareOpen(true)}
         >
-          <Send className="size-5 -rotate-12" strokeWidth={1.8} />
+          <Send className="size-7 -rotate-12" strokeWidth={1.8} />
         </RailAction>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More options"
-            className="grid size-8 place-items-center rounded-full"
-            style={{
-              color: NEON_RED,
-              filter: softNeonFilter(NEON_RED),
-            }}
+            className="grid size-9 place-items-center rounded-full text-foreground transition-transform active:scale-90"
           >
-            <MoreHorizontal className="size-5" strokeWidth={2.1} />
+            <MoreHorizontal className="size-7" strokeWidth={2.1} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="top">
@@ -982,79 +974,33 @@ function CommentSheet({
 }
 
 
-/* Neon palette — outlined symbols, each its own colour, dark edge for
-   visibility on bright videos. Counts stay plain white. */
-const NEON_BLUE = "oklch(0.78 0.16 235)";
-const NEON_GREEN = "oklch(0.82 0.19 150)";
-const NEON_VIOLET = "oklch(0.75 0.19 300)";
-const NEON_CYAN = "oklch(0.83 0.14 200)";
-const NEON_RED = "oklch(0.68 0.22 22)";
-const NEON_CORE = NEON_BLUE;
-const NEON_GLOW = NEON_BLUE;
-
-const neonFilter = (glow: string) =>
-  `drop-shadow(0 0 6px ${glow.replace(")", " / 85%)")}) drop-shadow(0 0 2px ${glow.replace(")", " / 65%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
-
-const softNeonFilter = (glow: string) =>
-  `drop-shadow(0 0 3px ${glow.replace(")", " / 55%)")}) drop-shadow(0 1px 1.5px oklch(0 0 0 / 80%))`;
-
-/* Comment: familiar speech bubble silhouette with restrained neon and white dots. */
-function NeonComment() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-5"
-      fill="none"
-      stroke={NEON_BLUE}
-      style={{ color: NEON_BLUE, filter: softNeonFilter(NEON_BLUE) }}
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M20.5 11.3c0 4.1-3.7 7.3-8.4 7.3-1.1 0-2.2-.2-3.2-.5L4.2 20l1.5-4a6.7 6.7 0 0 1-2-4.7C3.7 7.2 7.4 4 12.1 4s8.4 3.2 8.4 7.3Z" />
-      <g fill="var(--foreground)" stroke="var(--foreground)" strokeWidth="0.4">
-        <circle cx="8.6" cy="11.4" r="0.85" />
-        <circle cx="12.1" cy="11.4" r="0.85" />
-        <circle cx="15.6" cy="11.4" r="0.85" />
-      </g>
-    </svg>
-  );
-}
-
 function RailAction({
   label,
   count,
   active,
-  color,
-  activeColor,
   onClick,
   children,
 }: {
   label: string;
   count?: string;
   active?: boolean;
-  color: string;
-  activeColor?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
-  const core = active ? (activeColor ?? color) : color;
   return (
-    <div className="flex w-12 flex-col items-center gap-0.5 bg-transparent">
+    <div className="flex w-12 flex-col items-center gap-1 bg-transparent text-foreground">
       <button
         type="button"
         aria-label={label}
         aria-pressed={active}
         onClick={onClick}
-        className="grid size-7 place-items-center rounded-full bg-transparent shadow-none transition-transform active:scale-90"
-        style={{ color: core, filter: softNeonFilter(core) }}
+        className="grid size-8 place-items-center rounded-full bg-transparent text-foreground shadow-none drop-shadow-[0_1px_2px_var(--background)] transition-transform active:scale-90"
       >
         {children}
       </button>
       {count ? (
         <span
-          className="block w-12 whitespace-nowrap bg-transparent p-0 text-center font-sans text-[14px] font-bold leading-tight text-foreground shadow-none [filter:none]"
+          className="block w-12 whitespace-nowrap bg-transparent p-0 text-center font-sans text-base font-bold leading-none text-foreground drop-shadow-[0_1px_2px_var(--background)]"
         >
           {count}
         </span>
