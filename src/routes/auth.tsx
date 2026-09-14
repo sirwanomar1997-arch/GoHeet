@@ -12,6 +12,7 @@ import { Check, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { setDemoMode } from "@/lib/use-demo-mode";
 import {
   Dialog,
   DialogContent,
@@ -191,6 +192,9 @@ function AuthPage() {
           if (data.session) break;
           await new Promise((r) => setTimeout(r, 50));
         }
+        // Demo content is only an explicit preview choice. A real sign-in must
+        // always open the signed-in account rather than restoring demo mode.
+        setDemoMode(false);
         try {
           // Move first so the home screen paints straight away; refresh cached
           // data in the background instead of holding the user on a blank page.

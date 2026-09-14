@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMe } from "@/lib/use-me";
 import { listNotifications } from "@/lib/reelzy.functions";
 import { HeetFlame } from "./heet-flame";
+import { Button } from "@/components/ui/button";
+import { setDemoMode, useDemoMode } from "@/lib/use-demo-mode";
 
 function ReelzIcon({ className }: { className?: string }) {
   return (
@@ -217,6 +219,7 @@ function useSwipeNav() {
 
 export function AppShell({ children, hideNav = false }: { children: React.ReactNode; hideNav?: boolean }) {
   const swipe = useSwipeNav();
+  const demo = useDemoMode();
   return (
     <div
       className={`min-h-screen touch-pan-y overscroll-none bg-background ${hideNav ? "pb-10" : "pb-24"}`}
@@ -224,6 +227,18 @@ export function AppShell({ children, hideNav = false }: { children: React.ReactN
       onTouchEnd={swipe.onTouchEnd}
     >
       <div className="mx-auto max-w-lg">{children}</div>
+      {demo ? (
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setDemoMode(false)}
+          className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[80] shadow-lg"
+          translate="no"
+          data-no-translate
+        >
+          Exit demo
+        </Button>
+      ) : null}
       {hideNav ? null : <GoHeetNav />}
     </div>
   );

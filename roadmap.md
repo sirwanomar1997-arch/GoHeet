@@ -78,3 +78,5 @@
 
 - [x] Restore smooth two-way scrolling and refresh after two upward videos
 - [x] Show profile videos newest-first in a plain two-column gallery
+- [x] Keep demo scrolling unrestricted and refresh the real feed on the second backward step
+- [x] Make demo mode easy to exit and clear it after real sign-in
