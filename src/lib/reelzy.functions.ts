@@ -624,7 +624,7 @@ async function enforceAuthorStrikes(authorId: string) {
     .in("moderation_state", ["auto_removed", "removed"]);
   const strikes = count ?? 0;
   if (strikes >= 3) {
-    await sb.from("profiles").update({ banned_at: new Date().toISOString() }).eq("id", authorId);
+    await sb.from("profile_moderation").upsert({ user_id: authorId, banned_at: new Date().toISOString(), updated_at: new Date().toISOString() });
     await sb.from("moderation_actions").insert({
       actor_id: null,
       action: "ban_user",
@@ -634,9 +634,8 @@ async function enforceAuthorStrikes(authorId: string) {
     });
   } else if (strikes >= 2) {
     await sb
-      .from("profiles")
-      .update({ suspended_until: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() })
-      .eq("id", authorId);
+      .from("profile_moderation")
+      .upsert({ user_id: authorId, suspended_until: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(), updated_at: new Date().toISOString() });
     await sb.from("moderation_actions").insert({
       actor_id: null,
       action: "suspend_user",
@@ -698,9 +697,9 @@ export const publishMoment = createServerFn({ method: "POST" })
 
     // 0. Banned or suspended accounts cannot publish.
     const { data: authorProfile } = await sb
-      .from("profiles")
+      .from("profile_moderation")
       .select("banned_at, suspended_until")
-      .eq("id", context.userId)
+      .eq("user_id", context.userId)
       .maybeSingle();
     if (authorProfile?.banned_at) throw new Error("This account has been banned for breaking the Community Guidelines.");
     if (authorProfile?.suspended_until && new Date(authorProfile.suspended_until) > new Date()) {
@@ -2230,10 +2229,15 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (!convo) {
       const { data: target } = await sb
         .from("profiles")
-        .select("allow_messages, banned_at, deleted_at")
+        .select("allow_messages")
         .eq("id", other)
         .maybeSingle();
-      if (!target || target.banned_at || target.deleted_at) throw new Error("Person not found.");
+      const { data: targetMod } = await sb
+        .from("profile_moderation")
+        .select("banned_at, deleted_at")
+        .eq("user_id", other)
+        .maybeSingle();
+      if (!target || targetMod?.banned_at || targetMod?.deleted_at) throw new Error("Person not found.");
       const mutual = await areMutualFollows(me, other);
       const setting = (target as { allow_messages?: string }).allow_messages ?? "everyone";
       if (setting === "nobody") throw new Error("This person isn't accepting messages.");
