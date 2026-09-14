@@ -322,7 +322,7 @@ type StudioCategory =
   | "Skin"
   | "Eyes"
   | "Hair"
-  | "Wrinkles"
+  | "Face"
   | "Beard"
   | "Piercings"
   | "Outfits"
@@ -331,7 +331,7 @@ const CATEGORIES: StudioCategory[] = [
   "Skin",
   "Eyes",
   "Hair",
-  "Wrinkles",
+  "Face",
   "Beard",
   "Piercings",
   "Outfits",
