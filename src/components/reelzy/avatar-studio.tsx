@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
+import { ArrowLeft, Ban, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
@@ -14,7 +14,8 @@ import {
   EYE_COLORS,
   HAIR_COLORS,
   OUTFIT_COLORS,
-  WRINKLES,
+  FACE_DETAILS,
+  NO_FACE_DETAIL,
   SKINS,
   STYLE_REFERENCE,
   defaultTraits,
@@ -47,9 +48,9 @@ function describe(t: Traits) {
     `${t.skin.toLowerCase()} skin tone`,
     `${t.eyeColor.toLowerCase()} eyes`,
     t.hair.includes("bald") ? "bald head" : `${t.hair} hairstyle in ${t.hairColor.toLowerCase()}`,
-    t.wrinkles.startsWith("smooth skin")
-      ? "smooth youthful skin with no wrinkles"
-      : `visibly aged skin with ${t.wrinkles}`,
+    t.faceDetail === NO_FACE_DETAIL
+      ? "clear smooth skin with no marks, blemishes or wrinkles"
+      : `skin showing ${t.faceDetail}`,
     t.gender === "Female" || t.beard === "clean shaven" ? "clean shaven face" : `${t.beard} facial hair`,
     t.piercing === "no piercings" ? "no piercings at all" : `wearing a ${t.piercing}`,
 
@@ -76,11 +77,11 @@ function changeLabels(prev: Traits, next: Traits): string[] {
         : `hairstyle is now ${next.hair}, matching the pictured hairstyle exactly in length, shape, parting and texture`,
     );
   if (prev.hairColor !== next.hairColor) out.push(`hair colour is now ${next.hairColor.toLowerCase()}`);
-  if (prev.wrinkles !== next.wrinkles)
+  if (prev.faceDetail !== next.faceDetail)
     out.push(
-      next.wrinkles.startsWith("smooth skin")
-        ? "skin is now smooth and youthful, all wrinkles removed"
-        : `skin is now visibly aged with ${next.wrinkles}, clearly visible`,
+      next.faceDetail === NO_FACE_DETAIL
+        ? "skin is now clear and smooth, remove every freckle, mole, mark and wrinkle"
+        : `skin now clearly shows ${next.faceDetail}, and no other marks or wrinkles`,
     );
   if (prev.beard !== next.beard)
     out.push(
@@ -226,14 +227,42 @@ function PictureGrid({
   opts,
   value,
   onPick,
+  onClear,
+  clearLabel = "None",
+  cleared,
 }: {
   opts: Pic[];
   value: string | string[];
   onPick: (opt: Pic) => void;
+  /** Shows a "none / remove" tile first when provided. */
+  onClear?: () => void;
+  clearLabel?: string;
+  cleared?: boolean;
 }) {
   const isOn = (n: string) => (Array.isArray(value) ? value.includes(n) : value === n);
+  const noneOn = cleared ?? !opts.some((o) => isOn(o.name));
   return (
     <div className="grid grid-cols-4 gap-2.5 pb-6">
+      {onClear ? (
+        <Button
+          type="button"
+          variant="ghost"
+          title={clearLabel}
+          aria-label={clearLabel}
+          aria-pressed={noneOn}
+          onClick={onClear}
+          className={`flex h-auto min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 bg-surface p-0 transition-transform active:scale-95 ${
+            noneOn
+              ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+              : "border-border"
+          }`}
+        >
+          <span className="flex aspect-square w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+            <Ban className="size-6" aria-hidden />
+            <span className="text-[10px] font-semibold uppercase tracking-wide">{clearLabel}</span>
+          </span>
+        </Button>
+      ) : null}
       {opts.map((o) => (
         <Button
           key={o.name}
@@ -293,7 +322,7 @@ type StudioCategory =
   | "Skin"
   | "Eyes"
   | "Hair"
-  | "Wrinkles"
+  | "Face"
   | "Beard"
   | "Piercings"
   | "Outfits"
@@ -302,7 +331,7 @@ const CATEGORIES: StudioCategory[] = [
   "Skin",
   "Eyes",
   "Hair",
-  "Wrinkles",
+  "Face",
   "Beard",
   "Piercings",
   "Outfits",
@@ -694,15 +723,21 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               opts={hair}
               value={traits.hair}
               onPick={(o) => updateFromPicture({ hair: o.name }, o.sheet, o.index)}
+              onClear={() => update({ hair: "bald" })}
+              clearLabel="No hair"
+              cleared={traits.hair === "bald"}
             />
           </div>
         ) : null}
 
-        {category === "Wrinkles" ? (
+        {category === "Face" ? (
           <PictureGrid
-            opts={WRINKLES}
-            value={traits.wrinkles}
-            onPick={(o) => updateFromPicture({ wrinkles: o.name }, o.sheet, o.index)}
+            opts={FACE_DETAILS}
+            value={traits.faceDetail}
+            onPick={(o) => updateFromPicture({ faceDetail: o.name }, o.sheet, o.index)}
+            onClear={() => update({ faceDetail: NO_FACE_DETAIL })}
+            clearLabel="None"
+            cleared={traits.faceDetail === NO_FACE_DETAIL}
           />
         ) : null}
 
@@ -711,6 +746,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={BEARDS}
             value={traits.beard}
             onPick={(o) => updateFromPicture({ beard: o.name }, o.sheet, o.index)}
+            onClear={() => update({ beard: "clean shaven" })}
+            clearLabel="None"
+            cleared={traits.beard === "clean shaven"}
           />
         ) : null}
 
@@ -719,6 +757,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={piercings}
             value={traits.piercing}
             onPick={(o) => updateFromPicture({ piercing: o.name }, o.sheet, o.index)}
+            onClear={() => update({ piercing: "no piercings" })}
+            clearLabel="None"
+            cleared={traits.piercing === "no piercings"}
           />
         ) : null}
 
@@ -747,6 +788,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={accessories}
             value={traits.accessories.length ? traits.accessories : ["no accessories"]}
             onPick={(o) => toggleAccessory(o)}
+            onClear={() => update({ accessories: [] })}
+            clearLabel="None"
+            cleared={traits.accessories.length === 0}
           />
         ) : null}
 
