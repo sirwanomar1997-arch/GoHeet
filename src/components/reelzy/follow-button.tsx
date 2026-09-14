@@ -62,7 +62,12 @@ export function FollowButton({
   };
 
   return (
-    <div ref={wrapRef} className={`relative ${wrapperClassName}`}>
+    <div
+      ref={wrapRef}
+      className={`relative ${wrapperClassName}`}
+      data-no-translate
+      translate="no"
+    >
       <button
         type="button"
         disabled={busy}
@@ -81,7 +86,9 @@ export function FollowButton({
             : "ember-fill text-primary-foreground"
         } ${className}`}
       >
-        {following ? "Following" : "Follow"}
+        <span key={following ? "following" : "follow"}>
+          {following ? "Following" : "Follow"}
+        </span>
       </button>
       {confirmOpen && following ? (
         <div
