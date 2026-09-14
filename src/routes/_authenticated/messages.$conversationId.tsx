@@ -232,7 +232,11 @@ function ThreadPage() {
                   onPointerUp={holdEnd}
                   onPointerLeave={holdEnd}
                   onPointerCancel={holdEnd}
-                  onDoubleClick={() => pick(m.id, QUICK_REACTIONS[3]!)}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("audio")) return;
+                    if (pickerFor === m.id) return;
+                    pick(m.id, QUICK_REACTIONS[3]!);
+                  }}
                   className={`max-w-[78%] select-none rounded-2xl px-3.5 py-2.5 text-start text-sm ${
                     m.mine
                       ? "ember-fill text-primary-foreground"
