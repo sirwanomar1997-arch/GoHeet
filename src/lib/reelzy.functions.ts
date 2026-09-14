@@ -2491,7 +2491,13 @@ export const listConversations = createServerFn({ method: "POST" })
         isRequester: c.requester_id === me,
         lastMessageAt: c.last_message_at,
         unread: unreadByConvo.get(c.id) ?? 0,
-        lastMessage: last ? { body: last.body, createdAt: last.created_at } : null,
+        lastMessage: last
+          ? {
+              body: last.audio_path ? "🎤" : last.body,
+              isVoice: !!last.audio_path,
+              createdAt: last.created_at,
+            }
+          : null,
         person: {
           id: otherId,
           username: p?.username ?? "someone",
