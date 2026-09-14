@@ -2550,6 +2550,11 @@ export const getConversation = createServerFn({ method: "POST" })
       (msgs ?? []).map((m) => m.audio_path),
     );
 
+    const { data: reactions } = await sb
+      .from("message_reactions")
+      .select("message_id, user_id, emoji")
+      .in("message_id", (msgs ?? []).map((m) => m.id));
+
     await sb
       .from("messages")
       .update({ read_at: new Date().toISOString() })
