@@ -161,7 +161,7 @@ function EditProfilePage() {
         <section className={card}>
           <h2 className="font-display text-base font-semibold">Profile picture</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Use your personal photo or switch back to your avatar anytime.
+            Upload a photo from your phone. It shows on your profile and your moments.
           </p>
           <input
             ref={photoInput}
@@ -170,35 +170,20 @@ function EditProfilePage() {
             className="hidden"
             onChange={(event) => onPhoto(event.target.files?.[0])}
           />
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 flex items-center gap-4">
             <button
               type="button"
-              onClick={() => void chooseImageType("photo")}
-              className={`relative aspect-square overflow-hidden rounded-2xl border-2 bg-surface-raised ${imageType === "photo" ? "border-primary" : "border-border"}`}
+              onClick={() => photoInput.current?.click()}
+              className="relative size-24 overflow-hidden rounded-full border-2 border-border bg-surface-raised"
             >
               {photoPreview ? (
-                <img src={photoPreview} alt="Your personal profile" className="size-full object-cover" />
+                <img src={photoPreview} alt="Your profile picture" className="size-full object-cover" />
               ) : (
-                <span className="grid size-full place-items-center"><Camera className="size-8 text-muted-foreground" /></span>
+                <span className="grid size-full place-items-center"><Camera className="size-7 text-muted-foreground" /></span>
               )}
-              {imageType === "photo" ? <Check className="absolute right-2 top-2 size-5 rounded-full bg-primary p-1 text-primary-foreground" /> : null}
             </button>
-            <button
-              type="button"
-              onClick={() => void chooseImageType("avatar")}
-              disabled={!me?.profile?.avatar_url}
-              className={`relative aspect-square overflow-hidden rounded-2xl border-2 bg-surface-raised disabled:opacity-40 ${imageType === "avatar" ? "border-primary" : "border-border"}`}
-            >
-              {me?.profile?.avatar_url ? <img src={me.profile.avatar_url} alt="Your avatar" className="size-full object-cover" /> : <span className="grid size-full place-items-center"><Sparkles className="size-8 text-muted-foreground" /></span>}
-              {imageType === "avatar" ? <Check className="absolute right-2 top-2 size-5 rounded-full bg-primary p-1 text-primary-foreground" /> : null}
-            </button>
-          </div>
-          <div className="mt-3 flex gap-2">
-            <Button type="button" variant="outline" onClick={() => photoInput.current?.click()} disabled={photoMutation.isPending} className="flex-1">
+            <Button type="button" variant="outline" onClick={() => photoInput.current?.click()} disabled={photoMutation.isPending}>
               <Camera className="size-4" /> {photoMutation.isPending ? "Uploading…" : photoPreview ? "Change photo" : "Add photo"}
-            </Button>
-            <Button asChild type="button" variant="outline" className="flex-1">
-              <Link to="/avatar"><Sparkles className="size-4" /> Edit avatar</Link>
             </Button>
           </div>
         </section>
