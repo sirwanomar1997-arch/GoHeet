@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -259,6 +259,37 @@ export function MomentStage({
     setOffset({ x: 0, y: 0 });
   };
 
+  /* ---- Swipe right on the frame → jump to the creator's profile ---- */
+  const navigate = useNavigate();
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  const onSwipeStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1 || zoomStateRef.current.zoom > 1) {
+      swipeRef.current = null;
+      return;
+    }
+    const t = e.touches[0];
+    if (t) swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Deliberate, quick, mostly-horizontal flick to the right.
+    if (Date.now() - start.t > 800) return;
+    if (dx < 90 || dx < Math.abs(dy) * 1.5) return;
+    void navigate({
+      to: "/u/$username",
+      params: { username: moment.author.username },
+      replace: true,
+    });
+  };
+
 
   const like = useServerFn(toggleLike);
   const save = useServerFn(toggleSave);
@@ -427,6 +458,8 @@ export function MomentStage({
           : "animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
       }
       aria-label={`Moment by ${moment.author.username}`}
+      onTouchStart={onSwipeStart}
+      onTouchEnd={onSwipeEnd}
     >
       <div
         ref={zoomWrapRef}
