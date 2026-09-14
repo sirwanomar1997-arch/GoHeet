@@ -109,6 +109,11 @@ const en: Dict = {
   "msg.react": "React with an emoji",
   "msg.reactOther": "Pick another emoji",
   "msg.closePicker": "Close",
+  "msg.unsend": "Unsend",
+  "msg.unsent": "Message unsent.",
+  "msg.deleteChat": "Delete",
+  "msg.chatDeleted": "Conversation deleted.",
+  "msg.like": "Like with a heart",
 
   "lang.title": "Language",
   "lang.line":
