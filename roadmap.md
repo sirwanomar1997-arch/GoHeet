@@ -74,3 +74,4 @@
 - [x] Make camera editing tools react immediately to one tap
 
 - [x] Make Follow/Following always match the saved relationship
+- [x] Prevent automatic translation from overwriting live Follow/Following state
