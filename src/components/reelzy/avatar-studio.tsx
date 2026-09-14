@@ -723,15 +723,21 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               opts={hair}
               value={traits.hair}
               onPick={(o) => updateFromPicture({ hair: o.name }, o.sheet, o.index)}
+              onClear={() => update({ hair: "bald" })}
+              clearLabel="No hair"
+              cleared={traits.hair === "bald"}
             />
           </div>
         ) : null}
 
-        {category === "Wrinkles" ? (
+        {category === "Face" ? (
           <PictureGrid
-            opts={WRINKLES}
-            value={traits.wrinkles}
-            onPick={(o) => updateFromPicture({ wrinkles: o.name }, o.sheet, o.index)}
+            opts={FACE_DETAILS}
+            value={traits.faceDetail}
+            onPick={(o) => updateFromPicture({ faceDetail: o.name }, o.sheet, o.index)}
+            onClear={() => update({ faceDetail: NO_FACE_DETAIL })}
+            clearLabel="None"
+            cleared={traits.faceDetail === NO_FACE_DETAIL}
           />
         ) : null}
 
@@ -740,6 +746,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={BEARDS}
             value={traits.beard}
             onPick={(o) => updateFromPicture({ beard: o.name }, o.sheet, o.index)}
+            onClear={() => update({ beard: "clean shaven" })}
+            clearLabel="None"
+            cleared={traits.beard === "clean shaven"}
           />
         ) : null}
 
@@ -748,6 +757,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={piercings}
             value={traits.piercing}
             onPick={(o) => updateFromPicture({ piercing: o.name }, o.sheet, o.index)}
+            onClear={() => update({ piercing: "no piercings" })}
+            clearLabel="None"
+            cleared={traits.piercing === "no piercings"}
           />
         ) : null}
 
@@ -776,6 +788,9 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             opts={accessories}
             value={traits.accessories.length ? traits.accessories : ["no accessories"]}
             onPick={(o) => toggleAccessory(o)}
+            onClear={() => update({ accessories: [] })}
+            clearLabel="None"
+            cleared={traits.accessories.length === 0}
           />
         ) : null}
 
