@@ -72,8 +72,6 @@ function SettingsPage() {
   const [allowComments, setAllowComments] = useState("everyone");
   const [allowMessages, setAllowMessages] = useState("everyone");
   const [showFollowing, setShowFollowing] = useState(true);
-  const [showLikes, setShowLikes] = useState(true);
-  const [showSaves, setShowSaves] = useState(false);
   const [showReposts, setShowReposts] = useState(true);
   const [birthDate, setBirthDate] = useState("");
   const [clearing, setClearing] = useState(false);
