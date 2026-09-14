@@ -440,7 +440,8 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
       const next = { ...current, ...patch };
       const unchanged = (Object.keys(patch) as (keyof Traits)[]).every((key) => current[key] === next[key]);
       if (unchanged) return current;
-      void cellDataUrl(sheet, index).then((picture) => queueRender(next, false, picture));
+      const focus = (Object.keys(patch) as string[])[0];
+      void cellDataUrl(sheet, index).then((picture) => queueRender(next, false, picture, focus));
       return next;
     });
   }
