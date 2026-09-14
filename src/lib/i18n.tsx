@@ -106,6 +106,9 @@ const en: Dict = {
   "msg.voicePlay": "Play voice message",
   "msg.voicePause": "Pause voice message",
   "msg.voiceMicDenied": "Allow microphone access to record a voice message.",
+  "msg.react": "React with an emoji",
+  "msg.reactOther": "Pick another emoji",
+  "msg.closePicker": "Close",
 
   "lang.title": "Language",
   "lang.line":
@@ -156,6 +159,9 @@ const sv: Dict = {
   "msg.voicePlay": "Spela upp röstmeddelandet",
   "msg.voicePause": "Pausa röstmeddelandet",
   "msg.voiceMicDenied": "Tillåt mikrofonåtkomst för att spela in ett röstmeddelande.",
+  "msg.react": "Reagera med en emoji",
+  "msg.reactOther": "Välj en annan emoji",
+  "msg.closePicker": "Stäng",
 
   "lang.title": "Språk",
   "lang.line": "GoHeet följer telefonens språk automatiskt. Du kan välja ett annat här.",

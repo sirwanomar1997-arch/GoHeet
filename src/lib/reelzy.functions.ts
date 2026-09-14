@@ -2550,6 +2550,11 @@ export const getConversation = createServerFn({ method: "POST" })
       (msgs ?? []).map((m) => m.audio_path),
     );
 
+    const { data: reactions } = await sb
+      .from("message_reactions")
+      .select("message_id, user_id, emoji")
+      .in("message_id", (msgs ?? []).map((m) => m.id));
+
     await sb
       .from("messages")
       .update({ read_at: new Date().toISOString() })
@@ -2576,8 +2581,55 @@ export const getConversation = createServerFn({ method: "POST" })
         mine: m.sender_id === me,
         readByThem: m.sender_id === me ? !!m.read_at : false,
       })),
+      reactions: (reactions ?? []).map((r) => ({
+        messageId: r.message_id,
+        emoji: r.emoji,
+        mine: r.user_id === me,
+      })),
     };
 
+  });
+
+/** Adds, changes, or removes my emoji reaction on a message in my chat. */
+export const reactToMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { messageId: string; emoji: string | null }) => ({
+    messageId: z.string().uuid().parse(d.messageId),
+    emoji: z
+      .string()
+      .trim()
+      .min(1)
+      .max(16)
+      .nullable()
+      .parse(d.emoji === null ? null : d.emoji),
+  }))
+  .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "message", 60, 60_000);
+    const me = context.userId;
+    const sb = await admin();
+
+    const { data: msg } = await sb
+      .from("messages")
+      .select("id, conversation_id")
+      .eq("id", data.messageId)
+      .maybeSingle();
+    if (!msg) throw new Error("Message not found.");
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b")
+      .eq("id", msg.conversation_id)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+
+    if (data.emoji === null) {
+      await sb.from("message_reactions").delete().eq("message_id", msg.id).eq("user_id", me);
+      return { ok: true, emoji: null as string | null };
+    }
+    const { error } = await sb
+      .from("message_reactions")
+      .upsert({ message_id: msg.id, user_id: me, emoji: data.emoji }, { onConflict: "message_id,user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true, emoji: data.emoji };
   });
 
 export const respondToMessageRequest = createServerFn({ method: "POST" })

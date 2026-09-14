@@ -6,11 +6,15 @@ import { toast } from "sonner";
 import { ArrowLeft, Check, Mic, Send, Trash2, X } from "lucide-react";
 import {
   getConversation,
+  reactToMessage,
   respondToMessageRequest,
   sendMessage,
   sendVoiceMessage,
 } from "@/lib/reelzy.functions";
 import { useI18n } from "@/lib/i18n";
+
+/** Quick reactions offered on long-press; "+" opens the phone's own emoji keyboard. */
+const QUICK_REACTIONS = ["😂", "😍", "😢", "❤️"];
 
 
 export const Route = createFileRoute("/_authenticated/messages/$conversationId")({
@@ -143,6 +147,36 @@ function ThreadPage() {
     else setRecording(false);
   }
 
+  // --- Emoji reactions: hold a message to pick one, "+" opens the phone keyboard. ---
+  const postReaction = useServerFn(reactToMessage);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [customFor, setCustomFor] = useState<string | null>(null);
+  const [customEmoji, setCustomEmoji] = useState("");
+  const holdRef = useRef<number | null>(null);
+
+  const react = useMutation({
+    mutationFn: (v: { messageId: string; emoji: string | null }) => postReaction({ data: v }),
+    onSuccess: () => {
+      setPickerFor(null);
+      setCustomFor(null);
+      setCustomEmoji("");
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function holdStart(messageId: string) {
+    holdRef.current = window.setTimeout(() => setPickerFor(messageId), 400);
+  }
+  function holdEnd() {
+    if (holdRef.current) window.clearTimeout(holdRef.current);
+    holdRef.current = null;
+  }
+  function pick(messageId: string, emoji: string) {
+    const mine = data?.reactions.find((r) => r.messageId === messageId && r.mine);
+    react.mutate({ messageId, emoji: mine?.emoji === emoji ? null : emoji });
+  }
+
   const pending = data?.status === "pending";
   const rejected = data?.status === "rejected";
   const canWrite = data ? data.status === "accepted" || (pending && data.isRequester) : false;
@@ -182,10 +216,24 @@ function ThreadPage() {
           data?.messages.map((m, i) => {
             const lastMine =
               m.mine && !data.messages.slice(i + 1).some((n) => n.mine);
+            const msgReactions = data.reactions.filter((r) => r.messageId === m.id);
+            const myReaction = msgReactions.find((r) => r.mine)?.emoji ?? null;
             return (
               <div key={m.id} className={m.mine ? "flex flex-col items-end" : ""}>
                 <div
-                  className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("msg.react")}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setPickerFor(m.id);
+                  }}
+                  onPointerDown={() => holdStart(m.id)}
+                  onPointerUp={holdEnd}
+                  onPointerLeave={holdEnd}
+                  onPointerCancel={holdEnd}
+                  onDoubleClick={() => pick(m.id, QUICK_REACTIONS[3]!)}
+                  className={`max-w-[78%] select-none rounded-2xl px-3.5 py-2.5 text-start text-sm ${
                     m.mine
                       ? "ember-fill text-primary-foreground"
                       : "border border-border bg-surface"
@@ -211,6 +259,83 @@ function ThreadPage() {
                     m.body
                   )}
                 </div>
+
+                {msgReactions.length ? (
+                  <div className="-mt-1 flex gap-1" data-no-translate>
+                    {msgReactions.map((r, idx) => (
+                      <button
+                        key={`${m.id}-${idx}`}
+                        type="button"
+                        aria-label={t("msg.react")}
+                        onClick={() => r.mine && pick(m.id, r.emoji)}
+                        className="rounded-full border border-border bg-surface px-2 py-0.5 text-sm leading-none shadow-sm"
+                      >
+                        {r.emoji}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {pickerFor === m.id ? (
+                  <div
+                    className={`mt-1 flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-lg ${
+                      m.mine ? "self-end" : "self-start"
+                    }`}
+                    data-no-translate
+                  >
+                    {QUICK_REACTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        aria-label={emoji}
+                        disabled={react.isPending}
+                        onClick={() => pick(m.id, emoji)}
+                        className={`grid size-9 place-items-center rounded-full text-xl ${
+                          myReaction === emoji ? "bg-surface-raised" : ""
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                    {customFor === m.id ? (
+                      <input
+                        autoFocus
+                        value={customEmoji}
+                        maxLength={8}
+                        aria-label={t("msg.reactOther")}
+                        onChange={(e) => {
+                          const v = e.target.value.trim();
+                          setCustomEmoji(v);
+                          if (v) pick(m.id, v);
+                        }}
+                        className="h-9 w-16 rounded-full border border-border bg-background px-2 text-center text-xl outline-none"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={t("msg.reactOther")}
+                        onClick={() => {
+                          setCustomFor(m.id);
+                          setCustomEmoji("");
+                        }}
+                        className="grid size-9 place-items-center rounded-full border border-border text-lg"
+                      >
+                        +
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={t("msg.closePicker")}
+                      onClick={() => {
+                        setPickerFor(null);
+                        setCustomFor(null);
+                      }}
+                      className="grid size-9 place-items-center rounded-full text-muted-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : null}
                 {lastMine ? (
                   <span className="mt-1 pe-1 text-[11px] text-muted-foreground">
                     {m.readByThem ? t("msg.read") : t("msg.sent")}
