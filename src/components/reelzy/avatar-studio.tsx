@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
+import { ArrowLeft, Ban, Camera, RefreshCw, Sparkles, SwitchCamera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveAvatar } from "@/lib/reelzy.functions";
 import { useMe } from "@/lib/use-me";
@@ -14,7 +14,8 @@ import {
   EYE_COLORS,
   HAIR_COLORS,
   OUTFIT_COLORS,
-  WRINKLES,
+  FACE_DETAILS,
+  NO_FACE_DETAIL,
   SKINS,
   STYLE_REFERENCE,
   defaultTraits,
