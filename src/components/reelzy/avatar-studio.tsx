@@ -584,10 +584,15 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
               variant="ghost"
               onClick={() => {
                 runRef.current++;
+                setBusy(false);
+                // Editing an existing avatar: leave without saving, straight back.
+                if (me.data?.profile?.avatar_url) {
+                  onSkip?.();
+                  return;
+                }
                 setGender(null);
                 setFrame(null);
                 finalFrameRef.current = null;
-                setBusy(false);
               }}
               className="rounded-full bg-background/30 text-foreground backdrop-blur"
               aria-label="Back"
