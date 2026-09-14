@@ -119,15 +119,14 @@ export const adminAction = createServerFn({ method: "POST" })
         break;
       case "suspend_user":
         await sb
-          .from("profiles")
-          .update({ suspended_until: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() })
-          .eq("id", data.targetId);
+          .from("profile_moderation")
+          .upsert({ user_id: data.targetId, suspended_until: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(), updated_at: new Date().toISOString() });
         break;
       case "ban_user":
-        await sb.from("profiles").update({ banned_at: new Date().toISOString() }).eq("id", data.targetId);
+        await sb.from("profile_moderation").upsert({ user_id: data.targetId, banned_at: new Date().toISOString(), updated_at: new Date().toISOString() });
         break;
       case "reinstate_user":
-        await sb.from("profiles").update({ banned_at: null, suspended_until: null }).eq("id", data.targetId);
+        await sb.from("profile_moderation").upsert({ user_id: data.targetId, banned_at: null, suspended_until: null, updated_at: new Date().toISOString() });
         break;
       case "dismiss_report":
         break;
@@ -165,12 +164,23 @@ export const adminSearchPeople = createServerFn({ method: "POST" })
     const term = data.q.replace(/[%_]/g, "");
     let q = sb
       .from("profiles")
-      .select("id, username, display_name, moment_count, follower_count, banned_at, suspended_until, created_at")
+      .select("id, username, display_name, moment_count, follower_count, created_at")
       .order("created_at", { ascending: false })
       .limit(30);
     if (term) q = q.or(`username.ilike.%${term}%,display_name.ilike.%${term}%`);
     const { data: people } = await q;
-    return { people: people ?? [] };
+    const ids = (people ?? []).map((p) => p.id);
+    const { data: mods } = ids.length
+      ? await sb.from("profile_moderation").select("user_id, banned_at, suspended_until").in("user_id", ids)
+      : { data: [] as { user_id: string; banned_at: string | null; suspended_until: string | null }[] };
+    const modById = new Map((mods ?? []).map((m) => [m.user_id, m]));
+    return {
+      people: (people ?? []).map((p) => ({
+        ...p,
+        banned_at: modById.get(p.id)?.banned_at ?? null,
+        suspended_until: modById.get(p.id)?.suspended_until ?? null,
+      })),
+    };
   });
 
 export const adminModerationLog = createServerFn({ method: "POST" })

@@ -657,6 +657,41 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_moderation: {
+        Row: {
+          banned_at: string | null
+          deleted_at: string | null
+          deletion_requested_at: string | null
+          suspended_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banned_at?: string | null
+          deleted_at?: string | null
+          deletion_requested_at?: string | null
+          suspended_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banned_at?: string | null
+          deleted_at?: string | null
+          deletion_requested_at?: string | null
+          suspended_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_moderation_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_private: {
         Row: {
           birth_date: string
@@ -688,11 +723,8 @@ export type Database = {
           allow_comments: string
           allow_messages: string
           avatar_url: string | null
-          banned_at: string | null
           bio: string | null
           created_at: string
-          deleted_at: string | null
-          deletion_requested_at: string | null
           discoverable: boolean
           display_name: string | null
           follower_count: number
@@ -707,7 +739,6 @@ export type Database = {
           show_reposts: boolean
           show_saves: boolean
           social_links: Json
-          suspended_until: string | null
           total_likes: number
           total_views: number
           updated_at: string
@@ -718,11 +749,8 @@ export type Database = {
           allow_comments?: string
           allow_messages?: string
           avatar_url?: string | null
-          banned_at?: string | null
           bio?: string | null
           created_at?: string
-          deleted_at?: string | null
-          deletion_requested_at?: string | null
           discoverable?: boolean
           display_name?: string | null
           follower_count?: number
@@ -737,7 +765,6 @@ export type Database = {
           show_reposts?: boolean
           show_saves?: boolean
           social_links?: Json
-          suspended_until?: string | null
           total_likes?: number
           total_views?: number
           updated_at?: string
@@ -748,11 +775,8 @@ export type Database = {
           allow_comments?: string
           allow_messages?: string
           avatar_url?: string | null
-          banned_at?: string | null
           bio?: string | null
           created_at?: string
-          deleted_at?: string | null
-          deletion_requested_at?: string | null
           discoverable?: boolean
           display_name?: string | null
           follower_count?: number
@@ -767,7 +791,6 @@ export type Database = {
           show_reposts?: boolean
           show_saves?: boolean
           social_links?: Json
-          suspended_until?: string | null
           total_likes?: number
           total_views?: number
           updated_at?: string
