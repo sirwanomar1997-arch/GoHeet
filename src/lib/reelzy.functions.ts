@@ -2531,10 +2531,15 @@ export const getConversation = createServerFn({ method: "POST" })
 
     const { data: msgs } = await sb
       .from("messages")
-      .select("id, body, sender_id, created_at, read_at")
+      .select("id, body, sender_id, created_at, read_at, audio_path, audio_duration_ms")
       .eq("conversation_id", convo.id)
       .order("created_at", { ascending: true })
       .limit(300);
+
+    const voiceUrls = await signBucket(
+      "voice-messages",
+      (msgs ?? []).map((m) => m.audio_path),
+    );
 
     await sb
       .from("messages")
