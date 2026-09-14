@@ -373,7 +373,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
   );
 
   const queueRender = useCallback(
-    (next: Traits, fresh = false, picture: string | null = null) => {
+    (next: Traits, fresh = false, picture: string | null = null, focus?: string) => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         void (async () => {
@@ -385,7 +385,7 @@ export function AvatarStudio({ onDone, onSkip }: { onDone: () => void; onSkip?: 
             void generate(buildPrompt(next, seed), null, style);
             return;
           }
-          const prompt = picture ? buildPictureEditPrompt(next, changes) : buildEditPrompt(next, changes);
+          const prompt = picture ? buildPictureEditPrompt(next, changes, focus) : buildEditPrompt(next, changes);
           void generate(prompt, base, picture);
         })();
       }, fresh ? 0 : 700);
