@@ -33,6 +33,7 @@ import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/
 import { Route as ApiGenerateAvatarRouteImport } from './routes/api/generate-avatar'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
 import { Route as AuthenticatedMessagesConversationIdRouteImport } from './routes/_authenticated/messages.$conversationId'
+import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 import { Route as AuthenticatedUUsernameIndexRouteImport } from './routes/_authenticated/u.$username.index'
 import { Route as AuthenticatedUUsernameFollowersRouteImport } from './routes/_authenticated/u.$username.followers'
 import { Route as AuthenticatedUUsernameFollowingRouteImport } from './routes/_authenticated/u.$username.following'
@@ -158,23 +159,28 @@ const AuthenticatedMessagesConversationIdRoute =
     path: '/$conversationId',
     getParentRoute: () => AuthenticatedMessagesRoute,
   } as any)
+const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedUUsernameIndexRoute =
   AuthenticatedUUsernameIndexRouteImport.update({
-    id: '/u/$username/',
-    path: '/u/$username/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedUUsernameRoute,
   } as any)
 const AuthenticatedUUsernameFollowersRoute =
   AuthenticatedUUsernameFollowersRouteImport.update({
-    id: '/u/$username/followers',
-    path: '/u/$username/followers',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/followers',
+    path: '/followers',
+    getParentRoute: () => AuthenticatedUUsernameRoute,
   } as any)
 const AuthenticatedUUsernameFollowingRoute =
   AuthenticatedUUsernameFollowingRouteImport.update({
-    id: '/u/$username/following',
-    path: '/u/$username/following',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/following',
+    path: '/following',
+    getParentRoute: () => AuthenticatedUUsernameRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
+  '/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
   '/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
   '/u/$username/following': typeof AuthenticatedUUsernameFollowingRoute
   '/u/$username/': typeof AuthenticatedUUsernameIndexRoute
@@ -259,6 +266,7 @@ export interface FileRoutesById {
   '/api/generate-avatar': typeof ApiGenerateAvatarRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_authenticated/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
+  '/_authenticated/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
   '/_authenticated/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
   '/_authenticated/u/$username/following': typeof AuthenticatedUUsernameFollowingRoute
   '/_authenticated/u/$username/': typeof AuthenticatedUUsernameIndexRoute
@@ -289,6 +297,7 @@ export interface FileRouteTypes {
     | '/api/generate-avatar'
     | '/legal/$doc'
     | '/messages/$conversationId'
+    | '/u/$username'
     | '/u/$username/followers'
     | '/u/$username/following'
     | '/u/$username/'
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/api/generate-avatar'
     | '/legal/$doc'
     | '/_authenticated/messages/$conversationId'
+    | '/_authenticated/u/$username'
     | '/_authenticated/u/$username/followers'
     | '/_authenticated/u/$username/following'
     | '/_authenticated/u/$username/'
@@ -530,26 +540,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesConversationIdRouteImport
       parentRoute: typeof AuthenticatedMessagesRoute
     }
+    '/_authenticated/u/$username': {
+      id: '/_authenticated/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof AuthenticatedUUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/u/$username/': {
       id: '/_authenticated/u/$username/'
-      path: '/u/$username'
+      path: '/'
       fullPath: '/u/$username/'
       preLoaderRoute: typeof AuthenticatedUUsernameIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedUUsernameRoute
     }
     '/_authenticated/u/$username/followers': {
       id: '/_authenticated/u/$username/followers'
-      path: '/u/$username/followers'
+      path: '/followers'
       fullPath: '/u/$username/followers'
       preLoaderRoute: typeof AuthenticatedUUsernameFollowersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedUUsernameRoute
     }
     '/_authenticated/u/$username/following': {
       id: '/_authenticated/u/$username/following'
-      path: '/u/$username/following'
+      path: '/following'
       fullPath: '/u/$username/following'
       preLoaderRoute: typeof AuthenticatedUUsernameFollowingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedUUsernameRoute
     }
   }
 }
@@ -566,6 +583,24 @@ const AuthenticatedMessagesRouteChildren: AuthenticatedMessagesRouteChildren = {
 const AuthenticatedMessagesRouteWithChildren =
   AuthenticatedMessagesRoute._addFileChildren(
     AuthenticatedMessagesRouteChildren,
+  )
+
+interface AuthenticatedUUsernameRouteChildren {
+  AuthenticatedUUsernameFollowersRoute: typeof AuthenticatedUUsernameFollowersRoute
+  AuthenticatedUUsernameFollowingRoute: typeof AuthenticatedUUsernameFollowingRoute
+  AuthenticatedUUsernameIndexRoute: typeof AuthenticatedUUsernameIndexRoute
+}
+
+const AuthenticatedUUsernameRouteChildren: AuthenticatedUUsernameRouteChildren =
+  {
+    AuthenticatedUUsernameFollowersRoute: AuthenticatedUUsernameFollowersRoute,
+    AuthenticatedUUsernameFollowingRoute: AuthenticatedUUsernameFollowingRoute,
+    AuthenticatedUUsernameIndexRoute: AuthenticatedUUsernameIndexRoute,
+  }
+
+const AuthenticatedUUsernameRouteWithChildren =
+  AuthenticatedUUsernameRoute._addFileChildren(
+    AuthenticatedUUsernameRouteChildren,
   )
 
 interface AuthenticatedRouteRouteChildren {
@@ -586,9 +621,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedShareLaterRoute: typeof AuthenticatedShareLaterRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
-  AuthenticatedUUsernameFollowersRoute: typeof AuthenticatedUUsernameFollowersRoute
-  AuthenticatedUUsernameFollowingRoute: typeof AuthenticatedUUsernameFollowingRoute
-  AuthenticatedUUsernameIndexRoute: typeof AuthenticatedUUsernameIndexRoute
+  AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -609,9 +642,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedShareLaterRoute: AuthenticatedShareLaterRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
-  AuthenticatedUUsernameFollowersRoute: AuthenticatedUUsernameFollowersRoute,
-  AuthenticatedUUsernameFollowingRoute: AuthenticatedUUsernameFollowingRoute,
-  AuthenticatedUUsernameIndexRoute: AuthenticatedUUsernameIndexRoute,
+  AuthenticatedUUsernameRoute: AuthenticatedUUsernameRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
