@@ -2469,7 +2469,10 @@ export const listConversations = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(500);
 
-    const lastByConvo = new Map<string, { body: string; created_at: string; sender_id: string }>();
+    const lastByConvo = new Map<
+      string,
+      { body: string; created_at: string; sender_id: string; audio_path: string | null }
+    >();
     const unreadByConvo = new Map<string, number>();
     for (const m of lastMsgs ?? []) {
       if (!lastByConvo.has(m.conversation_id)) lastByConvo.set(m.conversation_id, m);
