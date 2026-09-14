@@ -227,14 +227,42 @@ function PictureGrid({
   opts,
   value,
   onPick,
+  onClear,
+  clearLabel = "None",
+  cleared,
 }: {
   opts: Pic[];
   value: string | string[];
   onPick: (opt: Pic) => void;
+  /** Shows a "none / remove" tile first when provided. */
+  onClear?: () => void;
+  clearLabel?: string;
+  cleared?: boolean;
 }) {
   const isOn = (n: string) => (Array.isArray(value) ? value.includes(n) : value === n);
+  const noneOn = cleared ?? !opts.some((o) => isOn(o.name));
   return (
     <div className="grid grid-cols-4 gap-2.5 pb-6">
+      {onClear ? (
+        <Button
+          type="button"
+          variant="ghost"
+          title={clearLabel}
+          aria-label={clearLabel}
+          aria-pressed={noneOn}
+          onClick={onClear}
+          className={`flex h-auto min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 bg-surface p-0 transition-transform active:scale-95 ${
+            noneOn
+              ? "border-primary shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+              : "border-border"
+          }`}
+        >
+          <span className="flex aspect-square w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+            <Ban className="size-6" aria-hidden />
+            <span className="text-[10px] font-semibold uppercase tracking-wide">{clearLabel}</span>
+          </span>
+        </Button>
+      ) : null}
       {opts.map((o) => (
         <Button
           key={o.name}
