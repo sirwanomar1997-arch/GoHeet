@@ -167,6 +167,11 @@ const sv: Dict = {
   "msg.react": "Reagera med en emoji",
   "msg.reactOther": "Välj en annan emoji",
   "msg.closePicker": "Stäng",
+  "msg.unsend": "Ångra sändning",
+  "msg.unsent": "Meddelandet togs bort.",
+  "msg.deleteChat": "Radera",
+  "msg.chatDeleted": "Konversationen raderades.",
+  "msg.like": "Gilla med ett hjärta",
 
   "lang.title": "Språk",
   "lang.line": "GoHeet följer telefonens språk automatiskt. Du kan välja ett annat här.",
