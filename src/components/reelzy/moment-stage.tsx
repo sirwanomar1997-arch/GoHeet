@@ -259,6 +259,37 @@ export function MomentStage({
     setOffset({ x: 0, y: 0 });
   };
 
+  /* ---- Swipe right on the frame → jump to the creator's profile ---- */
+  const navigate = useNavigate();
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  const onSwipeStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1 || zoomStateRef.current.zoom > 1) {
+      swipeRef.current = null;
+      return;
+    }
+    const t = e.touches[0];
+    if (t) swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Deliberate, quick, mostly-horizontal flick to the right.
+    if (Date.now() - start.t > 800) return;
+    if (dx < 90 || dx < Math.abs(dy) * 1.5) return;
+    void navigate({
+      to: "/u/$username",
+      params: { username: moment.author.username },
+      replace: true,
+    });
+  };
+
 
   const like = useServerFn(toggleLike);
   const save = useServerFn(toggleSave);
