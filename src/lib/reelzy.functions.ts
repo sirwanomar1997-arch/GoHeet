@@ -2632,6 +2632,59 @@ export const reactToMessage = createServerFn({ method: "POST" })
     return { ok: true, emoji: data.emoji };
   });
 
+/** Unsends my own message so nobody in the chat can see it anymore. */
+export const unsendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { messageId: string }) => ({
+    messageId: z.string().uuid().parse(d.messageId),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: msg } = await sb
+      .from("messages")
+      .select("id, sender_id, audio_path, unsent_at")
+      .eq("id", data.messageId)
+      .maybeSingle();
+    if (!msg) throw new Error("Message not found.");
+    if (msg.sender_id !== me) throw new Error("You can only unsend your own messages.");
+    if (msg.unsent_at) return { ok: true };
+
+    const { error } = await sb
+      .from("messages")
+      .update({ unsent_at: new Date().toISOString() })
+      .eq("id", msg.id);
+    if (error) throw new Error(error.message);
+    if (msg.audio_path) await sb.storage.from("voice-messages").remove([msg.audio_path]);
+    await sb.from("message_reactions").delete().eq("message_id", msg.id);
+    return { ok: true };
+  });
+
+/** Removes a conversation from my own message list. */
+export const deleteConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { conversationId: string }) => ({
+    conversationId: z.string().uuid().parse(d.conversationId),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+    const { error } = await sb
+      .from("conversation_hides")
+      .upsert(
+        { conversation_id: convo.id, user_id: me, hidden_at: new Date().toISOString() },
+        { onConflict: "conversation_id,user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const respondToMessageRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { conversationId: string; accept: boolean }) => ({
