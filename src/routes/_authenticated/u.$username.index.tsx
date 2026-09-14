@@ -617,6 +617,17 @@ function ProfilePage() {
                         ) : null}
                         <span className="stage-vignette absolute inset-0" aria-hidden />
                         <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
+                          <HeetFlame className="size-3.5" glow />
+                          <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
+                            {formatCount(m.likeCount)}
+                          </span>
+                        </span>
+                        {m.kind !== "photo" ? (
+                          <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
+                            <Play className="size-3 fill-current" />
+                          </span>
+                        ) : null}
+                        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
                           <Eye
                             className="size-3.5"
                             style={{
@@ -626,21 +637,6 @@ function ProfilePage() {
                           />
                           <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
                             {formatCount(m.viewCount)}
-                          </span>
-                        </span>
-                        {m.kind !== "photo" ? (
-                          <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
-                            <Play className="size-3 fill-current" />
-                          </span>
-                        ) : null}
-                        <span className="absolute inset-x-0 bottom-0 p-2.5">
-                          {m.caption ? (
-                            <span className="line-clamp-1 block font-display text-[13px] font-semibold leading-snug tracking-tight" data-no-translate>
-                              {m.caption}
-                            </span>
-                          ) : null}
-                          <span className="data-figure mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <span className="text-primary">{formatCount(m.likeCount)} heets</span>
                           </span>
                         </span>
                       </button>
