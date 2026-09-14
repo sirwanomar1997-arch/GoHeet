@@ -233,10 +233,9 @@ function ProfilePage() {
                 <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       setSafetyOpen(false);
-                      await report({ data: { targetType: "user", targetId: p.id, category: "harassment" } });
-                      toast.success("Reported to the safety team.");
+                      setReportOpen(true);
                     }}
                     className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
                   >
