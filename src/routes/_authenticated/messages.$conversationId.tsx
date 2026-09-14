@@ -216,10 +216,24 @@ function ThreadPage() {
           data?.messages.map((m, i) => {
             const lastMine =
               m.mine && !data.messages.slice(i + 1).some((n) => n.mine);
+            const msgReactions = data.reactions.filter((r) => r.messageId === m.id);
+            const myReaction = msgReactions.find((r) => r.mine)?.emoji ?? null;
             return (
               <div key={m.id} className={m.mine ? "flex flex-col items-end" : ""}>
                 <div
-                  className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("msg.react")}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setPickerFor(m.id);
+                  }}
+                  onPointerDown={() => holdStart(m.id)}
+                  onPointerUp={holdEnd}
+                  onPointerLeave={holdEnd}
+                  onPointerCancel={holdEnd}
+                  onDoubleClick={() => pick(m.id, QUICK_REACTIONS[3]!)}
+                  className={`max-w-[78%] select-none rounded-2xl px-3.5 py-2.5 text-start text-sm ${
                     m.mine
                       ? "ember-fill text-primary-foreground"
                       : "border border-border bg-surface"
