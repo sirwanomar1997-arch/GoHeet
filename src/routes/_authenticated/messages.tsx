@@ -249,7 +249,8 @@ function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) 
           {chat.unread}
         </span>
       ) : null}
-    </Link>
+      </Link>
+    </div>
   );
 }
 
