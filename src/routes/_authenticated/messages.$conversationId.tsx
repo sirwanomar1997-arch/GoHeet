@@ -115,7 +115,24 @@ function ThreadPage() {
                   }`}
                   data-no-translate
                 >
-                  {m.body}
+                  {m.audioUrl ? (
+                    <span className="flex flex-col gap-1">
+                      <audio
+                        src={m.audioUrl}
+                        controls
+                        preload="none"
+                        aria-label={t("msg.voiceNote")}
+                        className="h-10 w-[220px] max-w-full"
+                      />
+                      {m.audioDurationMs ? (
+                        <span className="text-[11px] opacity-80">
+                          {Math.max(1, Math.round(m.audioDurationMs / 1000))}s
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    m.body
+                  )}
                 </div>
                 {lastMine ? (
                   <span className="mt-1 pe-1 text-[11px] text-muted-foreground">
