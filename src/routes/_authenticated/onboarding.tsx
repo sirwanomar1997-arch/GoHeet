@@ -65,7 +65,7 @@ function Onboarding() {
     mutationFn: () => finish({ data: { username, displayName, birthDate } }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["me"] });
-      await navigate({ to: "/avatar" });
+      await navigate({ to: "/edit-profile" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
