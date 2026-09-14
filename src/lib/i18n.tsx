@@ -97,6 +97,15 @@ const en: Dict = {
   "msg.sent": "Sent",
   "msg.read": "Read",
   "msg.delivered": "Delivered",
+  "msg.voiceRecord": "Record a voice message",
+  "msg.voiceRecording": "Recording…",
+  "msg.voiceStop": "Stop recording",
+  "msg.voiceSend": "Send voice message",
+  "msg.voiceDelete": "Delete recording",
+  "msg.voiceNote": "Voice message",
+  "msg.voicePlay": "Play voice message",
+  "msg.voicePause": "Pause voice message",
+  "msg.voiceMicDenied": "Allow microphone access to record a voice message.",
 
   "lang.title": "Language",
   "lang.line":
