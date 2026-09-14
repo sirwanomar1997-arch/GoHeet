@@ -5,8 +5,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
-import { getProfile, getFeed, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { getProfile, getFeed, toggleBlock, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { FollowButton } from "@/components/reelzy/follow-button";
+import { ProfileReportSheet } from "@/components/reelzy/profile-report-sheet";
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoProfile } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
@@ -76,9 +77,10 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const demo = useDemoMode();
   const fetchProfile = useServerFn(getProfile);
-  const report = useServerFn(submitReport);
+  
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageBody, setMessageBody] = useState("");
@@ -231,10 +233,9 @@ function ProfilePage() {
                 <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl">
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       setSafetyOpen(false);
-                      await report({ data: { targetType: "user", targetId: p.id, category: "harassment" } });
-                      toast.success("Reported to the safety team.");
+                      setReportOpen(true);
                     }}
                     className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors hover:bg-surface"
                   >
@@ -707,6 +708,15 @@ function ProfilePage() {
         title={data.isSelf ? "Share your profile" : "Share this profile"}
         qr
       />
+
+      {!data.isSelf ? (
+        <ProfileReportSheet
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          userId={p.id}
+          username={p.username}
+        />
+      ) : null}
     </AppShell>
   );
 }
