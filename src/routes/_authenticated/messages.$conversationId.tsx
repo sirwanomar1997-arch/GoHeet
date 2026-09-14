@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Send, X } from "lucide-react";
+import { ArrowLeft, Check, Mic, Send, Trash2, X } from "lucide-react";
 import {
   getConversation,
   respondToMessageRequest,
   sendMessage,
+  sendVoiceMessage,
 } from "@/lib/reelzy.functions";
 import { useI18n } from "@/lib/i18n";
 
