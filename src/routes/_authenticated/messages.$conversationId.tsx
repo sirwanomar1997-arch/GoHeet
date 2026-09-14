@@ -182,6 +182,23 @@ function ThreadPage() {
           }}
           className="sticky bottom-0 flex items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
         >
+          {recording ? (
+            <div className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+              <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
+              <span className="text-sm font-semibold">{t("msg.voiceRecording")}</span>
+              <span className="text-sm tabular-nums text-muted-foreground">
+                {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+              </span>
+              <button
+                type="button"
+                aria-label={t("msg.voiceDelete")}
+                onClick={() => stopRecording(false)}
+                className="ms-auto grid size-9 place-items-center rounded-xl border border-border"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          ) : (
           <textarea
             value={body}
             rows={1}
