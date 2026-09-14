@@ -67,6 +67,82 @@ function ThreadPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // --- Voice messages: record with the microphone, send as an audio note. ---
+  const postVoice = useServerFn(sendVoiceMessage);
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const keepRef = useRef(true);
+  const startedAtRef = useRef(0);
+
+  const voice = useMutation({
+    mutationFn: (v: { audioBase64: string; mimeType: string; durationMs: number }) =>
+      postVoice({ data: { conversationId, ...v } }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    if (!recording) return;
+    const id = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [recording]);
+
+  async function startRecording() {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast.error(t("msg.voiceMicDenied"));
+      return;
+    }
+    const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+    const rec = new MediaRecorder(stream, { mimeType: mime });
+    chunksRef.current = [];
+    keepRef.current = true;
+    rec.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    rec.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const durationMs = Date.now() - startedAtRef.current;
+      const blob = new Blob(chunksRef.current, { type: mime });
+      chunksRef.current = [];
+      setRecording(false);
+      setElapsed(0);
+      if (!keepRef.current) return;
+      if (durationMs < 700 || blob.size < 1024) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = String(reader.result).split(",")[1] ?? "";
+        voice.mutate({ audioBase64: base64, mimeType: mime, durationMs });
+      };
+      reader.readAsDataURL(blob);
+    };
+    recorderRef.current = rec;
+    startedAtRef.current = Date.now();
+    setElapsed(0);
+    setRecording(true);
+    rec.start();
+    // Keep voice notes short so they upload quickly on mobile networks.
+    window.setTimeout(() => {
+      if (recorderRef.current === rec && rec.state === "recording") rec.stop();
+    }, 120_000);
+  }
+
+  function stopRecording(keep: boolean) {
+    keepRef.current = keep;
+    const rec = recorderRef.current;
+    if (rec && rec.state !== "inactive") rec.stop();
+    else setRecording(false);
+  }
+
   const pending = data?.status === "pending";
   const rejected = data?.status === "rejected";
   const canWrite = data ? data.status === "accepted" || (pending && data.isRequester) : false;
