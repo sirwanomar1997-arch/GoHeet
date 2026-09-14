@@ -1430,6 +1430,74 @@ export const removeFollower = createServerFn({ method: "POST" })
   });
 
 
+/**
+ * List everyone a profile follows (newest first). Hidden for other people when
+ * the profile owner turned "show following" off.
+ */
+export const listFollowing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { username: string }) => ({
+    username: usernameSchema.parse(d.username),
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("id, username, show_following")
+      .ilike("username", data.username)
+      .maybeSingle();
+    if (!profile) return { people: [] as FollowPerson[], isSelf: false, hidden: false };
+    const isSelf = profile.id === context.userId;
+    if (!isSelf && profile.show_following === false) {
+      return { people: [] as FollowPerson[], isSelf, hidden: true };
+    }
+
+    const { data: rows } = await context.supabase
+      .from("follows")
+      .select("following_id, created_at")
+      .eq("follower_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const ids = (rows ?? []).map((r) => r.following_id);
+    if (ids.length === 0) return { people: [] as FollowPerson[], isSelf, hidden: false };
+
+    const { data: profiles } = await context.supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, personal_photo_url, profile_image_type, follower_count")
+      .in("id", ids);
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+    const { data: myFollows } = await context.supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", context.userId)
+      .in("following_id", ids);
+    const followingSet = new Set((myFollows ?? []).map((f) => f.following_id));
+
+    const paths = (profiles ?? []).map((p) =>
+      p.profile_image_type === "photo" && p.personal_photo_url ? p.personal_photo_url : p.avatar_url,
+    );
+    const signed = await signAvatars(paths);
+
+    const people: FollowPerson[] = ids
+      .map((id) => {
+        const p = byId.get(id);
+        if (!p) return null;
+        const path =
+          p.profile_image_type === "photo" && p.personal_photo_url ? p.personal_photo_url : p.avatar_url;
+        return {
+          id: p.id,
+          username: p.username,
+          displayName: p.display_name,
+          avatarUrl: path ? (signed[path] ?? null) : null,
+          followerCount: p.follower_count,
+          isFollowing: followingSet.has(p.id),
+        };
+      })
+      .filter((p): p is FollowPerson => p !== null);
+
+    return { people, isSelf, hidden: false };
+  });
+
 export const listComments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { momentId: string }) => ({ momentId: z.string().uuid().parse(d.momentId) }))
