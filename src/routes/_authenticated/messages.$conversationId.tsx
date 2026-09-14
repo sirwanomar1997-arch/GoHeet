@@ -327,6 +327,16 @@ function ThreadPage() {
                         +
                       </button>
                     )}
+                    {m.mine ? (
+                      <button
+                        type="button"
+                        disabled={unsend.isPending}
+                        onClick={() => unsend.mutate(m.id)}
+                        className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-destructive"
+                      >
+                        <Trash2 className="size-3.5" /> {t("msg.unsend")}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       aria-label={t("msg.closePicker")}
