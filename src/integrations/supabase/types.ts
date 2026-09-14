@@ -197,6 +197,38 @@ export type Database = {
           },
         ]
       }
+      conversation_hides: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          hidden_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          hidden_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          hidden_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_hides_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -322,6 +354,7 @@ export type Database = {
           id: string
           read_at: string | null
           sender_id: string
+          unsent_at: string | null
         }
         Insert: {
           audio_duration_ms?: number | null
@@ -332,6 +365,7 @@ export type Database = {
           id?: string
           read_at?: string | null
           sender_id: string
+          unsent_at?: string | null
         }
         Update: {
           audio_duration_ms?: number | null
@@ -342,6 +376,7 @@ export type Database = {
           id?: string
           read_at?: string | null
           sender_id?: string
+          unsent_at?: string | null
         }
         Relationships: [
           {

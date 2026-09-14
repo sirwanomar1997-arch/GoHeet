@@ -2451,8 +2451,17 @@ export const listConversations = createServerFn({ method: "POST" })
       .order("last_message_at", { ascending: false })
       .limit(100);
 
-    const list = rows ?? [];
-    if (list.length === 0) return { chats: [], requests: [] };
+    const { data: hides } = await sb
+      .from("conversation_hides")
+      .select("conversation_id, hidden_at")
+      .eq("user_id", me);
+    const hiddenAt = new Map((hides ?? []).map((h) => [h.conversation_id, h.hidden_at]));
+
+    const list = (rows ?? []).filter((c) => {
+      const at = hiddenAt.get(c.id);
+      return !at || new Date(c.last_message_at).getTime() > new Date(at).getTime();
+    });
+    if (list.length === 0) return { chats: [], requests: [], sent: [] };
 
     const otherIds = list.map((c) => (c.user_a === me ? c.user_b : c.user_a));
     const { data: people } = await sb
@@ -2466,6 +2475,7 @@ export const listConversations = createServerFn({ method: "POST" })
       .from("messages")
       .select("id, conversation_id, body, sender_id, created_at, read_at, audio_path")
       .in("conversation_id", list.map((c) => c.id))
+      .is("unsent_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -2542,6 +2552,7 @@ export const getConversation = createServerFn({ method: "POST" })
       .from("messages")
       .select("id, body, sender_id, created_at, read_at, audio_path, audio_duration_ms")
       .eq("conversation_id", convo.id)
+      .is("unsent_at", null)
       .order("created_at", { ascending: true })
       .limit(300);
 
@@ -2630,6 +2641,59 @@ export const reactToMessage = createServerFn({ method: "POST" })
       .upsert({ message_id: msg.id, user_id: me, emoji: data.emoji }, { onConflict: "message_id,user_id" });
     if (error) throw new Error(error.message);
     return { ok: true, emoji: data.emoji };
+  });
+
+/** Unsends my own message so nobody in the chat can see it anymore. */
+export const unsendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { messageId: string }) => ({
+    messageId: z.string().uuid().parse(d.messageId),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: msg } = await sb
+      .from("messages")
+      .select("id, sender_id, audio_path, unsent_at")
+      .eq("id", data.messageId)
+      .maybeSingle();
+    if (!msg) throw new Error("Message not found.");
+    if (msg.sender_id !== me) throw new Error("You can only unsend your own messages.");
+    if (msg.unsent_at) return { ok: true };
+
+    const { error } = await sb
+      .from("messages")
+      .update({ unsent_at: new Date().toISOString() })
+      .eq("id", msg.id);
+    if (error) throw new Error(error.message);
+    if (msg.audio_path) await sb.storage.from("voice-messages").remove([msg.audio_path]);
+    await sb.from("message_reactions").delete().eq("message_id", msg.id);
+    return { ok: true };
+  });
+
+/** Removes a conversation from my own message list. */
+export const deleteConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { conversationId: string }) => ({
+    conversationId: z.string().uuid().parse(d.conversationId),
+  }))
+  .handler(async ({ data, context }) => {
+    const me = context.userId;
+    const sb = await admin();
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+    const { error } = await sb
+      .from("conversation_hides")
+      .upsert(
+        { conversation_id: convo.id, user_id: me, hidden_at: new Date().toISOString() },
+        { onConflict: "conversation_id,user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const respondToMessageRequest = createServerFn({ method: "POST" })

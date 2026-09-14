@@ -2,10 +2,10 @@ import { BackLink } from "@/components/reelzy/back-link";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Check, MailQuestion, MessageCircle, X } from "lucide-react";
-import { listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
+import { Check, MailQuestion, MessageCircle, Trash2, X } from "lucide-react";
+import { deleteConversation, listConversations, respondToMessageRequest } from "@/lib/reelzy.functions";
 import { AppShell } from "@/components/reelzy/nav";
 import { useI18n } from "@/lib/i18n";
 
@@ -174,12 +174,57 @@ function MessagesPage() {
 
 type Chat = NonNullable<Awaited<ReturnType<typeof listConversations>>>["chats"][number];
 
+/** One chat row. Swipe it to the left to reveal a delete button. */
 function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const remove = useServerFn(deleteConversation);
+  const [open, setOpen] = useState(false);
+  const startX = useRef<number | null>(null);
+
+  const del = useMutation({
+    mutationFn: () => remove({ data: { conversationId: chat.id } }),
+    onSuccess: () => {
+      toast.success(t("msg.chatDeleted"));
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
-    <Link
+    <div className="relative overflow-hidden rounded-2xl">
+      <button
+        type="button"
+        disabled={del.isPending}
+        onClick={() => del.mutate()}
+        className="absolute inset-y-0 end-0 flex w-24 items-center justify-center gap-1 rounded-2xl bg-destructive text-sm font-semibold text-destructive-foreground"
+      >
+        <Trash2 className="size-4" /> {t("msg.deleteChat")}
+      </button>
+      <Link
       to="/messages/$conversationId"
       params={{ conversationId: chat.id }}
-      className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3"
+      onPointerDown={(e) => {
+        startX.current = e.clientX;
+      }}
+      onPointerUp={(e) => {
+        const from = startX.current;
+        startX.current = null;
+        if (from === null) return;
+        const dx = e.clientX - from;
+        if (dx < -40) {
+          e.preventDefault();
+          setOpen(true);
+        } else if (dx > 20 && open) {
+          e.preventDefault();
+          setOpen(false);
+        } else if (open) {
+          e.preventDefault();
+          setOpen(false);
+        }
+      }}
+      style={{ transform: open ? "translateX(-6rem)" : undefined }}
+      className="relative flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-transform duration-200"
     >
       <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-raised">
         {chat.person.avatarUrl ? (
@@ -204,7 +249,8 @@ function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) 
           {chat.unread}
         </span>
       ) : null}
-    </Link>
+      </Link>
+    </div>
   );
 }
 

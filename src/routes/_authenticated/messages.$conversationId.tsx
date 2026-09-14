@@ -10,6 +10,7 @@ import {
   respondToMessageRequest,
   sendMessage,
   sendVoiceMessage,
+  unsendMessage,
 } from "@/lib/reelzy.functions";
 import { useI18n } from "@/lib/i18n";
 
@@ -165,6 +166,18 @@ function ThreadPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const postUnsend = useServerFn(unsendMessage);
+  const unsend = useMutation({
+    mutationFn: (messageId: string) => postUnsend({ data: { messageId } }),
+    onSuccess: () => {
+      setPickerFor(null);
+      toast.success(t("msg.unsent"));
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function holdStart(messageId: string) {
     holdRef.current = window.setTimeout(() => setPickerFor(messageId), 400);
   }
@@ -232,7 +245,11 @@ function ThreadPage() {
                   onPointerUp={holdEnd}
                   onPointerLeave={holdEnd}
                   onPointerCancel={holdEnd}
-                  onDoubleClick={() => pick(m.id, QUICK_REACTIONS[3]!)}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("audio")) return;
+                    if (pickerFor === m.id) return;
+                    pick(m.id, QUICK_REACTIONS[3]!);
+                  }}
                   className={`max-w-[78%] select-none rounded-2xl px-3.5 py-2.5 text-start text-sm ${
                     m.mine
                       ? "ember-fill text-primary-foreground"
@@ -323,6 +340,16 @@ function ThreadPage() {
                         +
                       </button>
                     )}
+                    {m.mine ? (
+                      <button
+                        type="button"
+                        disabled={unsend.isPending}
+                        onClick={() => unsend.mutate(m.id)}
+                        className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-destructive"
+                      >
+                        <Trash2 className="size-3.5" /> {t("msg.unsend")}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       aria-label={t("msg.closePicker")}
