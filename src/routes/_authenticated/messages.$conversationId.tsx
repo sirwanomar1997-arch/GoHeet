@@ -147,6 +147,36 @@ function ThreadPage() {
     else setRecording(false);
   }
 
+  // --- Emoji reactions: hold a message to pick one, "+" opens the phone keyboard. ---
+  const postReaction = useServerFn(reactToMessage);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [customFor, setCustomFor] = useState<string | null>(null);
+  const [customEmoji, setCustomEmoji] = useState("");
+  const holdRef = useRef<number | null>(null);
+
+  const react = useMutation({
+    mutationFn: (v: { messageId: string; emoji: string | null }) => postReaction({ data: v }),
+    onSuccess: () => {
+      setPickerFor(null);
+      setCustomFor(null);
+      setCustomEmoji("");
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function holdStart(messageId: string) {
+    holdRef.current = window.setTimeout(() => setPickerFor(messageId), 400);
+  }
+  function holdEnd() {
+    if (holdRef.current) window.clearTimeout(holdRef.current);
+    holdRef.current = null;
+  }
+  function pick(messageId: string, emoji: string) {
+    const mine = data?.reactions.find((r) => r.messageId === messageId && r.mine);
+    react.mutate({ messageId, emoji: mine?.emoji === emoji ? null : emoji });
+  }
+
   const pending = data?.status === "pending";
   const rejected = data?.status === "rejected";
   const canWrite = data ? data.status === "accepted" || (pending && data.isRequester) : false;
