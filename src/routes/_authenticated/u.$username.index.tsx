@@ -77,7 +77,7 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const demo = useDemoMode();
   const fetchProfile = useServerFn(getProfile);
-  const report = useServerFn(submitReport);
+  
   const blockUser = useServerFn(toggleBlock);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
