@@ -2363,6 +2363,82 @@ export const sendMessage = createServerFn({ method: "POST" })
     return { conversationId: convo.id, status: convo.status, message: msg };
   });
 
+/** Sends a recorded voice note inside an existing conversation. */
+export const sendVoiceMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: { conversationId: string; audioBase64: string; mimeType: string; durationMs: number }) => ({
+      conversationId: z.string().uuid().parse(d.conversationId),
+      audioBase64: z.string().min(100, "That recording was empty.").max(9_000_000).parse(d.audioBase64),
+      mimeType: z
+        .enum(["audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/ogg"])
+        .parse(d.mimeType.split(";")[0] as string),
+      durationMs: z.number().int().min(300).max(120_000).parse(d.durationMs),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    guardBurst(context.userId, "message", 30, 60_000);
+    const me = context.userId;
+    const sb = await admin();
+
+    const { data: convo } = await sb
+      .from("conversations")
+      .select("id, user_a, user_b, requester_id, status")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!convo || (convo.user_a !== me && convo.user_b !== me)) throw new Error("Chat not found.");
+
+    const other = convo.user_a === me ? convo.user_b : convo.user_a;
+    if (await blockedBetween(me, other)) throw new Error("You can't message this person.");
+    if (convo.status === "rejected") throw new Error("This person declined your message request.");
+    if (convo.status === "pending") {
+      if (convo.requester_id !== me) throw new Error("Accept the request before replying.");
+      const { count } = await sb
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", convo.id)
+        .eq("sender_id", me);
+      if ((count ?? 0) >= PENDING_MESSAGE_LIMIT) {
+        throw new Error("Wait until your request is accepted before sending more.");
+      }
+    }
+
+    const ext =
+      data.mimeType === "audio/mp4"
+        ? "m4a"
+        : data.mimeType === "audio/mpeg"
+          ? "mp3"
+          : data.mimeType === "audio/wav"
+            ? "wav"
+            : data.mimeType === "audio/ogg"
+              ? "ogg"
+              : "webm";
+    const binary = Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0));
+    if (binary.byteLength < 1024) throw new Error("That recording was too short.");
+    const path = `${me}/${convo.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await sb.storage
+      .from("voice-messages")
+      .upload(path, binary, { contentType: data.mimeType, upsert: false });
+    if (upErr) throw new Error(upErr.message);
+
+    const { data: msg, error: msgErr } = await sb
+      .from("messages")
+      .insert({
+        conversation_id: convo.id,
+        sender_id: me,
+        body: "",
+        audio_path: path,
+        audio_duration_ms: data.durationMs,
+      })
+      .select("id, body, created_at, sender_id")
+      .single();
+    if (msgErr) throw new Error(msgErr.message);
+
+    await track(me, "message_sent", { voice: true });
+    return { conversationId: convo.id, status: convo.status, message: msg };
+  });
+
+
 export const listConversations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
