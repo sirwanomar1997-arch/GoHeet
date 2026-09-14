@@ -519,24 +519,6 @@ function SettingsPage() {
             </label>
             <label className="flex items-center justify-between gap-4">
               <span className="text-sm">
-                Show what I like
-                <span className="block text-xs text-muted-foreground">
-                  Hide your liked Reelz from everyone else.
-                </span>
-              </span>
-              <Switch checked={showLikes} onCheckedChange={setShowLikes} />
-            </label>
-            <label className="flex items-center justify-between gap-4">
-              <span className="text-sm">
-                Show what I save
-                <span className="block text-xs text-muted-foreground">
-                  Saved Reelz are private unless you turn this on.
-                </span>
-              </span>
-              <Switch checked={showSaves} onCheckedChange={setShowSaves} />
-            </label>
-            <label className="flex items-center justify-between gap-4">
-              <span className="text-sm">
                 Public repost section
                 <span className="block text-xs text-muted-foreground">
                   Let people see the videos you repost.
