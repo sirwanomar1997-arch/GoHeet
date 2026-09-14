@@ -82,3 +82,4 @@
 - [x] Make demo mode easy to exit and clear it after real sign-in
 - [x] Match the home feed action rail to the clean white reference
 - [x] Publish the updated home feed and prepare new Google Play screenshots
+- [x] Restore the red Follow button and the original camera recording control
