@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
-import { getProfile, getFeed, toggleBlock, submitReport, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
+import { getProfile, getFeed, toggleBlock, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { FollowButton } from "@/components/reelzy/follow-button";
 import { ProfileReportSheet } from "@/components/reelzy/profile-report-sheet";
 import { useDemoMode } from "@/lib/use-demo-mode";
