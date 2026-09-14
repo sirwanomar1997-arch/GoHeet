@@ -83,7 +83,7 @@ export function FollowButton({
         className={`tap-target rounded-full text-sm font-semibold transition-colors ${
           following
             ? "border border-border text-foreground"
-            : "bg-destructive text-destructive-foreground"
+            : "ember-fill ember-ring text-primary-foreground"
         } ${className}`}
       >
         <span key={following ? "following" : "follow"}>

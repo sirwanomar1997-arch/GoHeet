@@ -37,7 +37,6 @@ function ProfileIcon({ className }: { className?: string }) {
 
 /**
  * The GoHeet ledger bar: four quiet destinations around one loud capture key.
- * The camera is the only thing in the product that gets the ember gradient.
  */
 export function GoHeetNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -100,14 +99,15 @@ export function GoHeetNav() {
             to="/camera"
             replace
             aria-label="Open the GoHeet camera"
-            className="capture-key group relative mx-0.5 grid size-14 shrink-0 place-items-center rounded-2xl transition-transform duration-200 active:scale-90"
+            className="capture-key group relative mx-0.5 grid size-16 shrink-0 place-items-center rounded-full transition-transform duration-200 active:scale-90"
           >
-            <span className="absolute inset-0 rounded-2xl bg-ember opacity-20 blur-md transition-opacity duration-500 group-active:opacity-40" />
-            <span className="relative grid size-full place-items-center overflow-hidden rounded-2xl bg-[image:var(--gradient-ember)] shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_28%,transparent),inset_0_-8px_16px_color-mix(in_oklab,var(--ember-deep)_40%,transparent)]">
-              <svg className="size-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <span className="absolute -inset-1 rounded-full bg-ember opacity-30 blur-lg transition-opacity duration-500 group-active:opacity-50" />
+            <span className="capture-face relative grid size-full place-items-center overflow-hidden rounded-full">
+              <svg className="size-7 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 4v16M4 12h16" />
               </svg>
-              <span className="pointer-events-none absolute inset-0.5 rounded-[14px] border border-white/20" />
+              <span className="capture-shine pointer-events-none absolute inset-x-2 top-1 h-5 rounded-full" />
+              <span className="pointer-events-none absolute inset-0.5 rounded-full border border-foreground/20" />
             </span>
           </Link>
         ) : null}
