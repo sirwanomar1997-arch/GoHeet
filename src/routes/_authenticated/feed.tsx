@@ -28,12 +28,13 @@ function FeedPage() {
     queryFn: () => (demo ? getDemoFeed(scope) : fetchFeed({ data: { scope } })),
   });
 
-  // Scrolling back up to re-watch a moment is free. Two back-steps in a row
-  // refreshes the feed with new moments.
+  // Scrolling back up to re-watch is always free. Crossing two full videos
+  // upward in one continuous return refreshes the feed after the gesture ends.
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const lastTopRef = useRef(0);
   const backStepsRef = useRef(0);
   const refreshingRef = useRef(false);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onFeedScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -52,11 +53,12 @@ function FeedPage() {
     if (backStepsRef.current >= 2 && !refreshingRef.current) {
       backStepsRef.current = 0;
       refreshingRef.current = true;
-      el.scrollTo({ top: 0, behavior: "smooth" });
-      lastTopRef.current = 0;
-      void refetch().finally(() => {
-        refreshingRef.current = false;
-      });
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = setTimeout(() => {
+        void refetch().finally(() => {
+          refreshingRef.current = false;
+        });
+      }, 180);
     }
   };
 
@@ -134,7 +136,7 @@ function FeedPage() {
         <div
           ref={scrollerRef}
           onScroll={onFeedScroll}
-          className="h-[calc(100svh-6.5rem)] snap-y snap-mandatory space-y-3 overflow-y-auto overscroll-contain px-3 pb-3"
+          className="h-[calc(100svh-6.5rem)] touch-pan-y snap-y snap-mandatory space-y-3 overflow-y-auto overscroll-y-contain px-3 pb-3 [-webkit-overflow-scrolling:touch]"
         >
           {data?.moments.map((m) => (
             <MomentStage key={m.id} moment={m} onGone={() => void refetch()} />

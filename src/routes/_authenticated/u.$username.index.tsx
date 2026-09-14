@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ChevronDown, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleBlock, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { FollowButton } from "@/components/reelzy/follow-button";
@@ -13,65 +13,13 @@ import { getDemoProfile } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { MomentReel } from "@/components/reelzy/moment-reel";
-import { formatCount, dayLabel } from "@/components/reelzy/format";
+import { formatCount } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
 import { HeetFlame } from "@/components/reelzy/heet-flame";
 
 export const Route = createFileRoute("/_authenticated/u/$username/")({
   component: ProfilePage,
 });
-
-const SORT_OPTIONS = [
-  { key: "new", label: "Newest" },
-  { key: "views", label: "Most viewed" },
-  { key: "old", label: "Oldest" },
-] as const;
-
-function ProfileSort({
-  sort,
-  onChange,
-}: {
-  sort: "new" | "views" | "old";
-  onChange: (s: "new" | "views" | "old") => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const current = SORT_OPTIONS.find((o) => o.key === sort);
-  return (
-    <div className="mb-4 px-5">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="data-figure inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <span className="uppercase tracking-[0.12em]">Sort by:</span>
-        <span className="font-semibold text-foreground">{current?.label}</span>
-        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open ? (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {SORT_OPTIONS.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => {
-                onChange(o.key);
-                setOpen(false);
-              }}
-              aria-pressed={sort === o.key}
-              className={`data-figure rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.12em] transition-colors ${
-                sort === o.key
-                  ? "border-transparent bg-[image:var(--gradient-ember)] text-primary-foreground"
-                  : "border-border bg-surface text-muted-foreground"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 function ProfilePage() {
   const { username } = Route.useParams();
@@ -91,15 +39,14 @@ function ProfilePage() {
   const qc = useQueryClient();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [adultLink, setAdultLink] = useState<string | null>(null);
-  const [sort, setSort] = useState<"new" | "views" | "old">("new");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, isLoading, refetch } = useQuery<any>({
-    queryKey: ["profile", username, sort, demo],
+    queryKey: ["profile", username, "new", demo],
     queryFn: () =>
       demo
-        ? getDemoProfile(username, sort)
-        : fetchProfile({ data: { username, sort } }),
+        ? getDemoProfile(username, "new")
+        : fetchProfile({ data: { username, sort: "new" } }),
     // Profile pictures must reflect the very latest choice (avatar ↔ photo),
     // so this always revalidates on mount and on focus.
     staleTime: 0,
@@ -528,9 +475,8 @@ function ProfilePage() {
       ) : null}
 
 
-      {/* --- Moments orbit the avatar as day-by-day ribbons, never a grid --- */}
+      {/* Profile moments: newest first in a simple two-column gallery. */}
       <section className="pb-12 pt-8">
-        <ProfileSort sort={sort} onChange={setSort} />
         {(() => {
           const list: MomentCard[] = tab === "reposted"
             ? data.reposts
@@ -575,36 +521,15 @@ function ProfilePage() {
             );
           }
 
-          const groupedTabs: Array<[string, MomentCard[]]> = [];
-          for (const m of list) {
-            const label = dayLabel(m.createdAt);
-            const last = groupedTabs[groupedTabs.length - 1];
-            if (last && last[0] === label) last[1].push(m);
-            else groupedTabs.push([label, [m]]);
-          }
-
           return (
-            <div className="space-y-7">
-              {groupedTabs.map(([label, items]) => (
-                <div key={label}>
-                  <div className="flex items-center gap-3 px-5">
-                    <span className="ember-fill size-[7px] shrink-0 rounded-full" aria-hidden />
-                    <p className="data-figure text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                      {label}
-                    </p>
-                    <span className="h-px flex-1 bg-border" aria-hidden />
-                    <span className="data-figure text-[11px] text-muted-foreground">
-                      {items.length}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2.5 px-5">
-                    {items.map((m) => (
+            <div>
+              <div className="grid grid-cols-2 gap-2.5 px-3">
+                    {list.map((m, index) => (
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => setOpenIndex(list.indexOf(m))}
-                        className="group relative aspect-[9/16] overflow-hidden rounded-[22px] border border-border bg-surface text-left"
+                        onClick={() => setOpenIndex(index)}
+                        className="group relative aspect-[9/16] touch-manipulation overflow-hidden rounded-2xl border border-border bg-surface text-left"
                       >
                         {m.posterUrl || m.mediaUrl ? (
                           <img
@@ -641,9 +566,7 @@ function ProfilePage() {
                         </span>
                       </button>
                     ))}
-                  </div>
-                </div>
-              ))}
+              </div>
 
               {openIndex !== null ? (
                 <MomentReel

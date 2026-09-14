@@ -75,3 +75,6 @@
 
 - [x] Make Follow/Following always match the saved relationship
 - [x] Prevent automatic translation from overwriting live Follow/Following state
+
+- [x] Restore smooth two-way scrolling and refresh after two upward videos
+- [x] Show profile videos newest-first in a plain two-column gallery

@@ -429,7 +429,7 @@ export function MomentStage({
     >
       <div
         ref={zoomWrapRef}
-        className="absolute inset-0 touch-none overflow-hidden"
+        className={`absolute inset-0 overflow-hidden ${zoom > 1 ? "touch-none" : "touch-pan-y"}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onMediaTap}
