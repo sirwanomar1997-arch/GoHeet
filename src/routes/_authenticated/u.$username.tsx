@@ -386,30 +386,19 @@ function ProfilePage() {
                 key={k as string}
                 className="relative flex min-w-0 flex-col items-center gap-1.5 px-3 py-4 [&:not(:last-child)]:after:absolute [&:not(:last-child)]:after:bottom-0 [&:not(:last-child)]:after:right-0 [&:not(:last-child)]:after:top-0 [&:not(:last-child)]:after:w-px [&:not(:last-child)]:after:bg-border"
               >
-                {isFollowers ? (
-                  <Link
-                    to="/u/$username/followers"
-                    params={{ username: p.username }}
-                    className="flex min-w-0 flex-col items-center gap-1.5"
-                    aria-label="See all followers"
-                  >
-                    <p className="font-display text-[22px] font-bold leading-none tabular-nums text-foreground">
-                      {v}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground">
-                      {k}
-                    </p>
-                  </Link>
-                ) : (
-                  <>
-                    <p className="font-display text-[22px] font-bold leading-none tabular-nums text-foreground">
-                      {v}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground">
-                      {k}
-                    </p>
-                  </>
-                )}
+                <Link
+                  to={isFollowers ? "/u/$username/followers" : "/u/$username/following"}
+                  params={{ username: p.username }}
+                  className="flex min-w-0 flex-col items-center gap-1.5"
+                  aria-label={isFollowers ? "See all followers" : "See who this profile follows"}
+                >
+                  <p className="font-display text-[22px] font-bold leading-none tabular-nums text-foreground">
+                    {v}
+                  </p>
+                  <p className="text-[11px] font-medium text-muted-foreground">
+                    {k}
+                  </p>
+                </Link>
               </div>
             ))}
           </div>
