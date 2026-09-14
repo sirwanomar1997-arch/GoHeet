@@ -19,7 +19,6 @@ import avatar1 from "@/assets/demo/avatar-1.jpg";
 import avatar2 from "@/assets/demo/avatar-2.jpg";
 import avatar3 from "@/assets/demo/avatar-3.jpg";
 import avatar4 from "@/assets/demo/avatar-4.jpg";
-import styleRef from "@/assets/av2/style-reference.jpg";
 import type { MomentCard } from "@/lib/reelzy.functions";
 
 export type DemoProfile = {
@@ -57,7 +56,7 @@ const now = Date.now();
 const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
 const daysAgo = (d: number) => new Date(now - d * 86400_000).toISOString();
 
-const PHOTOS = [skate, sunset, city, coffee, mountain, styleRef, sunset, city];
+const PHOTOS = [skate, sunset, city, coffee, mountain, sunset, city, coffee];
 
 export const demoAuthors: Array<{
   id: string;
