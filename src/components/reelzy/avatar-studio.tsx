@@ -117,10 +117,27 @@ const buildEditPrompt = (t: Traits, changes: string[]) =>
   `The finished character is a ${describe(t)}. ` +
   "Everything not listed above stays identical to the reference.";
 
-const buildPictureEditPrompt = (t: Traits, changes: string[]) =>
-  `${buildEditPrompt(t, changes)} The second reference image is the exact item the user tapped. ` +
-  "Copy that pictured item exactly — its shape, cut, texture and styling override any wording. " +
-  "Do not copy the second reference model's face, head, skin tone or anything else.";
+const FOCUS_RULES: Record<string, string> = {
+  hair:
+    "The second reference image is the exact hairstyle the user picked. Reproduce that hairstyle one-to-one: " +
+    "the same silhouette and outline, the same length (do not shorten or lengthen it), the same parting and fringe, " +
+    "the same volume, the same curl or wave pattern, the same layering, the same way it falls around the face, " +
+    "ears, neck and shoulders, and the same back length. The pictured hairstyle overrides any wording; " +
+    "if the result differs from the picture in any way it is wrong. Keep only the character's own hair colour. " +
+    "Do not copy the second reference model's face, head shape, skin tone, clothing or background.",
+  outfit:
+    "The second reference image is the exact garment the user picked. Reproduce its cut, neckline, sleeves, " +
+    "length, texture and details one-to-one. Do not copy the second model's face, head, skin tone or background.",
+};
+
+const buildPictureEditPrompt = (t: Traits, changes: string[], focus?: string) =>
+  `${buildEditPrompt(t, changes)} ` +
+  (focus && FOCUS_RULES[focus]
+    ? FOCUS_RULES[focus]
+    : "The second reference image is the exact item the user tapped. " +
+      "Copy that pictured item exactly — its shape, cut, texture and styling override any wording. " +
+      "Do not copy the second reference model's face, head, skin tone or anything else.");
+
 
 const SELFIE_PROMPT =
   `${STYLE_BASE} Recreate the exact person in the reference photo as this stylized 3D character: ` +
