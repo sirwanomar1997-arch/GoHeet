@@ -110,8 +110,6 @@ function SettingsPage() {
     setAllowComments(p.allow_comments ?? "everyone");
     setAllowMessages(p.allow_messages ?? "everyone");
     setShowFollowing(p.show_following !== false);
-    setShowLikes(p.show_likes !== false);
-    setShowSaves(!!p.show_saves);
     setShowReposts(p.show_reposts !== false);
     setBirthDate(p.birth_date ?? "");
   }, [me]);
@@ -125,8 +123,6 @@ function SettingsPage() {
           allowComments,
           allowMessages,
           showFollowing,
-          showLikes,
-          showSaves,
           showReposts,
         },
       }),
