@@ -12,7 +12,7 @@ import accessoryMaleSheet2 from "@/assets/av2/accessory-male-2.png";
 import jewelryFemaleSheet from "@/assets/av2/jewelry-female.png";
 import piercingsMaleSheet from "@/assets/av2/piercings-male.png";
 import piercingsFemaleSheet from "@/assets/av2/piercings-female.png";
-import wrinklesSheet from "@/assets/av2/wrinkles.png";
+import faceDetailsSheet from "@/assets/av2/face-details.png";
 import beardsSheet from "@/assets/av2/beards.png";
 import baseMale from "@/assets/av2/base-male.jpg";
 import baseFemale from "@/assets/av2/base-female.jpg";
@@ -42,7 +42,7 @@ export const SHEETS = {
   jewelryFemale: { src: jewelryFemaleSheet, cols: 5, rows: 4 },
   piercingsMale: { src: piercingsMaleSheet, cols: 5, rows: 4 },
   piercingsFemale: { src: piercingsFemaleSheet, cols: 5, rows: 4 },
-  wrinkles: { src: wrinklesSheet, cols: 5, rows: 4 },
+  faceDetails: { src: faceDetailsSheet, cols: 5, rows: 4 },
   beards: { src: beardsSheet, cols: 5, rows: 4 },
 } satisfies Record<string, Sheet>;
 
@@ -466,27 +466,31 @@ export const PIERCINGS_FEMALE = pics(SHEETS.piercingsFemale, [
   "nose hoop with multiple ear studs",
 ]);
 
-export const WRINKLES = pics(SHEETS.wrinkles, [
-  "smooth skin, no wrinkles",
-  "subtle forehead lines",
-  "deep forehead furrows",
-  "frown lines between the brows",
-  "crow's feet around the eyes",
-  "under-eye lines",
-  "smile lines",
-  "marionette lines around the mouth",
-  "laugh lines on the cheeks",
-  "chin crease",
-  "fine lines all over the face",
-  "forehead lines and crow's feet",
-  "full mature wrinkles with grey streaks",
-  "deep elderly wrinkles over the whole face",
-  "forehead lines and frown lines",
-  "crow's feet and smile lines",
-  "weathered sun-aged fine lines",
-  "under-eye circles with lines",
-  "light expression lines",
-  "full senior ageing with jowls",
+/** Value that means "no face detail at all". */
+export const NO_FACE_DETAIL = "clear skin, no marks or wrinkles";
+
+/** Skin features first, then the five elderly wrinkle looks (last row). */
+export const FACE_DETAILS = pics(SHEETS.faceDetails, [
+  "freckles across the nose and cheeks",
+  "dense freckles all over the face",
+  "deep cheek dimples",
+  "a beauty mark above the lip",
+  "a small mole on one cheek",
+  "a few scattered small moles",
+  "naturally blushed rosy cheeks",
+  "defined cheekbone contour lines",
+  "a cleft chin dimple",
+  "light acne on the cheeks",
+  "a thin scar on one cheek",
+  "dark under-eye circles",
+  "sun tan lines across the face",
+  "vitiligo patches on the skin",
+  "faint laugh lines",
+  "light elderly wrinkles",
+  "elderly wrinkles with crow's feet",
+  "elderly deep forehead furrows and frown lines",
+  "heavy elderly wrinkles with marionette lines",
+  "very old face with deep wrinkles and sagging jowls",
 ]);
 
 export const BEARDS = pics(SHEETS.beards, [
