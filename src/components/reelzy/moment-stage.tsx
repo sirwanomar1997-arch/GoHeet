@@ -458,6 +458,8 @@ export function MomentStage({
           : "animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
       }
       aria-label={`Moment by ${moment.author.username}`}
+      onTouchStart={onSwipeStart}
+      onTouchEnd={onSwipeEnd}
     >
       <div
         ref={zoomWrapRef}
