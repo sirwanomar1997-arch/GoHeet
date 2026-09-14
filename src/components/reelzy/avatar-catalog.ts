@@ -537,7 +537,7 @@ export type Traits = {
   eyeColor: string;
   hairColor: string;
   hair: string;
-  wrinkles: string;
+  faceDetail: string;
   beard: string;
   piercing: string;
   outfit: string;
@@ -553,7 +553,7 @@ export function defaultTraits(gender: "Male" | "Female"): Traits {
     eyeColor: female ? "Warm brown" : "Dark brown",
     hairColor: female ? "Chestnut brown" : "Dark brown",
     hair: female ? "long waves" : "short crop",
-    wrinkles: "smooth skin, no wrinkles",
+    faceDetail: NO_FACE_DETAIL,
     beard: "clean shaven",
     piercing: "no piercings",
     outfit: female ? "pink knit sweater" : "white t-shirt",
