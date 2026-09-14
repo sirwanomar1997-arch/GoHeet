@@ -2464,7 +2464,7 @@ export const listConversations = createServerFn({ method: "POST" })
 
     const { data: lastMsgs } = await sb
       .from("messages")
-      .select("id, conversation_id, body, sender_id, created_at, read_at")
+      .select("id, conversation_id, body, sender_id, created_at, read_at, audio_path")
       .in("conversation_id", list.map((c) => c.id))
       .order("created_at", { ascending: false })
       .limit(500);
