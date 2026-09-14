@@ -159,6 +159,9 @@ const sv: Dict = {
   "msg.voicePlay": "Spela upp röstmeddelandet",
   "msg.voicePause": "Pausa röstmeddelandet",
   "msg.voiceMicDenied": "Tillåt mikrofonåtkomst för att spela in ett röstmeddelande.",
+  "msg.react": "Reagera med en emoji",
+  "msg.reactOther": "Välj en annan emoji",
+  "msg.closePicker": "Stäng",
 
   "lang.title": "Språk",
   "lang.line": "GoHeet följer telefonens språk automatiskt. Du kan välja ett annat här.",
