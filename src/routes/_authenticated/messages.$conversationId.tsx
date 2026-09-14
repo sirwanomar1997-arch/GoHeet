@@ -165,6 +165,18 @@ function ThreadPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const postUnsend = useServerFn(unsendMessage);
+  const unsend = useMutation({
+    mutationFn: (messageId: string) => postUnsend({ data: { messageId } }),
+    onSuccess: () => {
+      setPickerFor(null);
+      toast.success(t("msg.unsent"));
+      void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      void qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function holdStart(messageId: string) {
     holdRef.current = window.setTimeout(() => setPickerFor(messageId), 400);
   }
