@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Bookmark, Ban, Sparkles, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Bookmark, Ban, Play, LayoutGrid, Settings, Pencil, Instagram, Youtube, Twitter, Facebook, Ghost, Globe, Eye, MessageCircle, Music2, ShieldAlert, Repeat2, MoreHorizontal, Share2, type LucideIcon } from "lucide-react";
 import { ShareSheet } from "@/components/reelzy/share-sheet";
 import { getProfile, getFeed, toggleBlock, sendMessage, type MomentCard } from "@/lib/reelzy.functions";
 import { FollowButton } from "@/components/reelzy/follow-button";
@@ -235,18 +235,8 @@ function ProfilePage() {
             )}
           </div>
 
-          {data.isSelf ? (
-            <Link
-              to="/edit-profile"
-              replace
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Sparkles className="size-3" /> Manage profile picture
-            </Link>
-          ) : null}
-
-          {/* nickname + username — compact, tight under the avatar button */}
-          <h2 className="mt-2 text-center font-display text-[13px] font-semibold tracking-tight text-foreground" data-no-translate>
+          {/* nickname + username — compact, tight under the photo */}
+          <h2 className="mt-3 text-center font-display text-[13px] font-semibold tracking-tight text-foreground" data-no-translate>
             {p.displayName || p.username}
           </h2>
 
