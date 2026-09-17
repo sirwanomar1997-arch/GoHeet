@@ -64,7 +64,6 @@ function MessagesPage() {
 
   const requests = data?.requests ?? [];
   const chats = data?.chats ?? [];
-  const sent = data?.sent ?? [];
 
   return (
     <AppShell>
@@ -112,7 +111,7 @@ function MessagesPage() {
           ) : (
             chats.map((c) => <ChatRow key={c.id} chat={c} />)
           )
-        ) : requests.length === 0 && sent.length === 0 ? (
+        ) : requests.length === 0 ? (
           <EmptyState
             icon={<MailQuestion className="size-5 text-sky-400" />}
             title={t("msg.noRequests")}
@@ -155,16 +154,6 @@ function MessagesPage() {
                 </div>
               </div>
             ))}
-            {sent.length > 0 ? (
-              <>
-                <p className="pt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                  {t("msg.waiting")}
-                </p>
-                {sent.map((c) => (
-                  <ChatRow key={c.id} chat={c} pendingLabel={t("msg.requestSent")} />
-                ))}
-              </>
-            ) : null}
           </>
         )}
       </div>
@@ -175,7 +164,7 @@ function MessagesPage() {
 type Chat = NonNullable<Awaited<ReturnType<typeof listConversations>>>["chats"][number];
 
 /** One chat row. Swipe it to the left to reveal a delete button. */
-function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) {
+function ChatRow({ chat }: { chat: Chat }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const remove = useServerFn(deleteConversation);
@@ -237,7 +226,7 @@ function ChatRow({ chat, pendingLabel }: { chat: Chat; pendingLabel?: string }) 
         <span className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-semibold" data-no-translate translate="no">{chat.person.displayName}</span>
           <span className="shrink-0 text-[11px] text-muted-foreground">
-            {pendingLabel ?? timeAgo(chat.lastMessageAt)}
+            {chat.status === "pending" ? t("msg.requestSent") : timeAgo(chat.lastMessageAt)}
           </span>
         </span>
         <span className="mt-0.5 block truncate text-xs text-muted-foreground" data-no-translate>

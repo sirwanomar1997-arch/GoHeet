@@ -28,8 +28,10 @@ type TrackWithCaps = MediaStreamTrack & {
   getSettings: () => MediaTrackSettings & { zoom?: number };
 };
 
-const HIGH_BITRATE = 12_000_000;
-const AUDIO_BITRATE = 192_000;
+// Conservative mobile settings prevent memory pressure and encoder crashes on
+// entry-level Android tablets while retaining clear short-form video.
+const VIDEO_BITRATE = 4_000_000;
+const AUDIO_BITRATE = 128_000;
 
 /** Ordered by fidelity: MP4/H.264 first (best downstream compatibility), then VP9, then anything. */
 function bestMimeType(): string | undefined {
@@ -54,9 +56,9 @@ function bestMimeType(): string | undefined {
 function videoConstraints(facing: Facing): MediaTrackConstraints {
   return {
     facingMode: { ideal: facing },
-    width: { ideal: 1920, max: 3840 },
-    height: { ideal: 1080, max: 2160 },
-    frameRate: { ideal: 30, max: 60 },
+    width: { ideal: 1280, max: 1920 },
+    height: { ideal: 720, max: 1080 },
+    frameRate: { ideal: 30, max: 30 },
     // Keep the sensor's own framing — no browser-side crop/scale.
     resizeMode: "none",
   } as MediaTrackConstraints;
@@ -300,9 +302,9 @@ export class CameraEngine {
     setTimeout(() => tracks.forEach((t) => (t.enabled = true)), ms);
   }
 
-  startRecording(onStop: (blob: Blob) => void) {
+  startRecording(onStop: (blob: Blob) => void): boolean {
     const stream = this.stream;
-    if (!stream) return;
+    if (!stream || this.recorder?.state === "recording" || typeof MediaRecorder === "undefined") return false;
     this.mime = bestMimeType();
 
     // Record a canvas rather than the raw camera track: the lens can then be
@@ -310,9 +312,14 @@ export class CameraEngine {
     const track = this.videoTrack;
     const settings = track?.getSettings();
     const canvas = document.createElement("canvas");
-    canvas.width = settings?.width || 1080;
-    canvas.height = settings?.height || 1920;
+    const sourceWidth = settings?.width || 1280;
+    const sourceHeight = settings?.height || 720;
+    const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
+    canvas.width = Math.max(2, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(2, Math.round(sourceHeight * scale));
     const ctx = canvas.getContext("2d");
+    const captureStream = canvas.captureStream?.bind(canvas);
+    if (!ctx || !captureStream) return false;
 
     const mix = document.createElement("video");
     mix.muted = true;
@@ -363,15 +370,26 @@ export class CameraEngine {
     this.raf = requestAnimationFrame(draw);
 
     const composed = new MediaStream([
-      ...canvas.captureStream(30).getVideoTracks(),
+      ...captureStream(30).getVideoTracks(),
       ...stream.getAudioTracks(),
     ]);
 
-    const rec = new MediaRecorder(composed, {
-      ...(this.mime ? { mimeType: this.mime } : {}),
-      videoBitsPerSecond: HIGH_BITRATE,
-      audioBitsPerSecond: AUDIO_BITRATE,
-    });
+    let rec: MediaRecorder;
+    try {
+      rec = new MediaRecorder(composed, {
+        ...(this.mime ? { mimeType: this.mime } : {}),
+        videoBitsPerSecond: VIDEO_BITRATE,
+        audioBitsPerSecond: AUDIO_BITRATE,
+      });
+    } catch {
+      try {
+        rec = new MediaRecorder(composed);
+      } catch {
+        composed.getVideoTracks().forEach((track) => track.stop());
+        this.teardownMixer();
+        return false;
+      }
+    }
     this.chunks = [];
     rec.ondataavailable = (e) => {
       if (e.data.size) this.chunks.push(e.data);
@@ -379,10 +397,12 @@ export class CameraEngine {
     rec.onstop = () => {
       const blob = new Blob(this.chunks, { type: rec.mimeType || this.mime || "video/webm" });
       this.chunks = [];
+      composed.getVideoTracks().forEach((track) => track.stop());
       onStop(blob);
     };
     this.recorder = rec;
     rec.start(500);
+    return true;
   }
 
   pause() {
