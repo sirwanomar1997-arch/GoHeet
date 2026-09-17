@@ -1,5 +1,5 @@
 import { BackLink } from "@/components/reelzy/back-link";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -43,6 +43,7 @@ function timeAgo(iso: string) {
 function MessagesPage() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchChats = useServerFn(listConversations);
   const respond = useServerFn(respondToMessageRequest);
   const [tab, setTab] = useState<"chats" | "requests">("chats");
@@ -109,7 +110,7 @@ function MessagesPage() {
               line={t("msg.noChatsLine")}
             />
           ) : (
-            chats.map((c) => <ChatRow key={c.id} chat={c} />)
+            chats.map((c) => <ChatRow key={c.id} chat={c} onOpen={() => void navigate({ to: "/messages/$conversationId", params: { conversationId: c.id } })} />)
           )
         ) : requests.length === 0 ? (
           <EmptyState
@@ -164,12 +165,13 @@ function MessagesPage() {
 type Chat = NonNullable<Awaited<ReturnType<typeof listConversations>>>["chats"][number];
 
 /** One chat row. Swipe it to the left to reveal a delete button. */
-function ChatRow({ chat }: { chat: Chat }) {
+function ChatRow({ chat, onOpen }: { chat: Chat; onOpen: () => void }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const remove = useServerFn(deleteConversation);
   const [open, setOpen] = useState(false);
   const startX = useRef<number | null>(null);
+  const swiped = useRef(false);
 
   const del = useMutation({
     mutationFn: () => remove({ data: { conversationId: chat.id } }),
@@ -190,11 +192,19 @@ function ChatRow({ chat }: { chat: Chat }) {
       >
         <Trash2 className="size-4" /> {t("msg.deleteChat")}
       </button>
-      <Link
-      to="/messages/$conversationId"
-      params={{ conversationId: chat.id }}
+      <button
+      type="button"
+      onClick={() => {
+        if (swiped.current) {
+          swiped.current = false;
+          return;
+        }
+        if (open) setOpen(false);
+        else onOpen();
+      }}
       onPointerDown={(e) => {
         startX.current = e.clientX;
+        swiped.current = false;
       }}
       onPointerUp={(e) => {
         const from = startX.current;
@@ -203,9 +213,11 @@ function ChatRow({ chat }: { chat: Chat }) {
         const dx = e.clientX - from;
         if (dx < -40) {
           e.preventDefault();
+          swiped.current = true;
           setOpen(true);
         } else if (dx > 20 && open) {
           e.preventDefault();
+          swiped.current = true;
           setOpen(false);
         } else if (open) {
           e.preventDefault();
@@ -213,7 +225,7 @@ function ChatRow({ chat }: { chat: Chat }) {
         }
       }}
       style={{ transform: open ? "translateX(-6rem)" : undefined }}
-      className="relative flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-transform duration-200"
+      className="relative z-10 flex w-full touch-manipulation items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-start transition-transform duration-200"
     >
       <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-raised">
         {chat.person.avatarUrl ? (
@@ -238,7 +250,7 @@ function ChatRow({ chat }: { chat: Chat }) {
           {chat.unread}
         </span>
       ) : null}
-      </Link>
+      </button>
     </div>
   );
 }
