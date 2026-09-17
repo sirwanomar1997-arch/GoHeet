@@ -897,18 +897,23 @@ function CameraPage() {
     try {
       const ext =
         captured.kind === "photo" ? "jpg" : captured.blob.type.includes("mp4") ? "mp4" : "webm";
-      const mediaPath = `${session.storagePrefix}/moment.${ext}`;
+      const mediaName = `moment.${ext}` as "moment.jpg" | "moment.mp4" | "moment.webm";
+      const mediaUpload = session.signedUploads[mediaName];
+      if (!mediaUpload) throw new Error("Couldn't prepare this video for upload. Please record again.");
+      const mediaPath = mediaUpload.path;
       const up = await supabase.storage
         .from("moments")
-        .upload(mediaPath, captured.blob, { contentType: captured.blob.type, upsert: true });
+        .uploadToSignedUrl(mediaPath, mediaUpload.token, captured.blob, { contentType: captured.blob.type });
       if (up.error) throw new Error(up.error.message);
 
       let thumbnailPath: string | undefined;
       if (captured.poster) {
-        const tp = `${session.storagePrefix}/poster.jpg`;
+        const posterUpload = session.signedUploads["poster.jpg"];
+        if (!posterUpload) throw new Error("Couldn't prepare the video preview.");
+        const tp = posterUpload.path;
         const t = await supabase.storage
           .from("moments")
-          .upload(tp, captured.poster, { contentType: "image/jpeg", upsert: true });
+          .uploadToSignedUrl(tp, posterUpload.token, captured.poster, { contentType: "image/jpeg" });
         if (!t.error) thumbnailPath = tp;
       }
 

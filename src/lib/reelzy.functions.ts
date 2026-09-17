@@ -541,10 +541,24 @@ export const startCapture = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    const prefix = `${context.userId}/${session.id}`;
+    const uploadNames = ["moment.jpg", "moment.mp4", "moment.webm", "poster.jpg"] as const;
+    const signedUploads = await Promise.all(
+      uploadNames.map(async (name) => {
+        const path = `${prefix}/${name}`;
+        const { data: signed, error: signedError } = await sb.storage
+          .from("moments")
+          .createSignedUploadUrl(path, { upsert: true });
+        if (signedError || !signed) throw new Error(signedError?.message ?? "Couldn't prepare the camera upload.");
+        return [name, { path, token: signed.token }] as const;
+      }),
+    );
+
     await track(context.userId, "camera_opened");
     return {
       sessionId: session.id,
-      storagePrefix: `${context.userId}/${session.id}`,
+      storagePrefix: prefix,
+      signedUploads: Object.fromEntries(signedUploads),
     };
   });
 
@@ -2232,7 +2246,7 @@ function pair(a: string, b: string) {
   return a < b ? { user_a: a, user_b: b } : { user_a: b, user_b: a };
 }
 
-async function areMutualFollows(a: string, b: string) {
+async function haveFollowConnection(a: string, b: string) {
   const sb = await admin();
   const { data } = await sb
     .from("follows")
@@ -2241,10 +2255,7 @@ async function areMutualFollows(a: string, b: string) {
       `and(follower_id.eq.${a},following_id.eq.${b}),and(follower_id.eq.${b},following_id.eq.${a})`,
     );
   const rows = data ?? [];
-  return (
-    rows.some((r) => r.follower_id === a && r.following_id === b) &&
-    rows.some((r) => r.follower_id === b && r.following_id === a)
-  );
+  return rows.length > 0;
 }
 
 async function blockedBetween(a: string, b: string) {
@@ -2321,7 +2332,9 @@ export const sendMessage = createServerFn({ method: "POST" })
         .eq("user_id", other)
         .maybeSingle();
       if (!target || targetMod?.banned_at || targetMod?.deleted_at) throw new Error("Person not found.");
-      const mutual = await areMutualFollows(me, other);
+      // Any existing follow in either direction is a normal chat. Only people
+      // with no relationship at all create an inbox request for the recipient.
+      const connected = await haveFollowConnection(me, other);
       const setting = (target as { allow_messages?: string }).allow_messages ?? "everyone";
       if (setting === "nobody") throw new Error("This person isn't accepting messages.");
       if (setting === "followers") {
@@ -2340,7 +2353,7 @@ export const sendMessage = createServerFn({ method: "POST" })
           user_a,
           user_b,
           requester_id: me,
-          status: mutual ? "accepted" : "pending",
+          status: connected ? "accepted" : "pending",
         })
         .select("id, user_a, user_b, requester_id, status")
         .single();
