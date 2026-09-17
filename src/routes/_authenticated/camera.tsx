@@ -596,7 +596,7 @@ function CameraPage() {
 
   async function beginRecording() {
     const engine = engineRef.current;
-    if (!engine) return;
+    if (!engine || recordingRef.current) return;
     accumulatedRef.current = 0;
     elapsedRef.current = 0;
     recordingRef.current = true;
@@ -605,7 +605,7 @@ function CameraPage() {
     playRecordStart();
     // Interface cues belong to the person filming, never to the clip.
     engine.silenceMic(700);
-    engine.startRecording(async (blob) => {
+    const started = engine.startRecording(async (blob) => {
       playRecordStop();
       recordingRef.current = false;
       const duration = elapsedRef.current;
@@ -622,6 +622,11 @@ function CameraPage() {
       setCaptured({ blob, url: URL.createObjectURL(blob), kind: "video", durationMs: duration, poster });
       stopStream();
     });
+    if (!started) {
+      recordingRef.current = false;
+      toast.error("Video recording isn't available on this device. You can still share a photo.");
+      return;
+    }
     setRecording(true);
   }
 

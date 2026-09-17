@@ -552,7 +552,12 @@ export const startCapture = createServerFn({ method: "POST" })
 /* Automatic safety review                                             */
 /* ------------------------------------------------------------------ */
 
-type SafetyVerdict = { decision: "approve" | "reject" | "hold"; reason: string };
+type SafetyVerdict = {
+  decision: "approve" | "reject" | "hold";
+  reason: string;
+  /** False means the external reviewer did not return a usable verdict. */
+  checked: boolean;
+};
 
 const SAFETY_RULES = `You are the automated content-safety reviewer for GoHeet, a short-video app rated 17+.
 Decide whether this post may be published to a public global feed.
@@ -572,10 +577,10 @@ Use HOLD only when the image is genuinely ambiguous and a human should look.
 
 Answer with JSON only: {"decision":"approve"|"reject"|"hold","reason":"short reason"}`;
 
-/** Reviews a post before it goes public. Fails closed: on error the post is held, never published. */
+/** Reviews a post before it goes public. Unavailable reviews are flagged for staff without blocking capture. */
 async function reviewForSafety(input: { imagePath: string | null; text: string }): Promise<SafetyVerdict> {
   const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return { decision: "hold", reason: "Safety review unavailable" };
+  if (!apiKey) return { decision: "hold", reason: "Safety review unavailable", checked: false };
 
   const content: Array<Record<string, unknown>> = [
     { type: "text", text: `Caption / on-screen text: ${input.text || "(none)"}` },
@@ -602,18 +607,18 @@ async function reviewForSafety(input: { imagePath: string | null; text: string }
     });
     if (!res.ok) {
       console.error("[safety-review] gateway", res.status, await res.text());
-      return { decision: "hold", reason: "Safety review unavailable" };
+      return { decision: "hold", reason: "Safety review unavailable", checked: false };
     }
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const raw = json.choices?.[0]?.message?.content ?? "";
     const parsed = JSON.parse(raw.replace(/^```json|```$/g, "").trim()) as SafetyVerdict;
     if (parsed.decision === "approve" || parsed.decision === "reject" || parsed.decision === "hold") {
-      return { decision: parsed.decision, reason: String(parsed.reason ?? "").slice(0, 200) };
+      return { decision: parsed.decision, reason: String(parsed.reason ?? "").slice(0, 200), checked: true };
     }
-    return { decision: "hold", reason: "Unclear review result" };
+    return { decision: "hold", reason: "Unclear review result", checked: false };
   } catch (err) {
     console.error("[safety-review]", err);
-    return { decision: "hold", reason: "Safety review failed" };
+    return { decision: "hold", reason: "Safety review failed", checked: false };
   }
 }
 
@@ -862,14 +867,21 @@ export const publishMoment = createServerFn({ method: "POST" })
       );
     }
 
-    // Suspicious but not certain: a human looks before anyone else can.
-    if (verdict.decision === "hold" || ai.score >= AI_HOLD_THRESHOLD) {
+    const aiUnavailable = ai.reason === "AI check unavailable" || ai.reason === "AI check failed";
+
+    // A real, completed review can still hold genuinely ambiguous media.
+    if ((verdict.checked && verdict.decision === "hold") || (!aiUnavailable && ai.score >= AI_HOLD_THRESHOLD)) {
       await track(context.userId, "moment_held_for_review", { aiScore: ai.score });
       return { id: moment.id, review: "pending" as const };
     }
 
-
-    await sb.from("moments").update({ status: "published", moderation_state: "clean" }).eq("id", moment.id);
+    // Review outages or exhausted AI allowance must not make camera-verified posts disappear.
+    // Publish them while keeping a visible staff-review flag; proven unsafe/synthetic verdicts above still reject.
+    const needsStaffReview = !verdict.checked || aiUnavailable;
+    await sb
+      .from("moments")
+      .update({ status: "published", moderation_state: needsStaffReview ? "flagged" : "clean" })
+      .eq("id", moment.id);
     await track(context.userId, "moment_published", { kind: data.kind });
     return { id: moment.id, review: "published" as const };
   });
@@ -2519,9 +2531,11 @@ export const listConversations = createServerFn({ method: "POST" })
 
     const decorated = list.map(decorate);
     return {
-      chats: decorated.filter((c) => c.status === "accepted"),
+      // A request is only an inbox request for its recipient. For its sender it
+      // is an ordinary conversation and must remain visible in Messages.
+      chats: decorated.filter((c) => c.status === "accepted" || (c.status === "pending" && c.isRequester)),
       requests: decorated.filter((c) => c.status === "pending" && !c.isRequester),
-      sent: decorated.filter((c) => c.status === "pending" && c.isRequester),
+      sent: [],
     };
   });
 
