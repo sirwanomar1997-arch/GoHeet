@@ -108,6 +108,7 @@ export function MomentStage({
     Array<{ id: number; x: number; y: number; dx: number; rot: number; size: number }>
   >([]);
   const [heetPop, setHeetPop] = useState(false);
+  const [viewCount, setViewCount] = useState<number>(moment.viewCount);
 
   const look = filterCss(moment.styleFilter);
   const overlay = parseOverlay(moment.overlay);
@@ -691,7 +692,7 @@ export function MomentStage({
 
         <RailAction
           label="Views"
-          count={formatCount(moment.viewCount)}
+          count={formatCount(viewCount)}
           onClick={() => undefined}
         >
           <Eye className="size-7" strokeWidth={1.8} />
