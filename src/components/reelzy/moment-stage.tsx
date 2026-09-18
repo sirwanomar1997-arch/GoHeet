@@ -885,7 +885,10 @@ function CommentSheet({
 
   const renderComment = (c: CommentRow, isReply: boolean) => (
     <div key={c.id} className={`flex gap-3 ${isReply ? "ml-11" : ""}`}>
-      <span
+      <Link
+        to="/u/$username"
+        params={{ username: c.username }}
+        aria-label={`Open @${c.username}`}
         className={`grid ${isReply ? "size-7" : "size-8"} shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-raised text-xs font-semibold uppercase`}
       >
         {c.avatarUrl ? (
@@ -893,10 +896,13 @@ function CommentSheet({
         ) : (
           c.username.slice(0, 1)
         )}
-      </span>
+      </Link>
       <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">
-          <span data-no-translate translate="no">@{c.username}</span> · {timeAgo(c.createdAt)}
+          <Link to="/u/$username" params={{ username: c.username }} data-no-translate translate="no" className="font-medium text-foreground">
+            @{c.username}
+          </Link>{" "}
+          · {timeAgo(c.createdAt)}
         </p>
         <p className="text-sm text-foreground" data-no-translate translate="no">{c.body}</p>
         <div className="mt-1 flex items-center gap-3">
