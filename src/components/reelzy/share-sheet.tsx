@@ -110,7 +110,19 @@ export function ShareSheet({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const people = (data?.chats ?? []).map((c) => c.person);
+  const chatPeople = (data?.chats ?? []).map((c) => ({
+    id: c.person.id,
+    username: c.person.username,
+    avatarUrl: c.person.avatarUrl ?? null,
+  }));
+  const followPeople = (following?.people ?? []).map((p) => ({
+    id: p.id,
+    username: p.username,
+    avatarUrl: p.avatarUrl ?? null,
+  }));
+  const people = [...chatPeople, ...followPeople].filter(
+    (p, i, all) => all.findIndex((o) => o.id === p.id) === i,
+  );
 
   const copy = async () => {
     await navigator.clipboard?.writeText(url);
