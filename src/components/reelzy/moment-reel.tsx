@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import type { MomentCard } from "@/lib/reelzy.functions";
 import { MomentStage } from "./moment-stage";
@@ -22,9 +22,10 @@ export function MomentReel({
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [index, setIndex] = useState(startIndex);
+  const [mediaReady, setMediaReady] = useState(false);
 
-  // Land directly on the tapped moment.
-  useEffect(() => {
+  // Position the tapped moment before the browser paints the full-screen viewer.
+  useLayoutEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollTo({ top: startIndex * el.clientHeight, behavior: "auto" });
@@ -48,7 +49,10 @@ export function MomentReel({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div
+      className={`fixed inset-0 z-50 bg-black ${mediaReady ? "visible" : "invisible"}`}
+      aria-hidden={!mediaReady}
+    >
       <div
         ref={scrollerRef}
         onScroll={(e) => {
@@ -58,8 +62,14 @@ export function MomentReel({
         }}
         className="h-[100svh] snap-y snap-mandatory overflow-y-auto overscroll-contain"
       >
-        {moments.map((m) => (
-          <MomentStage key={m.id} moment={m} fullscreen {...(onGone ? { onGone } : {})} />
+        {moments.map((m, momentIndex) => (
+          <MomentStage
+            key={m.id}
+            moment={m}
+            fullscreen
+            {...(onGone ? { onGone } : {})}
+            {...(momentIndex === startIndex ? { onMediaReady: () => setMediaReady(true) } : {})}
+          />
         ))}
       </div>
 
