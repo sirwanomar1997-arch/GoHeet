@@ -926,7 +926,7 @@ function CameraPage() {
         const tp = posterUpload.path;
         const t = await supabase.storage
           .from("moments")
-          .uploadToSignedUrl(tp, posterUpload.token, captured.poster, { contentType: "image/jpeg" });
+          .uploadToSignedUrl(tp, posterUpload.token, posterBlob, { contentType: "image/jpeg" });
         if (!t.error) thumbnailPath = tp;
       }
 
