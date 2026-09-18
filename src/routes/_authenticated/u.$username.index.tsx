@@ -16,6 +16,7 @@ import { MomentReel } from "@/components/reelzy/moment-reel";
 import { formatCount } from "@/components/reelzy/format";
 import { filterCss } from "@/components/reelzy/creative";
 import { HeetFlame } from "@/components/reelzy/heet-flame";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/u/$username/")({
   component: ProfilePage,
@@ -54,6 +55,29 @@ function ProfilePage() {
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
+
+  // Heets, followers and video counts follow along live: the moment someone
+  // hearts or un-hearts a video (or one is removed) this page updates itself.
+  const profileId: string | undefined = data?.profile?.id;
+  useEffect(() => {
+    if (demo || !profileId) return;
+    const channel = supabase
+      .channel(`profile-live-${profileId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${profileId}` },
+        () => void refetch(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "moments", filter: `author_id=eq.${profileId}` },
+        () => void refetch(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [demo, profileId, refetch]);
 
   useEffect(() => {
     if (!data?.isSelf) return;

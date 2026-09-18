@@ -114,6 +114,15 @@ const en: Dict = {
   "msg.deleteChat": "Delete",
   "msg.chatDeleted": "Conversation deleted.",
   "msg.like": "Like with a heart",
+  "msg.reply": "Reply",
+  "msg.replyingTo": "Replying to",
+  "msg.copy": "Copy",
+  "msg.copied": "Copied.",
+  "msg.translate": "Translate",
+  "msg.translating": "Translating…",
+  "msg.delete": "Delete",
+  "msg.deletedForYou": "Message removed for you.",
+  "msg.cancel": "Cancel",
 
   "lang.title": "Language",
   "lang.line":

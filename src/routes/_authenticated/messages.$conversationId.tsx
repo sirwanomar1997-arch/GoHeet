@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Mic, Send, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, CornerUpLeft, Languages, Mic, Send, Trash2, X } from "lucide-react";
 import {
   getConversation,
   reactToMessage,
@@ -12,6 +12,7 @@ import {
   sendVoiceMessage,
   unsendMessage,
 } from "@/lib/reelzy.functions";
+import { translateMessage } from "@/lib/translate.functions";
 import { useI18n } from "@/lib/i18n";
 
 /** Quick reactions offered on long-press; "+" opens the phone's own emoji keyboard. */
@@ -54,9 +55,16 @@ function ThreadPage() {
   }, [data?.messages.length]);
 
   const send = useMutation({
-    mutationFn: () => post({ data: { conversationId, body } }),
+    mutationFn: () =>
+      post({
+        data: {
+          conversationId,
+          body: replyTo ? `“${replyTo.text.slice(0, 120)}”\n${body}` : body,
+        },
+      }),
     onSuccess: () => {
       setBody("");
+      setReplyTo(null);
       void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
       void qc.invalidateQueries({ queryKey: ["conversations"] });
     },
@@ -185,6 +193,57 @@ function ThreadPage() {
     if (holdRef.current) window.clearTimeout(holdRef.current);
     holdRef.current = null;
   }
+  // --- Reply, copy, translate and hide-for-me on a held message. ---
+  const [replyTo, setReplyTo] = useState<{ id: string; text: string } | null>(null);
+  const [shown, setShown] = useState<Record<string, string>>({});
+  const [hidden, setHidden] = useState<string[]>([]);
+  const hideKey = `goheet.hidden-messages.${conversationId}`;
+  const { locale } = useI18n();
+  const doTranslate = useServerFn(translateMessage);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(hideKey);
+      if (raw) setHidden(JSON.parse(raw) as string[]);
+    } catch {
+      /* ignore */
+    }
+  }, [hideKey]);
+
+  function hideForMe(messageId: string) {
+    setHidden((prev) => {
+      const next = prev.includes(messageId) ? prev : [...prev, messageId];
+      try {
+        window.localStorage.setItem(hideKey, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+    setPickerFor(null);
+    toast.success(t("msg.deletedForYou"));
+  }
+
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t("msg.copied"));
+    } catch {
+      /* ignore */
+    }
+    setPickerFor(null);
+  }
+
+  const translating = useMutation({
+    mutationFn: (v: { id: string; text: string }) =>
+      doTranslate({ data: { text: v.text, locale } }).then((r) => ({ id: v.id, text: r.text })),
+    onSuccess: (r) => {
+      setShown((prev) => ({ ...prev, [r.id]: r.text }));
+      setPickerFor(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function pick(messageId: string, emoji: string) {
     const mine = data?.reactions.find((r) => r.messageId === messageId && r.mine);
     react.mutate({ messageId, emoji: mine?.emoji === emoji ? null : emoji });
@@ -226,7 +285,7 @@ function ThreadPage() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : (
-          data?.messages.map((m, i) => {
+          data?.messages.filter((m) => !hidden.includes(m.id)).map((m, i) => {
             const lastMine =
               m.mine && !data.messages.slice(i + 1).some((n) => n.mine);
             const msgReactions = data.reactions.filter((r) => r.messageId === m.id);
@@ -273,7 +332,7 @@ function ThreadPage() {
                       ) : null}
                     </span>
                   ) : (
-                    m.body
+                    shown[m.id] ?? m.body
                   )}
                 </div>
 
@@ -295,7 +354,7 @@ function ThreadPage() {
 
                 {pickerFor === m.id ? (
                   <div
-                    className={`mt-1 flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-lg ${
+                    className={`mt-1 flex max-w-full flex-wrap items-center gap-1 rounded-3xl border border-border bg-surface px-2 py-1 shadow-lg ${
                       m.mine ? "self-end" : "self-start"
                     }`}
                     data-no-translate
@@ -350,6 +409,43 @@ function ThreadPage() {
                         <Trash2 className="size-3.5" /> {t("msg.unsend")}
                       </button>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyTo({ id: m.id, text: m.audioUrl ? t("msg.voiceNote") : m.body });
+                        setPickerFor(null);
+                      }}
+                      className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold"
+                    >
+                      <CornerUpLeft className="size-3.5" /> {t("msg.reply")}
+                    </button>
+                    {m.audioUrl ? null : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => void copyText(m.body)}
+                          className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold"
+                        >
+                          <Copy className="size-3.5" /> {t("msg.copy")}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={translating.isPending}
+                          onClick={() => translating.mutate({ id: m.id, text: m.body })}
+                          className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold"
+                        >
+                          <Languages className="size-3.5" />
+                          {translating.isPending ? t("msg.translating") : t("msg.translate")}
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => hideForMe(m.id)}
+                      className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-destructive"
+                    >
+                      <Trash2 className="size-3.5" /> {t("msg.delete")}
+                    </button>
                     <button
                       type="button"
                       aria-label={t("msg.closePicker")}
@@ -409,8 +505,24 @@ function ThreadPage() {
             e.preventDefault();
             if (body.trim()) send.mutate();
           }}
-          className="sticky bottom-0 flex items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
+          className="sticky bottom-0 flex flex-wrap items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
         >
+          {replyTo ? (
+            <div className="flex w-full items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-xs">
+              <CornerUpLeft className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate" data-no-translate>
+                {replyTo.text}
+              </span>
+              <button
+                type="button"
+                aria-label={t("msg.cancel")}
+                onClick={() => setReplyTo(null)}
+                className="grid size-7 place-items-center rounded-lg border border-border"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ) : null}
           {recording ? (
             <div className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
               <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
