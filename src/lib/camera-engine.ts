@@ -30,8 +30,8 @@ type TrackWithCaps = MediaStreamTrack & {
 
 // Conservative mobile settings prevent memory pressure and encoder crashes on
 // entry-level Android tablets while retaining clear short-form video.
-const VIDEO_BITRATE = 4_000_000;
-const AUDIO_BITRATE = 128_000;
+const VIDEO_BITRATE = 12_000_000;
+const AUDIO_BITRATE = 192_000;
 
 /** Ordered by fidelity: MP4/H.264 first (best downstream compatibility), then VP9, then anything. */
 function bestMimeType(): string | undefined {
@@ -56,8 +56,8 @@ function bestMimeType(): string | undefined {
 function videoConstraints(facing: Facing): MediaTrackConstraints {
   return {
     facingMode: { ideal: facing },
-    width: { ideal: 1280, max: 1920 },
-    height: { ideal: 720, max: 1080 },
+    width: { ideal: 1920, max: 1920 },
+    height: { ideal: 1080, max: 1080 },
     frameRate: { ideal: 30, max: 30 },
     // Keep the sensor's own framing — no browser-side crop/scale.
     resizeMode: "none",
