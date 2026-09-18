@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer } from "lucide-react";
+import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer, Volume2, VolumeX } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
@@ -894,6 +894,7 @@ function CameraPage() {
     setPlace("");
     setOverlay(null);
     setLook("none");
+    setMuted(false);
   }
 
 
@@ -936,6 +937,7 @@ function CameraPage() {
           ...(caption.trim() ? { caption: caption.trim() } : {}),
           ...(place.trim() ? { locationLabel: place.trim() } : {}),
           ...(look !== "none" ? { styleFilter: look } : {}),
+          ...(captured.kind === "video" ? { originalAudioVolume: muted ? 0 : 1 } : {}),
           ...(overlay?.text.trim() ? { overlay } : {}),
         },
       });
@@ -1011,6 +1013,18 @@ function CameraPage() {
                   className="h-12 bg-surface-raised pl-10"
                 />
               </div>
+
+              {captured.kind === "video" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setMuted((m) => !m)}
+                  className="h-12 w-full justify-start rounded-2xl border border-border text-sm"
+                >
+                  {muted ? <VolumeX className="mr-2 size-4" /> : <Volume2 className="mr-2 size-4" />}
+                  {muted ? "Sound is off in this moment" : "Mute the sound"}
+                </Button>
+              ) : null}
 
               <Button
                 onClick={doPublish}
