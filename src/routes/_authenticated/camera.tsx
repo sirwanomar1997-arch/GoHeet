@@ -385,16 +385,15 @@ function CameraPage() {
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
-    if (Math.hypot(dx, dy) > 6) dragMovedRef.current = true;
+    if (Math.hypot(dx, dy) > 6) {
+      dragMovedRef.current = true;
+      cancelTextHold();
+      setTextMenuOpen(false);
+    }
     const box = stageRef.current?.getBoundingClientRect();
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
     const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
-    const overTrash = y > 80 && x > 22 && x < 78;
-    if (overTrash !== trashHotRef.current) {
-      trashHotRef.current = overTrash;
-      setTrashHot(overTrash);
-    }
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
 
@@ -410,15 +409,9 @@ function CameraPage() {
     }
     if (pointersRef.current.size > 0) return;
 
-    if (draggingRef.current && trashHotRef.current) {
-      setOverlay(null);
-      setTextOpen(false);
-      toast("Text binned.", { duration: 1500 });
-    }
+    cancelTextHold();
     draggingRef.current = false;
-    trashHotRef.current = false;
     setDraggingText(false);
-    setTrashHot(false);
   };
 
   const openTextEditor = () => {
