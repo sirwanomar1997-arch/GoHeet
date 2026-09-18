@@ -5,6 +5,7 @@
  */
 
 export type FilterCategory =
+  | "Exclusive"
   | "Signature"
   | "Cinema"
   | "Film"
@@ -16,6 +17,7 @@ export type FilterCategory =
   | "Dreamy";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
+  "Exclusive",
   "Signature",
   "Cinema",
   "Film",
