@@ -320,9 +320,8 @@ function CameraPage() {
       const geo = twoFingerGeometry();
       draggingRef.current = false;
       dragMovedRef.current = true;
-      trashHotRef.current = false;
+      cancelTextHold();
       setDraggingText(false);
-      setTrashHot(false);
       if (geo) {
         textPinchRef.current = {
           dist: geo.dist,
@@ -338,12 +337,11 @@ function CameraPage() {
 
     draggingRef.current = true;
     dragMovedRef.current = false;
-    trashHotRef.current = false;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggingText(true);
-    setTrashHot(false);
-    // The editing tray would sit over the bin, so step out of it while dragging.
+    // The editing tray would sit over the text, so step out of it while dragging.
     setTextOpen(false);
+    scheduleTextHold();
   };
   const onDragMove = (e: React.PointerEvent<HTMLElement>) => {
     if (e.pointerType === "touch") return;
