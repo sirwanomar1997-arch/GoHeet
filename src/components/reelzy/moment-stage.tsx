@@ -1080,7 +1080,8 @@ function EditMomentSheet({
             onClick={() => mutation.mutate()}
           >
             {mutation.isPending ? "Saving…" : "Save"}
-        </Button>
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );
