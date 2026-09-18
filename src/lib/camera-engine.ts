@@ -163,6 +163,9 @@ export class CameraEngine {
    * pipeline simply starts drawing the new lens — the take keeps running.
    */
   async switchFacing(facing: Facing): Promise<MediaStream> {
+    // While a take is running we record the sensor directly for maximum
+    // quality, so the lens cannot change mid-take.
+    if (this.recorder && this.recorder.state !== "inactive") return this.stream ?? new MediaStream();
     if (this.swapping) return this.stream ?? new MediaStream();
     this.swapping = true;
     // iOS only allows one active capture at a time, so release the current lens
