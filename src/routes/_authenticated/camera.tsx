@@ -919,7 +919,8 @@ function CameraPage() {
       if (up.error) throw new Error(up.error.message);
 
       let thumbnailPath: string | undefined;
-      if (captured.poster) {
+      const posterBlob = cover ?? captured.poster;
+      if (posterBlob) {
         const posterUpload = session.signedUploads["poster.jpg"];
         if (!posterUpload) throw new Error("Couldn't prepare the video preview.");
         const tp = posterUpload.path;
