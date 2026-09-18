@@ -784,7 +784,7 @@ export const publishMoment = createServerFn({ method: "POST" })
         overlay: data.overlay ?? null,
         original_audio_volume: data.originalAudioVolume ?? 1,
         status: "pending",
-        moderation_state: "pending",
+        moderation_state: "under_review",
       })
       .select("id")
       .single();
@@ -813,7 +813,7 @@ export const publishMoment = createServerFn({ method: "POST" })
         .from("moments")
         .update({
           status: "removed",
-          moderation_state: "auto_removed",
+          moderation_state: "removed",
           deleted_at: new Date().toISOString(),
           ai_score: ai.score,
           ai_reason: ai.reason,
@@ -865,7 +865,7 @@ export const publishMoment = createServerFn({ method: "POST" })
     if (verdict.decision === "reject") {
       await sb
         .from("moments")
-        .update({ status: "removed", moderation_state: "auto_removed", deleted_at: new Date().toISOString() })
+        .update({ status: "removed", moderation_state: "removed", deleted_at: new Date().toISOString() })
         .eq("id", moment.id);
       await sb.from("moderation_actions").insert({
         actor_id: null,
