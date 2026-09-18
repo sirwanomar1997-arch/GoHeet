@@ -783,7 +783,7 @@ export const publishMoment = createServerFn({ method: "POST" })
         style_filter: data.styleFilter ?? null,
         overlay: data.overlay ?? null,
         original_audio_volume: data.originalAudioVolume ?? 1,
-        status: "pending",
+        status: "hidden",
         moderation_state: "under_review",
       })
       .select("id")
