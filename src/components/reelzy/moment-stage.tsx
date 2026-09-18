@@ -865,9 +865,37 @@ function EditMomentSheet({
   const startCover = useServerFn(startCoverUpload);
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const frameVideoRef = useRef<HTMLVideoElement | null>(null);
   const [place, setPlace] = useState(moment.locationLabel ?? "");
   const [cover, setCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [pickFrame, setPickFrame] = useState(false);
+  const [frameTime, setFrameTime] = useState(0);
+  const [frameDuration, setFrameDuration] = useState(0);
+
+  /** Freeze the frame the slider is parked on and use it as the cover. */
+  const grabFrame = () => {
+    const vid = frameVideoRef.current;
+    if (!vid || !vid.videoWidth) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = vid.videoWidth;
+    canvas.height = vid.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("Couldn't use that frame.");
+          return;
+        }
+        setCover(new File([blob], "cover.jpg", { type: "image/jpeg" }));
+        setPickFrame(false);
+      },
+      "image/jpeg",
+      0.92,
+    );
+  };
 
   useEffect(() => {
     if (open) setPlace(moment.locationLabel ?? "");
