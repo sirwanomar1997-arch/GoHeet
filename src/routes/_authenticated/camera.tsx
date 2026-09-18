@@ -1281,6 +1281,17 @@ function CameraPage() {
         {!textOpen ? (
           <div className="pointer-events-auto absolute right-3 top-1/2 z-[70] flex -translate-y-1/2 flex-col gap-3">
             {[
+              ...(captured.kind === "video"
+                ? [
+                    {
+                      key: "mute",
+                      icon: muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />,
+                      label: muted ? "Turn the sound back on" : "Publish without sound",
+                      active: muted,
+                      onClick: () => setMuted((m) => !m),
+                    },
+                  ]
+                : []),
               {
                 key: "filter",
                 icon: <Sparkles className="size-5" />,
