@@ -287,8 +287,27 @@ function CameraPage() {
 
   const [draggingText, setDraggingText] = useState(false);
   const [pinchingText, setPinchingText] = useState(false);
-  const [trashHot, setTrashHot] = useState(false);
-  const trashHotRef = useRef(false);
+  const [textMenuOpen, setTextMenuOpen] = useState(false);
+  const textHoldTimerRef = useRef<number | null>(null);
+  const cancelTextHold = () => {
+    if (textHoldTimerRef.current !== null) {
+      window.clearTimeout(textHoldTimerRef.current);
+      textHoldTimerRef.current = null;
+    }
+  };
+  const scheduleTextHold = () => {
+    cancelTextHold();
+    textHoldTimerRef.current = window.setTimeout(() => {
+      textHoldTimerRef.current = null;
+      if (!dragMovedRef.current && !textPinchRef.current) setTextMenuOpen(true);
+    }, 500);
+  };
+  const deleteOverlayText = () => {
+    setOverlay(null);
+    setTextMenuOpen(false);
+    setTextOpen(false);
+    toast("Text deleted.", { duration: 1500 });
+  };
   const overlayRef = useRef<MomentOverlay | null>(null);
   overlayRef.current = overlay;
 
@@ -320,9 +339,8 @@ function CameraPage() {
       const geo = twoFingerGeometry();
       draggingRef.current = false;
       dragMovedRef.current = true;
-      trashHotRef.current = false;
+      cancelTextHold();
       setDraggingText(false);
-      setTrashHot(false);
       if (geo) {
         textPinchRef.current = {
           dist: geo.dist,
@@ -338,12 +356,11 @@ function CameraPage() {
 
     draggingRef.current = true;
     dragMovedRef.current = false;
-    trashHotRef.current = false;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggingText(true);
-    setTrashHot(false);
-    // The editing tray would sit over the bin, so step out of it while dragging.
+    // The editing tray would sit over the text, so step out of it while dragging.
     setTextOpen(false);
+    scheduleTextHold();
   };
   const onDragMove = (e: React.PointerEvent<HTMLElement>) => {
     if (e.pointerType === "touch") return;
@@ -368,16 +385,15 @@ function CameraPage() {
     if (!draggingRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
-    if (Math.hypot(dx, dy) > 6) dragMovedRef.current = true;
+    if (Math.hypot(dx, dy) > 6) {
+      dragMovedRef.current = true;
+      cancelTextHold();
+      setTextMenuOpen(false);
+    }
     const box = stageRef.current?.getBoundingClientRect();
     if (!box) return;
     const x = Math.min(96, Math.max(4, ((e.clientX - box.left) / box.width) * 100));
     const y = Math.min(96, Math.max(4, ((e.clientY - box.top) / box.height) * 100));
-    const overTrash = y > 80 && x > 22 && x < 78;
-    if (overTrash !== trashHotRef.current) {
-      trashHotRef.current = overTrash;
-      setTrashHot(overTrash);
-    }
     setOverlay((o) => (o ? { ...o, x, y } : o));
   };
 
@@ -393,15 +409,9 @@ function CameraPage() {
     }
     if (pointersRef.current.size > 0) return;
 
-    if (draggingRef.current && trashHotRef.current) {
-      setOverlay(null);
-      setTextOpen(false);
-      toast("Text binned.", { duration: 1500 });
-    }
+    cancelTextHold();
     draggingRef.current = false;
-    trashHotRef.current = false;
     setDraggingText(false);
-    setTrashHot(false);
   };
 
   const openTextEditor = () => {
@@ -435,9 +445,9 @@ function CameraPage() {
     const start = (event: TouchEvent) => {
       event.preventDefault();
       dragMovedRef.current = false;
-      trashHotRef.current = false;
-      setTrashHot(false);
+      cancelTextHold();
       setTextOpen(false);
+      setTextMenuOpen(false);
 
       if (event.touches.length >= 2) {
         const geo = geometry(event.touches);
@@ -460,6 +470,7 @@ function CameraPage() {
       if (!touch) return;
       touchDragRef.current = point(touch);
       setDraggingText(true);
+      scheduleTextHold();
     };
 
     const move = (event: TouchEvent) => {
@@ -506,12 +517,11 @@ function CameraPage() {
       if (!touch || !startPoint || box.width <= 0 || box.height <= 0) return;
       if (Math.hypot(touch.clientX - startPoint.x, touch.clientY - startPoint.y) > 5) {
         dragMovedRef.current = true;
+        cancelTextHold();
+        setTextMenuOpen(false);
       }
       const x = Math.min(96, Math.max(4, ((touch.clientX - box.left) / box.width) * 100));
       const y = Math.min(96, Math.max(4, ((touch.clientY - box.top) / box.height) * 100));
-      const overTrash = y > 80 && x > 22 && x < 78;
-      trashHotRef.current = overTrash;
-      setTrashHot(overTrash);
       setOverlay((value) => (value ? { ...value, x, y } : value));
     };
 
@@ -528,19 +538,14 @@ function CameraPage() {
       }
       if (event.touches.length > 0) return;
 
-      if (trashHotRef.current) {
-        setOverlay(null);
-        setTextOpen(false);
-        toast("Text binned.", { duration: 1500 });
-      } else if (!dragMovedRef.current) {
+      cancelTextHold();
+      if (!dragMovedRef.current && !textMenuOpen) {
         openTextEditor();
       }
       touchDragRef.current = null;
       textPinchRef.current = null;
-      trashHotRef.current = false;
       setDraggingText(false);
       setPinchingText(false);
-      setTrashHot(false);
     };
 
     stageEl.addEventListener("touchstart", start, { passive: false });
@@ -1211,7 +1216,7 @@ function CameraPage() {
                   if (e.key === "Enter" || e.key === " ") openTextEditor();
                 }}
 
-                aria-label="Tap to edit, hold and drag to move or bin your text"
+                aria-label="Tap to edit, drag to move, hold to delete your text"
                 className={`max-w-full cursor-grab touch-none select-none whitespace-pre-wrap break-words text-center leading-tight active:cursor-grabbing ${
                   overlayStyleProps(overlay.style, overlay.color).className
                 }`}
@@ -1224,17 +1229,25 @@ function CameraPage() {
                 {overlay.text}
               </p>
             </div>
-            {draggingText ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-8">
-                <div
-                  className={`flex size-16 items-center justify-center rounded-full border-2 transition-all duration-150 ${
-                    trashHot
-                      ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
-                      : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
-                  }`}
-                  aria-hidden
-                >
-                  <Trash2 className="size-7" />
+            {textMenuOpen ? (
+              <div className="absolute inset-x-0 bottom-0 z-[80] flex justify-center pb-10">
+                <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/80 p-1.5 backdrop-blur">
+                  <button
+                    type="button"
+                    onClick={deleteOverlayText}
+                    className="flex items-center gap-2 rounded-full bg-red-500/90 px-4 py-2 text-sm font-medium text-white active:scale-95"
+                  >
+                    <Trash2 className="size-4" />
+                    Delete text
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Keep text"
+                    onClick={() => setTextMenuOpen(false)}
+                    className="grid size-9 place-items-center rounded-full bg-white/10 text-white active:scale-95"
+                  >
+                    <X className="size-4" />
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -1268,6 +1281,17 @@ function CameraPage() {
         {!textOpen ? (
           <div className="pointer-events-auto absolute right-3 top-1/2 z-[70] flex -translate-y-1/2 flex-col gap-3">
             {[
+              ...(captured.kind === "video"
+                ? [
+                    {
+                      key: "mute",
+                      icon: muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />,
+                      label: muted ? "Turn the sound back on" : "Publish without sound",
+                      active: muted,
+                      onClick: () => setMuted((m) => !m),
+                    },
+                  ]
+                : []),
               {
                 key: "filter",
                 icon: <Sparkles className="size-5" />,
