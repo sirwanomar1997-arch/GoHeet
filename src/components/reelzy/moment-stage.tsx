@@ -467,7 +467,7 @@ export function MomentStage({
       className={
         fullscreen
           ? "relative h-[100svh] w-full shrink-0 snap-start snap-always overflow-hidden bg-black"
-          : "animate-shutter relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-surface shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
+          : "relative h-[calc(100svh-6.5rem)] w-full snap-start snap-always overflow-hidden rounded-[30px] bg-black shadow-[0_30px_60px_-30px_oklch(0_0_0/90%)] ring-1 ring-[oklch(1_0_0/6%)]"
       }
       aria-label={`Moment by ${moment.author.username}`}
       onTouchStart={onSwipeStart}
@@ -489,6 +489,7 @@ export function MomentStage({
           <video
             ref={videoRef}
             src={moment.mediaUrl}
+            poster={moment.posterUrl ?? undefined}
             className="size-full object-cover"
             style={look ? { filter: look } : undefined}
             playsInline
@@ -942,7 +943,10 @@ function EditMomentSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
+      <SheetContent
+        side="bottom"
+        className="max-h-[88svh] overflow-y-auto rounded-t-[28px] border-border bg-surface"
+      >
         <SheetHeader className="px-0">
           <SheetTitle className="font-display">Edit this moment</SheetTitle>
           <SheetDescription>
@@ -965,46 +969,7 @@ function EditMomentSheet({
             className="h-12 rounded-2xl bg-surface-raised"
           />
 
-          <div className="space-y-3 rounded-2xl bg-surface-raised p-3">
-            <div className="flex items-center gap-3">
-              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-surface">
-                {coverPreview ?? moment.posterUrl ? (
-                  <img
-                    src={coverPreview ?? moment.posterUrl ?? ""}
-                    alt=""
-                    className="size-full object-cover"
-                  />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Cover picture</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {cover ? "New cover ready." : "This is what people see in the grid."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              {moment.kind === "video" && moment.mediaUrl ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-10 flex-1 rounded-xl text-xs"
-                  onClick={() => setPickFrame((v) => !v)}
-                >
-                  {pickFrame ? "Close film" : "Pick from film"}
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-10 flex-1 rounded-xl text-xs"
-                onClick={() => fileRef.current?.click()}
-              >
-                From phone
-              </Button>
-            </div>
-
+          <div className="rounded-2xl bg-surface-raised p-3">
             {pickFrame && moment.mediaUrl ? (
               <div className="space-y-2">
                 <video
@@ -1014,7 +979,7 @@ function EditMomentSheet({
                   playsInline
                   muted
                   preload="auto"
-                  className="max-h-56 w-full rounded-xl bg-black object-contain"
+                  className="h-36 w-full rounded-xl bg-black object-contain"
                   onLoadedMetadata={(e) => setFrameDuration(e.currentTarget.duration || 0)}
                 />
                 <input
@@ -1031,15 +996,61 @@ function EditMomentSheet({
                   className="w-full accent-[oklch(0.78_0.18_55)]"
                   aria-label="Choose a frame"
                 />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 flex-1 rounded-xl text-xs"
+                    onClick={() => setPickFrame(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="ember-fill h-10 flex-1 rounded-xl text-xs text-primary-foreground"
+                    onClick={grabFrame}
+                  >
+                    Use this frame
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-surface">
+                  {coverPreview ?? moment.posterUrl ? (
+                    <img
+                      src={coverPreview ?? moment.posterUrl ?? ""}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">Cover picture</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {cover ? "New cover ready." : "What people see in the grid."}
+                  </p>
+                </div>
+                {moment.kind === "video" && moment.mediaUrl ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-9 shrink-0 rounded-xl px-3 text-xs"
+                    onClick={() => setPickFrame(true)}
+                  >
+                    From film
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
-                  className="ember-fill h-10 w-full rounded-xl text-xs text-primary-foreground"
-                  onClick={grabFrame}
+                  variant="secondary"
+                  className="h-9 shrink-0 rounded-xl px-3 text-xs"
+                  onClick={() => fileRef.current?.click()}
                 >
-                  Use this frame
+                  From phone
                 </Button>
               </div>
-            ) : null}
+            )}
 
             <input
               ref={fileRef}
@@ -1051,13 +1062,26 @@ function EditMomentSheet({
           </div>
         </div>
 
-        <Button
-          className="ember-fill mt-4 h-12 w-full rounded-2xl text-primary-foreground"
-          disabled={mutation.isPending}
-          onClick={() => mutation.mutate()}
-        >
-          {mutation.isPending ? "Saving…" : "Save"}
-        </Button>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant="secondary"
+            className="h-12 flex-1 rounded-2xl"
+            onClick={() => {
+              setCover(null);
+              setPickFrame(false);
+              onOpenChange(false);
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            className="ember-fill h-12 flex-[2] rounded-2xl text-primary-foreground"
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {mutation.isPending ? "Saving…" : "Save"}
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );
