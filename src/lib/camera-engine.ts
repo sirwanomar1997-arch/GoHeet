@@ -386,7 +386,6 @@ export class CameraEngine {
       try {
         rec = new MediaRecorder(composed);
       } catch {
-        composed.getVideoTracks().forEach((track) => track.stop());
         this.teardownMixer();
         return false;
       }
