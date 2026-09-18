@@ -55,9 +55,16 @@ function ThreadPage() {
   }, [data?.messages.length]);
 
   const send = useMutation({
-    mutationFn: () => post({ data: { conversationId, body } }),
+    mutationFn: () =>
+      post({
+        data: {
+          conversationId,
+          body: replyTo ? `“${replyTo.text.slice(0, 120)}”\n${body}` : body,
+        },
+      }),
     onSuccess: () => {
       setBody("");
+      setReplyTo(null);
       void qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
       void qc.invalidateQueries({ queryKey: ["conversations"] });
     },
@@ -347,7 +354,7 @@ function ThreadPage() {
 
                 {pickerFor === m.id ? (
                   <div
-                    className={`mt-1 flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-lg ${
+                    className={`mt-1 flex max-w-full flex-wrap items-center gap-1 rounded-3xl border border-border bg-surface px-2 py-1 shadow-lg ${
                       m.mine ? "self-end" : "self-start"
                     }`}
                     data-no-translate
@@ -498,8 +505,24 @@ function ThreadPage() {
             e.preventDefault();
             if (body.trim()) send.mutate();
           }}
-          className="sticky bottom-0 flex items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
+          className="sticky bottom-0 flex flex-wrap items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
         >
+          {replyTo ? (
+            <div className="flex w-full items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-xs">
+              <CornerUpLeft className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate" data-no-translate>
+                {replyTo.text}
+              </span>
+              <button
+                type="button"
+                aria-label={t("msg.cancel")}
+                onClick={() => setReplyTo(null)}
+                className="grid size-7 place-items-center rounded-lg border border-border"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ) : null}
           {recording ? (
             <div className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
               <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
