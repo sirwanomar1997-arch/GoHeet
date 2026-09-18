@@ -1697,22 +1697,53 @@ export const deleteComment = createServerFn({ method: "POST" })
 /** Lets the owner change the words on a moment after it is live. */
 export const updateMoment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { momentId: string; caption?: string; locationLabel?: string }) => ({
+  .inputValidator((d: { momentId: string; caption?: string; locationLabel?: string; thumbnailPath?: string }) => ({
     momentId: z.string().uuid().parse(d.momentId),
     caption: assertSafeText(z.string().trim().max(300).optional().parse(d.caption)),
     locationLabel: z.string().trim().max(60).optional().parse(d.locationLabel),
+    thumbnailPath: z.string().max(300).optional().parse(d.thumbnailPath),
   }))
   .handler(async ({ data, context }) => {
+    const patch: Record<string, string | null> = {
+      caption: data.caption ?? null,
+      location_label: data.locationLabel ?? null,
+    };
+    if (data.thumbnailPath) {
+      if (!data.thumbnailPath.startsWith(`${context.userId}/`)) {
+        throw new Error("That cover doesn't belong to you.");
+      }
+      patch['thumbnail_path'] = data.thumbnailPath;
+    }
     const { error } = await context.supabase
       .from("moments")
-      .update({
-        caption: data.caption ?? null,
-        location_label: data.locationLabel ?? null,
-      })
+      .update(patch)
       .eq("id", data.momentId)
       .eq("author_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/** A one-time upload link for a new cover picture on a moment you own. */
+export const startCoverUpload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { momentId: string }) => ({
+    momentId: z.string().uuid().parse(d.momentId),
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: moment } = await context.supabase
+      .from("moments")
+      .select("id, author_id")
+      .eq("id", data.momentId)
+      .maybeSingle();
+    if (!moment || moment.author_id !== context.userId) throw new Error("That moment isn't yours.");
+
+    const sb = await admin();
+    const path = `${context.userId}/covers/${data.momentId}-${Date.now()}.jpg`;
+    const { data: signed, error } = await sb.storage
+      .from("moments")
+      .createSignedUploadUrl(path, { upsert: true });
+    if (error || !signed) throw new Error(error?.message ?? "Couldn't prepare the cover upload.");
+    return { path, token: signed.token };
   });
 
 /* ------------------------------------------------------------------ */
