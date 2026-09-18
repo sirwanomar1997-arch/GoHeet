@@ -44,6 +44,7 @@ import {
   toggleLike,
   toggleRepost,
   toggleSave,
+  updateMoment,
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { isDemoMode } from "@/lib/use-demo-mode";
@@ -96,6 +97,8 @@ export function MomentStage({
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editCaption, setEditCaption] = useState(moment.caption ?? "");
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [bursts, setBursts] = useState<
@@ -727,9 +730,22 @@ export function MomentStage({
 
           <DropdownMenuContent align="end" side="top">
             {moment.isOwn ? (
-              <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
-                Delete moment
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditCaption(moment.caption ?? "");
+                    setEditOpen(true);
+                  }}
+                >
+                  Edit moment
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                  Share moment
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
+                  Delete moment
+                </DropdownMenuItem>
+              </>
             ) : (
               <>
                 <DropdownMenuItem onClick={() => setReportOpen(true)}>Report</DropdownMenuItem>
@@ -748,6 +764,15 @@ export function MomentStage({
         open={commentsOpen}
         onOpenChange={setCommentsOpen}
         author={moment.author.username}
+        canModerate={moment.isOwn}
+      />
+
+      <EditMomentSheet
+        momentId={moment.id}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        caption={editCaption}
+        onCaption={setEditCaption}
       />
 
       <ShareSheet
@@ -813,16 +838,71 @@ type CommentRow = {
   avatarUrl: string | null;
 };
 
+/** Change the words on a moment that is already live. */
+function EditMomentSheet({
+  momentId,
+  open,
+  onOpenChange,
+  caption,
+  onCaption,
+}: {
+  momentId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  caption: string;
+  onCaption: (v: string) => void;
+}) {
+  const save = useServerFn(updateMoment);
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => save({ data: { momentId, caption } }),
+    onSuccess: () => {
+      toast.success("Updated.");
+      onOpenChange(false);
+      void qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message || "Couldn't save that."),
+  });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
+        <SheetHeader className="px-0">
+          <SheetTitle className="font-display">Edit this moment</SheetTitle>
+          <SheetDescription>Change the caption. The film itself stays as you shot it.</SheetDescription>
+        </SheetHeader>
+        <Textarea
+          value={caption}
+          onChange={(e) => onCaption(e.target.value.slice(0, 300))}
+          rows={3}
+          placeholder="Say something real…"
+          className="bg-surface-raised"
+        />
+        <Button
+          className="ember-fill mt-4 h-12 w-full rounded-2xl text-primary-foreground"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? "Saving…" : "Save"}
+        </Button>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 function CommentSheet({
   momentId,
   open,
   onOpenChange,
   author,
+  canModerate = false,
 }: {
   momentId: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   author: string;
+  /** The owner of the video can remove anyone's comment on it. */
+  canModerate?: boolean;
 }) {
   const fetchComments = useServerFn(listComments);
   const create = useServerFn(addComment);
@@ -925,18 +1005,24 @@ function CommentSheet({
           >
             Reply
           </button>
-          {c.isOwn ? (
+          {c.isOwn || canModerate ? (
             <button
               type="button"
               className="text-[11px] text-muted-foreground underline"
               onClick={async () => {
-                await remove({ data: { commentId: c.id } });
-                void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+                try {
+                  await remove({ data: { commentId: c.id } });
+                  void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+                  toast.success("Comment removed.");
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Couldn't remove that comment.");
+                }
               }}
             >
               Delete
             </button>
-          ) : (
+          ) : null}
+          {!c.isOwn ? (
             <button
               type="button"
               className="text-[11px] text-muted-foreground underline"
@@ -949,7 +1035,7 @@ function CommentSheet({
             >
               Report
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
