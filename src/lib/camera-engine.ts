@@ -152,7 +152,9 @@ export class CameraEngine {
     this.state.facing = facing;
     this.readCapabilities();
     // Always begin at the natural, unzoomed view.
+    this.zoomApplied = this.state.zoomRange?.min ?? 1;
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
+    await this.tuneLens();
     return stream;
   }
 
