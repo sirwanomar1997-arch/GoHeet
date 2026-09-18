@@ -399,9 +399,18 @@ export class CameraEngine {
       ctx?.drawImage(source, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
     };
 
+    // The camera delivers 30 frames a second, but the screen asks for 60. Copying
+    // every frame twice doubles the work for nothing and is what makes a close,
+    // detailed shot stutter on mid-range phones. Draw at the camera's own pace.
+    const FRAME_MS = 1000 / 30;
+    let lastDraw = 0;
+
     const draw = () => {
       this.raf = requestAnimationFrame(draw);
       if (!ctx) return;
+      const now = performance.now();
+      if (now - lastDraw < FRAME_MS - 2) return;
+      lastDraw = now;
       const live = mix.videoWidth > 0 && mix.readyState >= 2 && !this.swapping;
       const held = this.freeze;
 
