@@ -489,6 +489,7 @@ export function MomentStage({
           <video
             ref={videoRef}
             src={moment.mediaUrl}
+            poster={moment.posterUrl ?? undefined}
             className="size-full object-cover"
             style={look ? { filter: look } : undefined}
             playsInline
