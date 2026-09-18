@@ -123,6 +123,95 @@ function ReviewVideo({ src, filter, posterUrl }: { src: string; filter: string |
 }
 
 
+/**
+ * Pick the still people see before they tap: scrub the clip to a frame you
+ * like, or use a picture from the phone. Only the cover — the moment itself
+ * still comes from the camera.
+ */
+function CoverPicker({
+  src,
+  durationMs,
+  filter,
+  onPick,
+}: {
+  src: string;
+  durationMs: number;
+  filter: string | undefined;
+  onPick: (blob: Blob) => void;
+}) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [at, setAt] = useState(0);
+
+  async function useThisFrame() {
+    const el = ref.current;
+    if (!el) return;
+    const blob = await CameraEngine.grabFrame(el, false);
+    if (blob) onPick(blob);
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-border p-3">
+      <div className="mx-auto aspect-[9/16] w-32 overflow-hidden rounded-xl bg-black">
+        <video
+          ref={ref}
+          src={src}
+          className="size-full object-cover"
+          style={filter ? { filter } : undefined}
+          muted
+          playsInline
+          preload="auto"
+          onLoadedData={() => {
+            if (ref.current) ref.current.currentTime = 0.05;
+          }}
+        />
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={Math.max(durationMs, 200)}
+        step={100}
+        value={at}
+        aria-label="Choose the frame people see first"
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          setAt(v);
+          if (ref.current) ref.current.currentTime = Math.max(v / 1000, 0.05);
+        }}
+        className="w-full accent-primary"
+      />
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          onClick={() => void useThisFrame()}
+          className="h-11 flex-1 rounded-xl text-sm"
+        >
+          Use this frame
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => fileRef.current?.click()}
+          className="h-11 flex-1 rounded-xl border border-border text-sm"
+        >
+          Choose a picture
+        </Button>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
 function CameraPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
