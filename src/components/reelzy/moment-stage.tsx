@@ -306,9 +306,13 @@ export function MomentStage({
 
   const flushView = useCallback(
     (completed: boolean) => {
-      if (reportedRef.current || watchedRef.current < 1500) return;
+      if (reportedRef.current) return;
       reportedRef.current = true;
-      void view({ data: { momentId: moment.id, watchedMs: Math.round(watchedRef.current), completed } });
+      void view({ data: { momentId: moment.id, watchedMs: Math.round(watchedRef.current), completed } })
+        .then((res) => {
+          if (res?.counted) setViewCount((c) => c + 1);
+        })
+        .catch(() => undefined);
     },
     [moment.id, view],
   );
@@ -322,9 +326,10 @@ export function MomentStage({
         for (const e of entries) {
           if (e.isIntersecting && e.intersectionRatio > 0.6) {
             void vid?.play().catch(() => undefined);
+            // Opening the moment already counts as a view.
+            flushView(false);
           } else {
             vid?.pause();
-            flushView(false);
           }
         }
       },
