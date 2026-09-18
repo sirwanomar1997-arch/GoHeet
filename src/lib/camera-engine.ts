@@ -377,9 +377,13 @@ export class CameraEngine {
     const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
     canvas.width = Math.max(2, Math.round(sourceWidth * scale));
     canvas.height = Math.max(2, Math.round(sourceHeight * scale));
-    const ctx = canvas.getContext("2d");
+    // No transparency to composite and no need to sync with the page's paint:
+    // both let the browser take the cheap, direct path for every frame copy.
+    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
     const captureStream = canvas.captureStream?.bind(canvas);
     if (!ctx || !captureStream) return false;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     const mix = document.createElement("video");
     mix.muted = true;
