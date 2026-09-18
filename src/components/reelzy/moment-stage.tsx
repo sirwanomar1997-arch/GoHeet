@@ -892,7 +892,7 @@ function EditMomentSheet({
         data: {
           momentId: moment.id,
           caption,
-          locationLabel: place.trim() || undefined,
+          ...(place.trim() ? { locationLabel: place.trim() } : {}),
           ...(thumbnailPath ? { thumbnailPath } : {}),
         },
       });
