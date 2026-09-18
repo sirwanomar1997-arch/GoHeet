@@ -11,7 +11,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { listConversations, sendMessage } from "@/lib/reelzy.functions";
+import { listConversations, listFollowing, sendMessage } from "@/lib/reelzy.functions";
+import { useMe } from "@/lib/use-me";
 
 type Target = {
   key: string;
