@@ -44,9 +44,12 @@ import {
   toggleLike,
   toggleRepost,
   toggleSave,
+  startCoverUpload,
   updateMoment,
   type MomentCard,
 } from "@/lib/reelzy.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import { isDemoMode } from "@/lib/use-demo-mode";
 import { formatCount, timeAgo } from "./format";
 import { HeetFlame } from "./heet-flame";
@@ -768,7 +771,7 @@ export function MomentStage({
       />
 
       <EditMomentSheet
-        momentId={moment.id}
+        moment={moment}
         open={editOpen}
         onOpenChange={setEditOpen}
         caption={editCaption}
@@ -838,26 +841,65 @@ type CommentRow = {
   avatarUrl: string | null;
 };
 
-/** Change the words on a moment that is already live. */
+/** Change the caption, the place and the cover of a moment that is already live. */
 function EditMomentSheet({
-  momentId,
+  moment,
   open,
   onOpenChange,
   caption,
   onCaption,
 }: {
-  momentId: string;
+  moment: MomentCard;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   caption: string;
   onCaption: (v: string) => void;
 }) {
   const save = useServerFn(updateMoment);
+  const startCover = useServerFn(startCoverUpload);
   const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [place, setPlace] = useState(moment.locationLabel ?? "");
+  const [cover, setCover] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) setPlace(moment.locationLabel ?? "");
+  }, [open, moment.locationLabel]);
+
+  useEffect(() => {
+    if (!cover) {
+      setCoverPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(cover);
+    setCoverPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [cover]);
+
   const mutation = useMutation({
-    mutationFn: () => save({ data: { momentId, caption } }),
+    mutationFn: async () => {
+      let thumbnailPath: string | undefined;
+      if (cover) {
+        const slot = await startCover({ data: { momentId: moment.id } });
+        const { error } = await supabase.storage
+          .from("moments")
+          .uploadToSignedUrl(slot.path, slot.token, cover, { contentType: cover.type || "image/jpeg" });
+        if (error) throw new Error(error.message);
+        thumbnailPath = slot.path;
+      }
+      return save({
+        data: {
+          momentId: moment.id,
+          caption,
+          ...(place.trim() ? { locationLabel: place.trim() } : {}),
+          ...(thumbnailPath ? { thumbnailPath } : {}),
+        },
+      });
+    },
     onSuccess: () => {
-      toast.success("Updated.");
+      toast.success("Updated. Everyone sees it now.");
+      setCover(null);
       onOpenChange(false);
       void qc.invalidateQueries();
     },
@@ -869,15 +911,60 @@ function EditMomentSheet({
       <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
         <SheetHeader className="px-0">
           <SheetTitle className="font-display">Edit this moment</SheetTitle>
-          <SheetDescription>Change the caption. The film itself stays as you shot it.</SheetDescription>
+          <SheetDescription>
+            Change the description, the place and the cover picture. The film itself stays as you shot it.
+          </SheetDescription>
         </SheetHeader>
-        <Textarea
-          value={caption}
-          onChange={(e) => onCaption(e.target.value.slice(0, 300))}
-          rows={3}
-          placeholder="Say something real…"
-          className="bg-surface-raised"
-        />
+
+        <div className="space-y-3">
+          <Textarea
+            value={caption}
+            onChange={(e) => onCaption(e.target.value.slice(0, 300))}
+            rows={3}
+            placeholder="Say something real…"
+            className="bg-surface-raised"
+          />
+          <Input
+            value={place}
+            onChange={(e) => setPlace(e.target.value.slice(0, 60))}
+            placeholder="Add a place"
+            className="h-12 rounded-2xl bg-surface-raised"
+          />
+
+          <div className="flex items-center gap-3 rounded-2xl bg-surface-raised p-3">
+            <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-surface">
+              {coverPreview ?? moment.posterUrl ? (
+                <img
+                  src={coverPreview ?? moment.posterUrl ?? ""}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Cover picture</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {cover ? cover.name : "This is what people see in the grid."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="rounded-xl"
+              onClick={() => fileRef.current?.click()}
+            >
+              Change
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => setCover(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
+
         <Button
           className="ember-fill mt-4 h-12 w-full rounded-2xl text-primary-foreground"
           disabled={mutation.isPending}
