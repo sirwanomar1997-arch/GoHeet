@@ -730,9 +730,22 @@ export function MomentStage({
 
           <DropdownMenuContent align="end" side="top">
             {moment.isOwn ? (
-              <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
-                Delete moment
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditCaption(moment.caption ?? "");
+                    setEditOpen(true);
+                  }}
+                >
+                  Edit moment
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                  Share moment
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => deleteMutation.mutate()}>
+                  Delete moment
+                </DropdownMenuItem>
+              </>
             ) : (
               <>
                 <DropdownMenuItem onClick={() => setReportOpen(true)}>Report</DropdownMenuItem>
