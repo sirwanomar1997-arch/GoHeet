@@ -182,6 +182,8 @@ function CameraPage() {
   const [place, setPlace] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [look, setLook] = useState<FilterId>("none");
+  // Mute the take before publishing when the sound isn't wanted.
+  const [muted, setMuted] = useState(false);
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
