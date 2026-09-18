@@ -1949,7 +1949,7 @@ export const submitReport = createServerFn({ method: "POST" })
           if (ai.synthetic) {
             await sb
               .from("moments")
-              .update({ status: "removed", moderation_state: "auto_removed", deleted_at: new Date().toISOString() })
+              .update({ status: "removed", moderation_state: "removed", deleted_at: new Date().toISOString() })
               .eq("id", m.id);
             await sb.from("moderation_actions").insert({
               actor_id: null,
