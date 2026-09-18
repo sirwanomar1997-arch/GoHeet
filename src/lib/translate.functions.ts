@@ -235,3 +235,48 @@ export const translateUi = createServerFn({ method: "POST" })
 
     return { translations: { ...translations, ...fresh } };
   });
+
+/**
+ * Translate one private message into the reader's own language.
+ *
+ * Private content is never cached or shared — the translation is produced on
+ * demand and returned only to the person who asked for it.
+ */
+export const translateMessage = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        text: z.string().trim().min(1).max(2000),
+        locale: z.string().trim().min(2).max(8).regex(/^[a-zA-Z-]+$/),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<{ text: string }> => {
+    const locale = data.locale.toLowerCase().split("-")[0] as string;
+    const language = LANGUAGE_NAMES[locale] ?? "English";
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) return { text: data.text };
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3.8-flash",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You translate chat messages. Reply with the translation only — no quotes, no notes. Keep names, @handles, emoji and numbers exactly as written.",
+            },
+            { role: "user", content: `Translate into ${language}:\n\n${data.text}` },
+          ],
+        }),
+      });
+      if (!res.ok) return { text: data.text };
+      const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      const out = json.choices?.[0]?.message?.content?.trim();
+      return { text: out || data.text };
+    } catch {
+      return { text: data.text };
+    }
+  });
