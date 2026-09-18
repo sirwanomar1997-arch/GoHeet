@@ -197,7 +197,7 @@ function ThreadPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
-        <Link to="/messages" aria-label="Back to messages" className="grid size-9 place-items-center rounded-xl border border-border">
+        <Link to="/feed" replace aria-label="Back to home" className="grid size-9 place-items-center rounded-xl border border-border">
           <ArrowLeft className="size-4" />
         </Link>
         {data ? (
