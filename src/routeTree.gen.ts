@@ -21,7 +21,6 @@ import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedEditProfileRouteImport } from './routes/_authenticated/edit-profile'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
-import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedMyCommentsRouteImport } from './routes/_authenticated/my-comments'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
@@ -30,6 +29,7 @@ import { Route as AuthenticatedShareLaterRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
+import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedMessagesConversationIdRouteImport } from './routes/_authenticated/messages.$conversationId'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 import { Route as AuthenticatedUUsernameIndexRouteImport } from './routes/_authenticated/u.$username.index'
@@ -96,11 +96,6 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMyCommentsRoute = AuthenticatedMyCommentsRouteImport.update({
   id: '/my-comments',
   path: '/my-comments',
@@ -141,11 +136,17 @@ const LegalDocRoute = LegalDocRouteImport.update({
   path: '/legal/$doc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMessagesIndexRoute =
+  AuthenticatedMessagesIndexRouteImport.update({
+    id: '/messages/',
+    path: '/messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMessagesConversationIdRoute =
   AuthenticatedMessagesConversationIdRouteImport.update({
-    id: '/$conversationId',
-    path: '/$conversationId',
-    getParentRoute: () => AuthenticatedMessagesRoute,
+    id: '/messages/$conversationId',
+    path: '/messages/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
@@ -183,7 +184,6 @@ export interface FileRoutesByFullPath {
   '/edit-profile': typeof AuthenticatedEditProfileRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/history': typeof AuthenticatedHistoryRoute
-  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/my-comments': typeof AuthenticatedMyCommentsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -194,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/legal/$doc': typeof LegalDocRoute
   '/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
+  '/messages/': typeof AuthenticatedMessagesIndexRoute
   '/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
   '/u/$username/following': typeof AuthenticatedUUsernameFollowingRoute
   '/u/$username/': typeof AuthenticatedUUsernameIndexRoute
@@ -210,7 +211,6 @@ export interface FileRoutesByTo {
   '/edit-profile': typeof AuthenticatedEditProfileRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/history': typeof AuthenticatedHistoryRoute
-  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/my-comments': typeof AuthenticatedMyCommentsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -220,6 +220,7 @@ export interface FileRoutesByTo {
   '/trash': typeof AuthenticatedTrashRoute
   '/legal/$doc': typeof LegalDocRoute
   '/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
+  '/messages': typeof AuthenticatedMessagesIndexRoute
   '/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
   '/u/$username/following': typeof AuthenticatedUUsernameFollowingRoute
   '/u/$username': typeof AuthenticatedUUsernameIndexRoute
@@ -238,7 +239,6 @@ export interface FileRoutesById {
   '/_authenticated/edit-profile': typeof AuthenticatedEditProfileRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
-  '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/_authenticated/my-comments': typeof AuthenticatedMyCommentsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
@@ -249,6 +249,7 @@ export interface FileRoutesById {
   '/legal/$doc': typeof LegalDocRoute
   '/_authenticated/messages/$conversationId': typeof AuthenticatedMessagesConversationIdRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRouteWithChildren
+  '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
   '/_authenticated/u/$username/followers': typeof AuthenticatedUUsernameFollowersRoute
   '/_authenticated/u/$username/following': typeof AuthenticatedUUsernameFollowingRoute
   '/_authenticated/u/$username/': typeof AuthenticatedUUsernameIndexRoute
@@ -267,7 +268,6 @@ export interface FileRouteTypes {
     | '/edit-profile'
     | '/feed'
     | '/history'
-    | '/messages'
     | '/my-comments'
     | '/onboarding'
     | '/saved'
@@ -278,6 +278,7 @@ export interface FileRouteTypes {
     | '/legal/$doc'
     | '/messages/$conversationId'
     | '/u/$username'
+    | '/messages/'
     | '/u/$username/followers'
     | '/u/$username/following'
     | '/u/$username/'
@@ -294,7 +295,6 @@ export interface FileRouteTypes {
     | '/edit-profile'
     | '/feed'
     | '/history'
-    | '/messages'
     | '/my-comments'
     | '/onboarding'
     | '/saved'
@@ -304,6 +304,7 @@ export interface FileRouteTypes {
     | '/trash'
     | '/legal/$doc'
     | '/messages/$conversationId'
+    | '/messages'
     | '/u/$username/followers'
     | '/u/$username/following'
     | '/u/$username'
@@ -321,7 +322,6 @@ export interface FileRouteTypes {
     | '/_authenticated/edit-profile'
     | '/_authenticated/feed'
     | '/_authenticated/history'
-    | '/_authenticated/messages'
     | '/_authenticated/my-comments'
     | '/_authenticated/onboarding'
     | '/_authenticated/saved'
@@ -332,6 +332,7 @@ export interface FileRouteTypes {
     | '/legal/$doc'
     | '/_authenticated/messages/$conversationId'
     | '/_authenticated/u/$username'
+    | '/_authenticated/messages/'
     | '/_authenticated/u/$username/followers'
     | '/_authenticated/u/$username/following'
     | '/_authenticated/u/$username/'
@@ -431,13 +432,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/messages': {
-      id: '/_authenticated/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/my-comments': {
       id: '/_authenticated/my-comments'
       path: '/my-comments'
@@ -494,12 +488,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalDocRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/messages/': {
+      id: '/_authenticated/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/messages/$conversationId': {
       id: '/_authenticated/messages/$conversationId'
-      path: '/$conversationId'
+      path: '/messages/$conversationId'
       fullPath: '/messages/$conversationId'
       preLoaderRoute: typeof AuthenticatedMessagesConversationIdRouteImport
-      parentRoute: typeof AuthenticatedMessagesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
@@ -532,20 +533,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedMessagesRouteChildren {
-  AuthenticatedMessagesConversationIdRoute: typeof AuthenticatedMessagesConversationIdRoute
-}
-
-const AuthenticatedMessagesRouteChildren: AuthenticatedMessagesRouteChildren = {
-  AuthenticatedMessagesConversationIdRoute:
-    AuthenticatedMessagesConversationIdRoute,
-}
-
-const AuthenticatedMessagesRouteWithChildren =
-  AuthenticatedMessagesRoute._addFileChildren(
-    AuthenticatedMessagesRouteChildren,
-  )
-
 interface AuthenticatedUUsernameRouteChildren {
   AuthenticatedUUsernameFollowersRoute: typeof AuthenticatedUUsernameFollowersRoute
   AuthenticatedUUsernameFollowingRoute: typeof AuthenticatedUUsernameFollowingRoute
@@ -573,7 +560,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEditProfileRoute: typeof AuthenticatedEditProfileRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
-  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
   AuthenticatedMyCommentsRoute: typeof AuthenticatedMyCommentsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
@@ -581,7 +567,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedShareLaterRoute: typeof AuthenticatedShareLaterRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
+  AuthenticatedMessagesConversationIdRoute: typeof AuthenticatedMessagesConversationIdRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRouteWithChildren
+  AuthenticatedMessagesIndexRoute: typeof AuthenticatedMessagesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -593,7 +581,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEditProfileRoute: AuthenticatedEditProfileRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
-  AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
   AuthenticatedMyCommentsRoute: AuthenticatedMyCommentsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
@@ -601,7 +588,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedShareLaterRoute: AuthenticatedShareLaterRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
+  AuthenticatedMessagesConversationIdRoute:
+    AuthenticatedMessagesConversationIdRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRouteWithChildren,
+  AuthenticatedMessagesIndexRoute: AuthenticatedMessagesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
