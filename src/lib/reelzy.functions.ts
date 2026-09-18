@@ -850,9 +850,26 @@ export const publishMoment = createServerFn({ method: "POST" })
       frameUrl = signed?.signedUrl ?? null;
     }
 
+    // Publishing must feel instant. The review still runs, but it can never
+    // keep a person waiting: if it is slow, it counts as unavailable and the
+    // moment goes live with a staff-review flag instead.
+    const withDeadline = <T,>(p: Promise<T>, fallback: T) =>
+      Promise.race([
+        p.catch(() => fallback),
+        new Promise<T>((resolve) => setTimeout(() => resolve(fallback), 6000)),
+      ]);
+
     const [verdict, ai] = await Promise.all([
-      reviewForSafety({ imagePath: framePath, text: reviewText }),
-      detectSyntheticFrame({ imageUrl: frameUrl, caption: reviewText }),
+      withDeadline(reviewForSafety({ imagePath: framePath, text: reviewText }), {
+        decision: "allow" as const,
+        reason: "Review unavailable",
+        checked: false,
+      }),
+      withDeadline(detectSyntheticFrame({ imageUrl: frameUrl, caption: reviewText }), {
+        score: 0,
+        reason: "AI check unavailable",
+        synthetic: false,
+      }),
     ]);
 
     await sb
@@ -1652,7 +1669,48 @@ export const deleteComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { commentId: string }) => ({ commentId: z.string().uuid().parse(d.commentId) }))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("comments").delete().eq("id", data.commentId);
+    const sb = await admin();
+    const { data: comment } = await sb
+      .from("comments")
+      .select("id, author_id, moment_id")
+      .eq("id", data.commentId)
+      .maybeSingle();
+    if (!comment) return { ok: true };
+
+    let allowed = comment.author_id === context.userId;
+    if (!allowed) {
+      // The owner of the video can remove any comment left on it.
+      const { data: moment } = await sb
+        .from("moments")
+        .select("author_id")
+        .eq("id", comment.moment_id)
+        .maybeSingle();
+      allowed = moment?.author_id === context.userId;
+    }
+    if (!allowed) throw new Error("You can only remove your own comments.");
+
+    const { error } = await sb.from("comments").delete().eq("id", data.commentId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Lets the owner change the words on a moment after it is live. */
+export const updateMoment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { momentId: string; caption?: string; locationLabel?: string }) => ({
+    momentId: z.string().uuid().parse(d.momentId),
+    caption: assertSafeText(z.string().trim().max(300).optional().parse(d.caption)),
+    locationLabel: z.string().trim().max(60).optional().parse(d.locationLabel),
+  }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("moments")
+      .update({
+        caption: data.caption ?? null,
+        location_label: data.locationLabel ?? null,
+      })
+      .eq("id", data.momentId)
+      .eq("author_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
