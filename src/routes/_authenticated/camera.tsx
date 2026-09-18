@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer, Volume2, VolumeX } from "lucide-react";
+import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer, Volume2, VolumeX, Image as ImageIcon } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
