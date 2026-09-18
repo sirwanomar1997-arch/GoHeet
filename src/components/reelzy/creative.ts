@@ -65,6 +65,180 @@ const HALATION: GradeLayer = {
  * a LUT would, never warped like a face filter.
  */
 export const FILTERS: FilterDef[] = [
+  // ── Exclusive: the headline grades. Each one is a full LUT-style stack —
+  // split-toned shadows and highlights, bloom, and a shaped vignette.
+  {
+    id: "aurora",
+    label: "Aurora",
+    category: "Exclusive",
+    css: "contrast(1.24) saturate(1.3) brightness(1.02)",
+    layers: [
+      { bg: "linear-gradient(190deg, rgba(0,255,200,0.26), rgba(0,0,0,0) 48%, rgba(150,70,255,0.3))", blend: "soft-light" },
+      { bg: "radial-gradient(70% 50% at 50% 22%, rgba(120,255,225,0.28), rgba(0,0,0,0) 72%)", blend: "screen", opacity: 0.8 },
+      { bg: "linear-gradient(180deg, rgba(4,10,28,0.34), rgba(0,0,0,0) 55%)", blend: "multiply", opacity: 0.8 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#5ef0c8,#7a3cff)",
+  },
+  {
+    id: "velvet",
+    label: "Velvet",
+    category: "Exclusive",
+    css: "contrast(1.3) saturate(1.08) brightness(0.97)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(255,90,140,0.22), rgba(18,6,30,0.42))", blend: "soft-light" },
+      { bg: "radial-gradient(75% 55% at 50% 42%, rgba(255,180,200,0.2), rgba(0,0,0,0) 70%)", blend: "screen", opacity: 0.65 },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#ff6a9c,#1a0720)",
+  },
+  {
+    id: "goldhour",
+    label: "Gold Hour",
+    category: "Exclusive",
+    css: "contrast(1.18) saturate(1.22) brightness(1.05) sepia(0.06)",
+    layers: [
+      { bg: "linear-gradient(200deg, rgba(255,196,92,0.34), rgba(255,120,50,0.2) 60%, rgba(40,20,10,0.3))", blend: "soft-light" },
+      HALATION,
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#ffd27a,#c2521a)",
+  },
+  {
+    id: "obsidian",
+    label: "Obsidian",
+    category: "Exclusive",
+    css: "contrast(1.42) saturate(0.82) brightness(0.95)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(180,210,255,0.16), rgba(0,0,0,0.5))", blend: "soft-light" },
+      { bg: "radial-gradient(85% 65% at 50% 38%, rgba(255,255,255,0.12), rgba(0,0,0,0) 68%)", blend: "screen", opacity: 0.6 },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#7f8c9c,#07090d)",
+  },
+  {
+    id: "porcelain",
+    label: "Porcelain",
+    category: "Exclusive",
+    css: "contrast(1.06) saturate(1.04) brightness(1.08)",
+    layers: [
+      { bg: "radial-gradient(78% 58% at 50% 32%, rgba(255,246,238,0.32), rgba(255,255,255,0) 74%)", blend: "screen" },
+      { bg: "linear-gradient(180deg, rgba(255,225,210,0.18), rgba(200,215,235,0.2))", blend: "soft-light" },
+      { bg: "radial-gradient(130% 95% at 50% 45%, rgba(0,0,0,0) 60%, rgba(30,26,24,0.28) 100%)", blend: "multiply" },
+    ],
+    swatch: "linear-gradient(135deg,#fff4ec,#d7e2ee)",
+  },
+  {
+    id: "neonrain",
+    label: "Neon Rain",
+    category: "Exclusive",
+    css: "contrast(1.34) saturate(1.5) brightness(0.98)",
+    layers: [
+      { bg: "linear-gradient(160deg, rgba(0,190,255,0.32), rgba(0,0,0,0) 50%, rgba(255,0,140,0.34))", blend: "soft-light" },
+      { bg: "radial-gradient(60% 45% at 30% 30%, rgba(0,220,255,0.26), rgba(0,0,0,0) 70%)", blend: "screen" },
+      { bg: "radial-gradient(60% 45% at 75% 70%, rgba(255,40,160,0.24), rgba(0,0,0,0) 70%)", blend: "screen" },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#00d9ff,#ff1f8f)",
+  },
+  {
+    id: "desertsilk",
+    label: "Desert Silk",
+    category: "Exclusive",
+    css: "contrast(1.12) saturate(1.1) brightness(1.04) sepia(0.12)",
+    layers: [
+      { bg: "linear-gradient(190deg, rgba(240,190,140,0.3), rgba(150,110,90,0.26))", blend: "soft-light" },
+      { bg: "radial-gradient(80% 60% at 50% 30%, rgba(255,230,200,0.24), rgba(0,0,0,0) 72%)", blend: "screen", opacity: 0.7 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#efc79a,#8d6248)",
+  },
+  {
+    id: "midnightblue",
+    label: "Midnight Blue",
+    category: "Exclusive",
+    css: "contrast(1.28) saturate(1.06) brightness(0.97)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(90,150,255,0.3), rgba(6,10,32,0.44))", blend: "soft-light" },
+      { bg: "radial-gradient(70% 50% at 50% 34%, rgba(190,220,255,0.18), rgba(0,0,0,0) 70%)", blend: "screen", opacity: 0.7 },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#5b95ff,#060a20)",
+  },
+  {
+    id: "emberglass",
+    label: "Ember Glass",
+    category: "Exclusive",
+    css: "contrast(1.26) saturate(1.24) brightness(1.01)",
+    layers: [
+      { bg: "linear-gradient(210deg, rgba(255,120,40,0.28), rgba(0,0,0,0) 55%, rgba(0,120,160,0.26))", blend: "soft-light" },
+      HALATION,
+      { bg: "linear-gradient(0deg, rgba(60,20,0,0.3), rgba(0,0,0,0) 58%)", blend: "multiply", opacity: 0.8 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#ff8a3c,#0b6a86)",
+  },
+  {
+    id: "platinum",
+    label: "Platinum",
+    category: "Exclusive",
+    css: "contrast(1.2) saturate(0.2) brightness(1.05)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(220,235,255,0.2), rgba(255,240,225,0.18))", blend: "soft-light" },
+      { bg: "radial-gradient(80% 60% at 50% 30%, rgba(255,255,255,0.2), rgba(0,0,0,0) 72%)", blend: "screen", opacity: 0.7 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#eef3f8,#9aa4ad)",
+  },
+  {
+    id: "rosegold",
+    label: "Rose Gold",
+    category: "Exclusive",
+    css: "contrast(1.14) saturate(1.16) brightness(1.06)",
+    layers: [
+      { bg: "linear-gradient(200deg, rgba(255,190,175,0.32), rgba(255,215,150,0.22) 60%, rgba(90,50,60,0.24))", blend: "soft-light" },
+      { bg: "radial-gradient(70% 52% at 45% 30%, rgba(255,225,215,0.26), rgba(0,0,0,0) 72%)", blend: "screen", opacity: 0.75 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#ffcabb,#c98a63)",
+  },
+  {
+    id: "jade",
+    label: "Jade",
+    category: "Exclusive",
+    css: "contrast(1.22) saturate(1.18) brightness(1.0)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(60,200,160,0.28), rgba(10,40,35,0.34))", blend: "soft-light" },
+      { bg: "radial-gradient(72% 54% at 50% 32%, rgba(210,255,240,0.2), rgba(0,0,0,0) 70%)", blend: "screen", opacity: 0.7 },
+      VIGNETTE_SOFT,
+    ],
+    swatch: "linear-gradient(135deg,#43d6a5,#0b2a24)",
+  },
+  {
+    id: "supernova",
+    label: "Supernova",
+    category: "Exclusive",
+    css: "contrast(1.3) saturate(1.34) brightness(1.04)",
+    layers: [
+      { bg: "radial-gradient(55% 40% at 50% 28%, rgba(255,235,180,0.4), rgba(0,0,0,0) 70%)", blend: "screen" },
+      { bg: "linear-gradient(200deg, rgba(255,110,60,0.26), rgba(120,60,255,0.26))", blend: "soft-light" },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#ffe9a8,#7a3cff)",
+  },
+  {
+    id: "noirlux",
+    label: "Noir Lux",
+    category: "Exclusive",
+    css: "contrast(1.5) saturate(0.06) brightness(0.98)",
+    layers: [
+      { bg: "linear-gradient(180deg, rgba(255,240,215,0.14), rgba(0,0,0,0.42))", blend: "soft-light" },
+      { bg: "radial-gradient(62% 46% at 50% 34%, rgba(255,255,255,0.16), rgba(0,0,0,0) 70%)", blend: "screen", opacity: 0.7 },
+      VIGNETTE_HARD,
+    ],
+    swatch: "linear-gradient(135deg,#f2ede4,#101010)",
+  },
+
   { id: "none", label: "Real", category: "Signature", css: "none", swatch: "linear-gradient(135deg,#8d8d8d,#e6e6e6)" },
   {
     id: "goheet",
