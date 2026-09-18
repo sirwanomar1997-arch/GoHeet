@@ -764,6 +764,15 @@ export function MomentStage({
         open={commentsOpen}
         onOpenChange={setCommentsOpen}
         author={moment.author.username}
+        canModerate={moment.isOwn}
+      />
+
+      <EditMomentSheet
+        momentId={moment.id}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        caption={editCaption}
+        onCaption={setEditCaption}
       />
 
       <ShareSheet
