@@ -11,6 +11,7 @@ import {
 import { useDemoMode } from "@/lib/use-demo-mode";
 import { getDemoConversations, getDemoNotifications } from "@/lib/demo-data";
 import { AppShell } from "@/components/reelzy/nav";
+import { BackLink } from "@/components/reelzy/back-link";
 import { EmptyState, LoadingRail } from "@/components/reelzy/empty-state";
 import { timeAgo } from "@/components/reelzy/format";
 
@@ -66,7 +67,8 @@ function ActivityPage() {
 
   return (
     <AppShell>
-      <header className="sticky top-0 z-30 bg-background/90 px-4 py-4 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 flex items-center gap-3 bg-background/90 px-4 py-4 backdrop-blur-xl">
+        <BackLink to="/feed" label="Back to home" />
         <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">Notice</h1>
       </header>
 

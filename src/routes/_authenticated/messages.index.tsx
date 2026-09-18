@@ -69,7 +69,7 @@ function MessagesPage() {
     <AppShell>
       <header className="px-5 pb-2 pt-6">
         <div className="mb-3">
-          <BackLink to="/feed" label="Back to home" />
+          <BackLink to="/activity" label="Back to notifications" />
         </div>
         <h1 className="font-display text-2xl font-extrabold tracking-[-0.04em]">{t("msg.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("msg.subtitle")}</p>
