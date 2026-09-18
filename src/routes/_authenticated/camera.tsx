@@ -287,8 +287,27 @@ function CameraPage() {
 
   const [draggingText, setDraggingText] = useState(false);
   const [pinchingText, setPinchingText] = useState(false);
-  const [trashHot, setTrashHot] = useState(false);
-  const trashHotRef = useRef(false);
+  const [textMenuOpen, setTextMenuOpen] = useState(false);
+  const textHoldTimerRef = useRef<number | null>(null);
+  const cancelTextHold = () => {
+    if (textHoldTimerRef.current !== null) {
+      window.clearTimeout(textHoldTimerRef.current);
+      textHoldTimerRef.current = null;
+    }
+  };
+  const scheduleTextHold = () => {
+    cancelTextHold();
+    textHoldTimerRef.current = window.setTimeout(() => {
+      textHoldTimerRef.current = null;
+      if (!dragMovedRef.current && !textPinchRef.current) setTextMenuOpen(true);
+    }, 500);
+  };
+  const deleteOverlayText = () => {
+    setOverlay(null);
+    setTextMenuOpen(false);
+    setTextOpen(false);
+    toast("Text deleted.", { duration: 1500 });
+  };
   const overlayRef = useRef<MomentOverlay | null>(null);
   overlayRef.current = overlay;
 
