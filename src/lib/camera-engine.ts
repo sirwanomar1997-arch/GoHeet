@@ -264,7 +264,42 @@ export class CameraEngine {
     this.state.height = settings.height ?? 0;
   }
 
-  /** Hardware zoom when the lens supports it; the UI falls back to a capped digital zoom. */
+  /**
+   * Keep the lens hunting-free: continuous autofocus, exposure and white
+   * balance. Without this many phones re-focus from scratch every time the
+   * subject gets close, which reads as stutter and breathing in the take.
+   * Every field is best-effort — unsupported ones are simply skipped.
+   */
+  private async tuneLens() {
+    const track = this.videoTrack;
+    if (!track) return;
+    const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
+    const has = (key: string, mode: string) => {
+      const v = caps[key];
+      return Array.isArray(v) && (v as string[]).includes(mode);
+    };
+    const advanced: Record<string, unknown>[] = [];
+    if (has("focusMode", "continuous")) advanced.push({ focusMode: "continuous" });
+    if (has("exposureMode", "continuous")) advanced.push({ exposureMode: "continuous" });
+    if (has("whiteBalanceMode", "continuous")) advanced.push({ whiteBalanceMode: "continuous" });
+    if (!advanced.length) return;
+    try {
+      await track.applyConstraints({ advanced } as unknown as MediaTrackConstraints);
+    } catch {
+      /* lens does not accept these — the default behaviour still works */
+    }
+  }
+
+  /**
+   * Hardware zoom when the lens supports it; the UI falls back to a capped
+   * digital zoom.
+   *
+   * A pinch fires dozens of times a second. Sending every one of those to the
+   * driver queues constraint changes faster than the lens can settle, and the
+   * preview stalls and jumps. So we only ever have one change in flight: newer
+   * values overwrite the pending one and the lens always lands on the finger's
+   * latest position.
+   */
   async setZoom(value: number): Promise<number> {
     const track = this.videoTrack;
     const range = this.state.zoomRange;
@@ -273,11 +308,28 @@ export class CameraEngine {
       return value;
     }
     const clamped = Math.min(range.max, Math.max(range.min, value));
+    this.state.zoom = clamped;
+    this.zoomWanted = clamped;
+    if (this.zoomBusy) return clamped;
+
+    this.zoomBusy = true;
     try {
-      await track.applyConstraints({ advanced: [{ zoom: clamped }] } as unknown as MediaTrackConstraints);
-      this.state.zoom = clamped;
-    } catch {
-      this.state.zoom = clamped;
+      while (this.zoomWanted !== null) {
+        const target = this.zoomWanted;
+        this.zoomWanted = null;
+        // Snap to the lens's own step so tiny sub-step deltas never thrash it.
+        const step = range.step || 0.1;
+        const snapped = Math.round(target / step) * step;
+        if (Math.abs(snapped - this.zoomApplied) < step / 2) continue;
+        try {
+          await track.applyConstraints({ advanced: [{ zoom: snapped }] } as unknown as MediaTrackConstraints);
+          this.zoomApplied = snapped;
+        } catch {
+          break;
+        }
+      }
+    } finally {
+      this.zoomBusy = false;
     }
     return clamped;
   }
