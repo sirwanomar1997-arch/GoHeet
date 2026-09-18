@@ -555,11 +555,17 @@ export function MomentStage({
       <div className="stage-grain pointer-events-none absolute inset-0" aria-hidden />
 
       {overlay ? (
-        <div className="pointer-events-none absolute inset-0">
+        <div
+          className="pointer-events-none absolute inset-0 z-30"
+          data-no-translate
+          translate="no"
+        >
           <p
-            className={`absolute max-w-[80%] whitespace-pre-wrap text-center leading-tight ${
+            className={`notranslate absolute max-w-[80%] whitespace-pre-wrap text-center leading-tight ${
               overlayStyleProps(overlay.style, overlay.color).className
             }`}
+            data-no-translate
+            translate="no"
             style={{
               left: `${overlay.x}%`,
               top: `${overlay.y}%`,
