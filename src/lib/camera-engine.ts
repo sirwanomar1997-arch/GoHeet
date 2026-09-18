@@ -397,11 +397,11 @@ export class CameraEngine {
     rec.onstop = () => {
       const blob = new Blob(this.chunks, { type: rec.mimeType || this.mime || "video/webm" });
       this.chunks = [];
-      composed.getVideoTracks().forEach((track) => track.stop());
+      // The camera keeps running — only the encoder stops.
       onStop(blob);
     };
     this.recorder = rec;
-    rec.start(500);
+    rec.start(1000);
     return true;
   }
 
