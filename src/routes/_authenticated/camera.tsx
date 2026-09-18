@@ -1121,6 +1121,32 @@ function CameraPage() {
                 </Button>
               ) : null}
 
+              {captured.kind === "video" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setCoverOpen((v) => !v)}
+                    className="h-12 w-full justify-start rounded-2xl border border-border text-sm"
+                  >
+                    <ImageIcon className="mr-2 size-4" />
+                    {cover ? "Cover picture chosen · change it" : "Choose the cover picture"}
+                  </Button>
+                  {coverOpen ? (
+                    <CoverPicker
+                      src={captured.url}
+                      durationMs={captured.durationMs}
+                      filter={filterCss(look) || undefined}
+                      onPick={(blob) => {
+                        setCover(blob);
+                        setCoverOpen(false);
+                        toast.success("Cover picture set.");
+                      }}
+                    />
+                  ) : null}
+                </>
+              ) : null}
+
               <Button
                 onClick={doPublish}
                 disabled={publishing || !session}
