@@ -370,85 +370,10 @@ export class CameraEngine {
     if (!stream || this.recorder?.state === "recording" || typeof MediaRecorder === "undefined") return false;
     this.mime = bestMimeType();
 
-    // Record a canvas rather than the raw camera track: the lens can then be
-    // swapped mid-take without the recorder ever seeing an interruption.
-    const track = this.videoTrack;
-    const settings = track?.getSettings();
-    const canvas = document.createElement("canvas");
-    const sourceWidth = settings?.width || 1280;
-    const sourceHeight = settings?.height || 720;
-    const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
-    canvas.width = Math.max(2, Math.round(sourceWidth * scale));
-    canvas.height = Math.max(2, Math.round(sourceHeight * scale));
-    // No transparency to composite and no need to sync with the page's paint:
-    // both let the browser take the cheap, direct path for every frame copy.
-    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
-    const captureStream = canvas.captureStream?.bind(canvas);
-    if (!ctx || !captureStream) return false;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-
-    const mix = document.createElement("video");
-    mix.muted = true;
-    mix.playsInline = true;
-    mix.srcObject = new MediaStream(stream.getVideoTracks());
-    void mix.play().catch(() => undefined);
-
-    this.canvas = canvas;
-    this.mixVideo = mix;
-
-    const FADE_MS = 260;
-    const drawCover = (source: CanvasImageSource, sw: number, sh: number) => {
-      // Cover-fit so a lens with a different aspect never letterboxes the take.
-      const scale = Math.max(canvas.width / sw, canvas.height / sh);
-      const w = sw * scale;
-      const h = sh * scale;
-      ctx?.drawImage(source, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-    };
-
-    // The camera delivers 30 frames a second, but the screen asks for 60. Copying
-    // every frame twice doubles the work for nothing and is what makes a close,
-    // detailed shot stutter on mid-range phones. Draw at the camera's own pace.
-    const FRAME_MS = 1000 / 30;
-    let lastDraw = 0;
-
-    const draw = () => {
-      this.raf = requestAnimationFrame(draw);
-      if (!ctx) return;
-      const now = performance.now();
-      if (now - lastDraw < FRAME_MS - 2) return;
-      lastDraw = now;
-      const live = mix.videoWidth > 0 && mix.readyState >= 2 && !this.swapping;
-      const held = this.freeze;
-
-      // Lens is waking up: keep the last good frame on screen instead of black.
-      if (!live) {
-        if (held) drawCover(held, held.width, held.height);
-        return;
-      }
-
-      // New lens is live: dissolve out of the held frame so the cut feels soft.
-      const t = held && this.fadeFrom ? Math.min(1, (performance.now() - this.fadeFrom) / FADE_MS) : 1;
-      if (held && t < 1) {
-        drawCover(held, held.width, held.height);
-        ctx.save();
-        ctx.globalAlpha = t;
-        drawCover(mix, mix.videoWidth, mix.videoHeight);
-        ctx.restore();
-        return;
-      }
-      if (held && t >= 1) {
-        this.freeze = null;
-        this.fadeFrom = 0;
-      }
-      drawCover(mix, mix.videoWidth, mix.videoHeight);
-    };
-    this.raf = requestAnimationFrame(draw);
-
-    const composed = new MediaStream([
-      ...captureStream(30).getVideoTracks(),
-      ...stream.getAudioTracks(),
-    ]);
+    // Record the sensor directly. Copying every frame through a canvas costs
+    // real work on the phone and softens detail; feeding the encoder the
+    // camera's own frames gives full sharpness and no stutter, even close up.
+    const composed = stream;
 
     let rec: MediaRecorder;
     try {
