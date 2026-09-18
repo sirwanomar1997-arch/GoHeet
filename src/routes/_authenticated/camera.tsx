@@ -517,12 +517,11 @@ function CameraPage() {
       if (!touch || !startPoint || box.width <= 0 || box.height <= 0) return;
       if (Math.hypot(touch.clientX - startPoint.x, touch.clientY - startPoint.y) > 5) {
         dragMovedRef.current = true;
+        cancelTextHold();
+        setTextMenuOpen(false);
       }
       const x = Math.min(96, Math.max(4, ((touch.clientX - box.left) / box.width) * 100));
       const y = Math.min(96, Math.max(4, ((touch.clientY - box.top) / box.height) * 100));
-      const overTrash = y > 80 && x > 22 && x < 78;
-      trashHotRef.current = overTrash;
-      setTrashHot(overTrash);
       setOverlay((value) => (value ? { ...value, x, y } : value));
     };
 
@@ -539,19 +538,14 @@ function CameraPage() {
       }
       if (event.touches.length > 0) return;
 
-      if (trashHotRef.current) {
-        setOverlay(null);
-        setTextOpen(false);
-        toast("Text binned.", { duration: 1500 });
-      } else if (!dragMovedRef.current) {
+      cancelTextHold();
+      if (!dragMovedRef.current && !textMenuOpen) {
         openTextEditor();
       }
       touchDragRef.current = null;
       textPinchRef.current = null;
-      trashHotRef.current = false;
       setDraggingText(false);
       setPinchingText(false);
-      setTrashHot(false);
     };
 
     stageEl.addEventListener("touchstart", start, { passive: false });
