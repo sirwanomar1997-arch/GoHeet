@@ -838,6 +838,58 @@ type CommentRow = {
   avatarUrl: string | null;
 };
 
+/** Change the words on a moment that is already live. */
+function EditMomentSheet({
+  momentId,
+  open,
+  onOpenChange,
+  caption,
+  onCaption,
+}: {
+  momentId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  caption: string;
+  onCaption: (v: string) => void;
+}) {
+  const save = useServerFn(updateMoment);
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => save({ data: { momentId, caption } }),
+    onSuccess: () => {
+      toast.success("Updated.");
+      onOpenChange(false);
+      void qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message || "Couldn't save that."),
+  });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-[28px] border-border bg-surface">
+        <SheetHeader className="px-0">
+          <SheetTitle className="font-display">Edit this moment</SheetTitle>
+          <SheetDescription>Change the caption. The film itself stays as you shot it.</SheetDescription>
+        </SheetHeader>
+        <Textarea
+          value={caption}
+          onChange={(e) => onCaption(e.target.value.slice(0, 300))}
+          rows={3}
+          placeholder="Say something real…"
+          className="bg-surface-raised"
+        />
+        <Button
+          className="ember-fill mt-4 h-12 w-full rounded-2xl text-primary-foreground"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? "Saving…" : "Save"}
+        </Button>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 function CommentSheet({
   momentId,
   open,
