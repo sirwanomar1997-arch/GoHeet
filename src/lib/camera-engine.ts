@@ -89,6 +89,10 @@ export class CameraEngine {
   /** Timestamp the crossfade from the frozen frame to the new lens began. */
   private fadeFrom = 0;
   private swapping = false;
+  /** Zoom coalescing: only one lens change is ever in flight at a time. */
+  private zoomWanted: number | null = null;
+  private zoomBusy = false;
+  private zoomApplied = 1;
 
   state: EngineState = {
     facing: "user",
