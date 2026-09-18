@@ -173,7 +173,11 @@ function CameraPage() {
     label: null,
   });
 
-  const [session, setSession] = useState<{ sessionId: string; storagePrefix: string } | null>(null);
+  const [session, setSession] = useState<{
+    sessionId: string;
+    storagePrefix: string;
+    signedUploads: Record<string, { path: string; token: string }>;
+  } | null>(null);
   const [caption, setCaption] = useState("");
   const [place, setPlace] = useState("");
   const [publishing, setPublishing] = useState(false);
