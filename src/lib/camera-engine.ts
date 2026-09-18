@@ -89,6 +89,10 @@ export class CameraEngine {
   /** Timestamp the crossfade from the frozen frame to the new lens began. */
   private fadeFrom = 0;
   private swapping = false;
+  /** Zoom coalescing: only one lens change is ever in flight at a time. */
+  private zoomWanted: number | null = null;
+  private zoomBusy = false;
+  private zoomApplied = 1;
 
   state: EngineState = {
     facing: "user",
@@ -148,7 +152,9 @@ export class CameraEngine {
     this.state.facing = facing;
     this.readCapabilities();
     // Always begin at the natural, unzoomed view.
+    this.zoomApplied = this.state.zoomRange?.min ?? 1;
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
+    await this.tuneLens();
     return stream;
   }
 
@@ -189,7 +195,9 @@ export class CameraEngine {
     if (!this.stream) this.stream = next;
     this.state.facing = facing;
     this.readCapabilities();
+    this.zoomApplied = this.state.zoomRange?.min ?? 1;
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
+    await this.tuneLens();
     await this.attachMixSource();
     this.swapping = false;
     return this.stream;
@@ -264,7 +272,42 @@ export class CameraEngine {
     this.state.height = settings.height ?? 0;
   }
 
-  /** Hardware zoom when the lens supports it; the UI falls back to a capped digital zoom. */
+  /**
+   * Keep the lens hunting-free: continuous autofocus, exposure and white
+   * balance. Without this many phones re-focus from scratch every time the
+   * subject gets close, which reads as stutter and breathing in the take.
+   * Every field is best-effort — unsupported ones are simply skipped.
+   */
+  private async tuneLens() {
+    const track = this.videoTrack;
+    if (!track) return;
+    const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
+    const has = (key: string, mode: string) => {
+      const v = caps[key];
+      return Array.isArray(v) && (v as string[]).includes(mode);
+    };
+    const advanced: Record<string, unknown>[] = [];
+    if (has("focusMode", "continuous")) advanced.push({ focusMode: "continuous" });
+    if (has("exposureMode", "continuous")) advanced.push({ exposureMode: "continuous" });
+    if (has("whiteBalanceMode", "continuous")) advanced.push({ whiteBalanceMode: "continuous" });
+    if (!advanced.length) return;
+    try {
+      await track.applyConstraints({ advanced } as unknown as MediaTrackConstraints);
+    } catch {
+      /* lens does not accept these — the default behaviour still works */
+    }
+  }
+
+  /**
+   * Hardware zoom when the lens supports it; the UI falls back to a capped
+   * digital zoom.
+   *
+   * A pinch fires dozens of times a second. Sending every one of those to the
+   * driver queues constraint changes faster than the lens can settle, and the
+   * preview stalls and jumps. So we only ever have one change in flight: newer
+   * values overwrite the pending one and the lens always lands on the finger's
+   * latest position.
+   */
   async setZoom(value: number): Promise<number> {
     const track = this.videoTrack;
     const range = this.state.zoomRange;
@@ -273,11 +316,28 @@ export class CameraEngine {
       return value;
     }
     const clamped = Math.min(range.max, Math.max(range.min, value));
+    this.state.zoom = clamped;
+    this.zoomWanted = clamped;
+    if (this.zoomBusy) return clamped;
+
+    this.zoomBusy = true;
     try {
-      await track.applyConstraints({ advanced: [{ zoom: clamped }] } as unknown as MediaTrackConstraints);
-      this.state.zoom = clamped;
-    } catch {
-      this.state.zoom = clamped;
+      while (this.zoomWanted !== null) {
+        const target = this.zoomWanted;
+        this.zoomWanted = null;
+        // Snap to the lens's own step so tiny sub-step deltas never thrash it.
+        const step = range.step || 0.1;
+        const snapped = Math.round(target / step) * step;
+        if (Math.abs(snapped - this.zoomApplied) < step / 2) continue;
+        try {
+          await track.applyConstraints({ advanced: [{ zoom: snapped }] } as unknown as MediaTrackConstraints);
+          this.zoomApplied = snapped;
+        } catch {
+          break;
+        }
+      }
+    } finally {
+      this.zoomBusy = false;
     }
     return clamped;
   }
@@ -317,9 +377,13 @@ export class CameraEngine {
     const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
     canvas.width = Math.max(2, Math.round(sourceWidth * scale));
     canvas.height = Math.max(2, Math.round(sourceHeight * scale));
-    const ctx = canvas.getContext("2d");
+    // No transparency to composite and no need to sync with the page's paint:
+    // both let the browser take the cheap, direct path for every frame copy.
+    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
     const captureStream = canvas.captureStream?.bind(canvas);
     if (!ctx || !captureStream) return false;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     const mix = document.createElement("video");
     mix.muted = true;
@@ -339,9 +403,18 @@ export class CameraEngine {
       ctx?.drawImage(source, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
     };
 
+    // The camera delivers 30 frames a second, but the screen asks for 60. Copying
+    // every frame twice doubles the work for nothing and is what makes a close,
+    // detailed shot stutter on mid-range phones. Draw at the camera's own pace.
+    const FRAME_MS = 1000 / 30;
+    let lastDraw = 0;
+
     const draw = () => {
       this.raf = requestAnimationFrame(draw);
       if (!ctx) return;
+      const now = performance.now();
+      if (now - lastDraw < FRAME_MS - 2) return;
+      lastDraw = now;
       const live = mix.videoWidth > 0 && mix.readyState >= 2 && !this.swapping;
       const held = this.freeze;
 
