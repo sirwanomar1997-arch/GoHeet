@@ -861,7 +861,7 @@ export const publishMoment = createServerFn({ method: "POST" })
 
     const [verdict, ai] = await Promise.all([
       withDeadline(reviewForSafety({ imagePath: framePath, text: reviewText }), {
-        decision: "allow" as const,
+        decision: "approve" as const,
         reason: "Review unavailable",
         checked: false,
       }),
