@@ -445,9 +445,9 @@ function CameraPage() {
     const start = (event: TouchEvent) => {
       event.preventDefault();
       dragMovedRef.current = false;
-      trashHotRef.current = false;
-      setTrashHot(false);
+      cancelTextHold();
       setTextOpen(false);
+      setTextMenuOpen(false);
 
       if (event.touches.length >= 2) {
         const geo = geometry(event.touches);
@@ -470,6 +470,7 @@ function CameraPage() {
       if (!touch) return;
       touchDragRef.current = point(touch);
       setDraggingText(true);
+      scheduleTextHold();
     };
 
     const move = (event: TouchEvent) => {
