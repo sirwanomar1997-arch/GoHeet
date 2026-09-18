@@ -898,6 +898,8 @@ function CameraPage() {
     setOverlay(null);
     setLook("none");
     setMuted(false);
+    setCover(null);
+    setCoverOpen(false);
   }
 
 
