@@ -843,11 +843,14 @@ function CommentSheet({
   open,
   onOpenChange,
   author,
+  canModerate = false,
 }: {
   momentId: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   author: string;
+  /** The owner of the video can remove anyone's comment on it. */
+  canModerate?: boolean;
 }) {
   const fetchComments = useServerFn(listComments);
   const create = useServerFn(addComment);
@@ -950,18 +953,24 @@ function CommentSheet({
           >
             Reply
           </button>
-          {c.isOwn ? (
+          {c.isOwn || canModerate ? (
             <button
               type="button"
               className="text-[11px] text-muted-foreground underline"
               onClick={async () => {
-                await remove({ data: { commentId: c.id } });
-                void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+                try {
+                  await remove({ data: { commentId: c.id } });
+                  void qc.invalidateQueries({ queryKey: ["comments", momentId] });
+                  toast.success("Comment removed.");
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Couldn't remove that comment.");
+                }
               }}
             >
               Delete
             </button>
-          ) : (
+          ) : null}
+          {!c.isOwn ? (
             <button
               type="button"
               className="text-[11px] text-muted-foreground underline"
@@ -974,7 +983,7 @@ function CommentSheet({
             >
               Report
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
