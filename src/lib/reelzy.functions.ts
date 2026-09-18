@@ -1704,19 +1704,16 @@ export const updateMoment = createServerFn({ method: "POST" })
     thumbnailPath: z.string().max(300).optional().parse(d.thumbnailPath),
   }))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, string | null> = {
-      caption: data.caption ?? null,
-      location_label: data.locationLabel ?? null,
-    };
-    if (data.thumbnailPath) {
-      if (!data.thumbnailPath.startsWith(`${context.userId}/`)) {
-        throw new Error("That cover doesn't belong to you.");
-      }
-      patch['thumbnail_path'] = data.thumbnailPath;
+    if (data.thumbnailPath && !data.thumbnailPath.startsWith(`${context.userId}/`)) {
+      throw new Error("That cover doesn't belong to you.");
     }
     const { error } = await context.supabase
       .from("moments")
-      .update(patch)
+      .update({
+        caption: data.caption ?? null,
+        location_label: data.locationLabel ?? null,
+        ...(data.thumbnailPath ? { thumbnail_path: data.thumbnailPath } : {}),
+      })
       .eq("id", data.momentId)
       .eq("author_id", context.userId);
     if (error) throw new Error(error.message);
