@@ -1712,6 +1712,20 @@ export const getProfile = createServerFn({ method: "POST" })
       (a, b) => (repostOrder.get(a.id) ?? 0) - (repostOrder.get(b.id) ?? 0),
     );
 
+    // Totals are counted from the moments that are actually live right now, so
+    // deleting a moment drops its heets and views from the profile instantly.
+    const { data: liveTotals } = await context.supabase
+      .from("moments")
+      .select("like_count, view_count")
+      .eq("author_id", profile.id)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .limit(2000);
+    const liveRows = (liveTotals ?? []) as { like_count: number; view_count: number }[];
+    const liveLikes = liveRows.reduce((sum, r) => sum + Number(r.like_count ?? 0), 0);
+    const liveViews = liveRows.reduce((sum, r) => sum + Number(r.view_count ?? 0), 0);
+    const liveMoments = liveRows.length;
+
     const displayImagePath = profile.profile_image_type === "photo" && profile.personal_photo_url
       ? profile.personal_photo_url
       : profile.avatar_url;
@@ -1728,9 +1742,9 @@ export const getProfile = createServerFn({ method: "POST" })
         profileImageType: profile.profile_image_type,
         followerCount: profile.follower_count,
         followingCount: profile.following_count,
-        momentCount: profile.moment_count,
-        totalViews: Number(profile.total_views ?? 0),
-        totalLikes: Number(profile.total_likes ?? 0),
+        momentCount: liveMoments,
+        totalViews: liveViews,
+        totalLikes: liveLikes,
         isPrivate: profile.is_private,
         showReposts: profile.show_reposts,
         socialLinks: ((profile as unknown as { social_links?: Record<string, string> })

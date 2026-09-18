@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer, Volume2, VolumeX } from "lucide-react";
+import { SwitchCamera, X, MapPin, Type as TypeIcon, Check, Play, Trash2, Sparkles, Zap, ZapOff, Bookmark, Camera as CameraIcon, Sun, Timer, Volume2, VolumeX, Image as ImageIcon } from "lucide-react";
 import { CameraEngine, isEngineError, type EngineError, type ZoomRange } from "@/lib/camera-engine";
 import { saveClip, listSavedClips, getClip, updateClip, deleteClip, SHARE_LATER_LIMIT } from "@/lib/share-later";
 import { publishMoment, startCapture } from "@/lib/reelzy.functions";
@@ -123,6 +123,95 @@ function ReviewVideo({ src, filter, posterUrl }: { src: string; filter: string |
 }
 
 
+/**
+ * Pick the still people see before they tap: scrub the clip to a frame you
+ * like, or use a picture from the phone. Only the cover — the moment itself
+ * still comes from the camera.
+ */
+function CoverPicker({
+  src,
+  durationMs,
+  filter,
+  onPick,
+}: {
+  src: string;
+  durationMs: number;
+  filter: string | undefined;
+  onPick: (blob: Blob) => void;
+}) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [at, setAt] = useState(0);
+
+  async function useThisFrame() {
+    const el = ref.current;
+    if (!el) return;
+    const blob = await CameraEngine.grabFrame(el, false);
+    if (blob) onPick(blob);
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-border p-3">
+      <div className="mx-auto aspect-[9/16] w-32 overflow-hidden rounded-xl bg-black">
+        <video
+          ref={ref}
+          src={src}
+          className="size-full object-cover"
+          style={filter ? { filter } : undefined}
+          muted
+          playsInline
+          preload="auto"
+          onLoadedData={() => {
+            if (ref.current) ref.current.currentTime = 0.05;
+          }}
+        />
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={Math.max(durationMs, 200)}
+        step={100}
+        value={at}
+        aria-label="Choose the frame people see first"
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          setAt(v);
+          if (ref.current) ref.current.currentTime = Math.max(v / 1000, 0.05);
+        }}
+        className="w-full accent-primary"
+      />
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          onClick={() => void useThisFrame()}
+          className="h-11 flex-1 rounded-xl text-sm"
+        >
+          Use this frame
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => fileRef.current?.click()}
+          className="h-11 flex-1 rounded-xl border border-border text-sm"
+        >
+          Choose a picture
+        </Button>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
 function CameraPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -184,6 +273,9 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   // Mute the take before publishing when the sound isn't wanted.
   const [muted, setMuted] = useState(false);
+  // The still people see before they tap: a frame of the clip, or a picture.
+  const [cover, setCover] = useState<Blob | null>(null);
+  const [coverOpen, setCoverOpen] = useState(false);
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -895,6 +987,8 @@ function CameraPage() {
     setOverlay(null);
     setLook("none");
     setMuted(false);
+    setCover(null);
+    setCoverOpen(false);
   }
 
 
@@ -914,13 +1008,14 @@ function CameraPage() {
       if (up.error) throw new Error(up.error.message);
 
       let thumbnailPath: string | undefined;
-      if (captured.poster) {
+      const posterBlob = cover ?? captured.poster;
+      if (posterBlob) {
         const posterUpload = session.signedUploads["poster.jpg"];
         if (!posterUpload) throw new Error("Couldn't prepare the video preview.");
         const tp = posterUpload.path;
         const t = await supabase.storage
           .from("moments")
-          .uploadToSignedUrl(tp, posterUpload.token, captured.poster, { contentType: "image/jpeg" });
+          .uploadToSignedUrl(tp, posterUpload.token, posterBlob, { contentType: "image/jpeg" });
         if (!t.error) thumbnailPath = tp;
       }
 
@@ -1024,6 +1119,32 @@ function CameraPage() {
                   {muted ? <VolumeX className="mr-2 size-4" /> : <Volume2 className="mr-2 size-4" />}
                   {muted ? "Sound is off in this moment" : "Mute the sound"}
                 </Button>
+              ) : null}
+
+              {captured.kind === "video" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setCoverOpen((v) => !v)}
+                    className="h-12 w-full justify-start rounded-2xl border border-border text-sm"
+                  >
+                    <ImageIcon className="mr-2 size-4" />
+                    {cover ? "Cover picture chosen · change it" : "Choose the cover picture"}
+                  </Button>
+                  {coverOpen ? (
+                    <CoverPicker
+                      src={captured.url}
+                      durationMs={captured.durationMs}
+                      filter={filterCss(look) || undefined}
+                      onPick={(blob) => {
+                        setCover(blob);
+                        setCoverOpen(false);
+                        toast.success("Cover picture set.");
+                      }}
+                    />
+                  ) : null}
+                </>
               ) : null}
 
               <Button
