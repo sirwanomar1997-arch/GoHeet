@@ -108,6 +108,7 @@ export function MomentStage({
     Array<{ id: number; x: number; y: number; dx: number; rot: number; size: number }>
   >([]);
   const [heetPop, setHeetPop] = useState(false);
+  const [viewCount, setViewCount] = useState<number>(moment.viewCount);
 
   const look = filterCss(moment.styleFilter);
   const overlay = parseOverlay(moment.overlay);
@@ -306,9 +307,13 @@ export function MomentStage({
 
   const flushView = useCallback(
     (completed: boolean) => {
-      if (reportedRef.current || watchedRef.current < 1500) return;
+      if (reportedRef.current) return;
       reportedRef.current = true;
-      void view({ data: { momentId: moment.id, watchedMs: Math.round(watchedRef.current), completed } });
+      void view({ data: { momentId: moment.id, watchedMs: Math.round(watchedRef.current), completed } })
+        .then((res) => {
+          if (res?.counted) setViewCount((c) => c + 1);
+        })
+        .catch(() => undefined);
     },
     [moment.id, view],
   );
@@ -322,9 +327,10 @@ export function MomentStage({
         for (const e of entries) {
           if (e.isIntersecting && e.intersectionRatio > 0.6) {
             void vid?.play().catch(() => undefined);
+            // Opening the moment already counts as a view.
+            flushView(false);
           } else {
             vid?.pause();
-            flushView(false);
           }
         }
       },
@@ -483,13 +489,13 @@ export function MomentStage({
           <video
             ref={videoRef}
             src={moment.mediaUrl}
-            poster={moment.posterUrl ?? undefined}
             className="size-full object-cover"
             style={look ? { filter: look } : undefined}
             playsInline
             loop
+            autoPlay
             muted={muted}
-            preload="metadata"
+            preload="auto"
           />
         ) : moment.mediaUrl ? (
           <img
@@ -686,7 +692,7 @@ export function MomentStage({
 
         <RailAction
           label="Views"
-          count={formatCount(moment.viewCount)}
+          count={formatCount(viewCount)}
           onClick={() => undefined}
         >
           <Eye className="size-7" strokeWidth={1.8} />
@@ -859,9 +865,37 @@ function EditMomentSheet({
   const startCover = useServerFn(startCoverUpload);
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const frameVideoRef = useRef<HTMLVideoElement | null>(null);
   const [place, setPlace] = useState(moment.locationLabel ?? "");
   const [cover, setCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [pickFrame, setPickFrame] = useState(false);
+  const [frameTime, setFrameTime] = useState(0);
+  const [frameDuration, setFrameDuration] = useState(0);
+
+  /** Freeze the frame the slider is parked on and use it as the cover. */
+  const grabFrame = () => {
+    const vid = frameVideoRef.current;
+    if (!vid || !vid.videoWidth) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = vid.videoWidth;
+    canvas.height = vid.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("Couldn't use that frame.");
+          return;
+        }
+        setCover(new File([blob], "cover.jpg", { type: "image/jpeg" }));
+        setPickFrame(false);
+      },
+      "image/jpeg",
+      0.92,
+    );
+  };
 
   useEffect(() => {
     if (open) setPlace(moment.locationLabel ?? "");
@@ -931,30 +965,82 @@ function EditMomentSheet({
             className="h-12 rounded-2xl bg-surface-raised"
           />
 
-          <div className="flex items-center gap-3 rounded-2xl bg-surface-raised p-3">
-            <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-surface">
-              {coverPreview ?? moment.posterUrl ? (
-                <img
-                  src={coverPreview ?? moment.posterUrl ?? ""}
-                  alt=""
-                  className="size-full object-cover"
-                />
+          <div className="space-y-3 rounded-2xl bg-surface-raised p-3">
+            <div className="flex items-center gap-3">
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-surface">
+                {coverPreview ?? moment.posterUrl ? (
+                  <img
+                    src={coverPreview ?? moment.posterUrl ?? ""}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Cover picture</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {cover ? "New cover ready." : "This is what people see in the grid."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {moment.kind === "video" && moment.mediaUrl ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-10 flex-1 rounded-xl text-xs"
+                  onClick={() => setPickFrame((v) => !v)}
+                >
+                  {pickFrame ? "Close film" : "Pick from film"}
+                </Button>
               ) : null}
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-10 flex-1 rounded-xl text-xs"
+                onClick={() => fileRef.current?.click()}
+              >
+                From phone
+              </Button>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">Cover picture</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {cover ? cover.name : "This is what people see in the grid."}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="rounded-xl"
-              onClick={() => fileRef.current?.click()}
-            >
-              Change
-            </Button>
+
+            {pickFrame && moment.mediaUrl ? (
+              <div className="space-y-2">
+                <video
+                  ref={frameVideoRef}
+                  src={moment.mediaUrl}
+                  crossOrigin="anonymous"
+                  playsInline
+                  muted
+                  preload="auto"
+                  className="max-h-56 w-full rounded-xl bg-black object-contain"
+                  onLoadedMetadata={(e) => setFrameDuration(e.currentTarget.duration || 0)}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(frameDuration, 0.1)}
+                  step={0.05}
+                  value={frameTime}
+                  onChange={(e) => {
+                    const t = Number(e.target.value);
+                    setFrameTime(t);
+                    if (frameVideoRef.current) frameVideoRef.current.currentTime = t;
+                  }}
+                  className="w-full accent-[oklch(0.78_0.18_55)]"
+                  aria-label="Choose a frame"
+                />
+                <Button
+                  type="button"
+                  className="ember-fill h-10 w-full rounded-xl text-xs text-primary-foreground"
+                  onClick={grabFrame}
+                >
+                  Use this frame
+                </Button>
+              </div>
+            ) : null}
+
             <input
               ref={fileRef}
               type="file"
