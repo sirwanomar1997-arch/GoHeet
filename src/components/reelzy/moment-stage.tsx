@@ -44,6 +44,7 @@ import {
   toggleLike,
   toggleRepost,
   toggleSave,
+  updateMoment,
   type MomentCard,
 } from "@/lib/reelzy.functions";
 import { isDemoMode } from "@/lib/use-demo-mode";
@@ -96,6 +97,8 @@ export function MomentStage({
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editCaption, setEditCaption] = useState(moment.caption ?? "");
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [bursts, setBursts] = useState<
