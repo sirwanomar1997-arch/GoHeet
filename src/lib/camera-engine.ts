@@ -195,7 +195,9 @@ export class CameraEngine {
     if (!this.stream) this.stream = next;
     this.state.facing = facing;
     this.readCapabilities();
+    this.zoomApplied = this.state.zoomRange?.min ?? 1;
     await this.setZoom(this.state.zoomRange?.min ?? 1).catch(() => undefined);
+    await this.tuneLens();
     await this.attachMixSource();
     this.swapping = false;
     return this.stream;
