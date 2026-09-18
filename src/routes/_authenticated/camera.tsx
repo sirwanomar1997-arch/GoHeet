@@ -1216,7 +1216,7 @@ function CameraPage() {
                   if (e.key === "Enter" || e.key === " ") openTextEditor();
                 }}
 
-                aria-label="Tap to edit, hold and drag to move or bin your text"
+                aria-label="Tap to edit, drag to move, hold to delete your text"
                 className={`max-w-full cursor-grab touch-none select-none whitespace-pre-wrap break-words text-center leading-tight active:cursor-grabbing ${
                   overlayStyleProps(overlay.style, overlay.color).className
                 }`}
@@ -1229,17 +1229,25 @@ function CameraPage() {
                 {overlay.text}
               </p>
             </div>
-            {draggingText ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-8">
-                <div
-                  className={`flex size-16 items-center justify-center rounded-full border-2 transition-all duration-150 ${
-                    trashHot
-                      ? "scale-125 border-red-500 bg-red-500 text-white shadow-[0_0_28px_rgba(239,68,68,0.7)]"
-                      : "border-white/40 bg-black/55 text-white/90 backdrop-blur-sm"
-                  }`}
-                  aria-hidden
-                >
-                  <Trash2 className="size-7" />
+            {textMenuOpen ? (
+              <div className="absolute inset-x-0 bottom-0 z-[80] flex justify-center pb-10">
+                <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/80 p-1.5 backdrop-blur">
+                  <button
+                    type="button"
+                    onClick={deleteOverlayText}
+                    className="flex items-center gap-2 rounded-full bg-red-500/90 px-4 py-2 text-sm font-medium text-white active:scale-95"
+                  >
+                    <Trash2 className="size-4" />
+                    Delete text
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Keep text"
+                    onClick={() => setTextMenuOpen(false)}
+                    className="grid size-9 place-items-center rounded-full bg-white/10 text-white active:scale-95"
+                  >
+                    <X className="size-4" />
+                  </button>
                 </div>
               </div>
             ) : null}
