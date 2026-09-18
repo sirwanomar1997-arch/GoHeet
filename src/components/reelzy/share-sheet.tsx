@@ -82,13 +82,23 @@ export function ShareSheet({
   qr?: boolean;
 }) {
   const fetchConversations = useServerFn(listConversations);
+  const fetchFollowing = useServerFn(listFollowing);
   const send = useServerFn(sendMessage);
   const [sent, setSent] = useState<Record<string, boolean>>({});
+  const me = useMe();
+  const myUsername = me.data?.profile?.username as string | undefined;
 
   const { data } = useQuery({
     queryKey: ["share-people"],
     queryFn: () => fetchConversations({ data: undefined }),
     enabled: open,
+  });
+
+  // People you follow are reachable too, even without a chat history.
+  const { data: following } = useQuery({
+    queryKey: ["share-following", myUsername],
+    queryFn: () => fetchFollowing({ data: { username: myUsername as string } }),
+    enabled: open && !!myUsername,
   });
 
   const sendMutation = useMutation({
