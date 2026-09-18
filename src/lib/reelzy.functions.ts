@@ -1742,9 +1742,9 @@ export const getProfile = createServerFn({ method: "POST" })
         profileImageType: profile.profile_image_type,
         followerCount: profile.follower_count,
         followingCount: profile.following_count,
-        momentCount: profile.moment_count,
-        totalViews: Number(profile.total_views ?? 0),
-        totalLikes: Number(profile.total_likes ?? 0),
+        momentCount: liveMoments,
+        totalViews: liveViews,
+        totalLikes: liveLikes,
         isPrivate: profile.is_private,
         showReposts: profile.show_reposts,
         socialLinks: ((profile as unknown as { social_links?: Record<string, string> })
