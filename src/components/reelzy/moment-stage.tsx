@@ -80,10 +80,12 @@ export function MomentStage({
   moment,
   onGone,
   fullscreen = false,
+  onMediaReady,
 }: {
   moment: MomentCard;
   onGone?: () => void;
   fullscreen?: boolean;
+  onMediaReady?: () => void;
 }) {
   const qc = useQueryClient();
   const repost = useServerFn(toggleRepost);
@@ -489,14 +491,14 @@ export function MomentStage({
           <video
             ref={videoRef}
             src={moment.mediaUrl}
-            poster={moment.posterUrl ?? undefined}
+            poster={fullscreen ? undefined : moment.posterUrl ?? undefined}
             className="size-full object-cover"
             style={look ? { filter: look } : undefined}
             playsInline
             loop
-            autoPlay
             muted={muted}
             preload="auto"
+            onPlaying={onMediaReady}
           />
         ) : moment.mediaUrl ? (
           <img
@@ -505,6 +507,7 @@ export function MomentStage({
             className="size-full object-cover"
             style={look ? { filter: look } : undefined}
             draggable={false}
+            onLoad={onMediaReady}
           />
         ) : (
           <div className="grid size-full place-items-center text-sm text-muted-foreground">
