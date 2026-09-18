@@ -184,6 +184,9 @@ function CameraPage() {
   const [look, setLook] = useState<FilterId>("none");
   // Mute the take before publishing when the sound isn't wanted.
   const [muted, setMuted] = useState(false);
+  // The still people see before they tap: a frame of the clip, or a picture.
+  const [cover, setCover] = useState<Blob | null>(null);
+  const [coverOpen, setCoverOpen] = useState(false);
   const [overlay, setOverlay] = useState<MomentOverlay | null>(null);
   const [textOpen, setTextOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
