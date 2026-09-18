@@ -1244,10 +1244,8 @@ export const recordView = createServerFn({ method: "POST" })
     completed: z.boolean().optional().parse(d.completed),
   }))
   .handler(async ({ data, context }) => {
-    guardBurst(context.userId, "view", 120, 60_000);
-    // A view only counts once per person per moment per day, and only after
-    // a meaningful amount of watch time.
-    if (data.watchedMs < 1500) return { counted: false };
+    guardBurst(context.userId, "view", 180, 60_000);
+    // A view counts the moment someone opens the film, once per person per day.
     const sb = await admin();
     const { data: moment } = await sb
       .from("moments")
@@ -1255,7 +1253,6 @@ export const recordView = createServerFn({ method: "POST" })
       .eq("id", data.momentId)
       .maybeSingle();
     if (!moment) return { counted: false };
-    if (moment.author_id === context.userId) return { counted: false };
 
     const { error } = await sb.from("moment_views").insert({
       moment_id: data.momentId,
