@@ -68,6 +68,7 @@ export function MomentReel({
             moment={m}
             fullscreen
             {...(onGone ? { onGone } : {})}
+            onProfileOpen={onClose}
             {...(momentIndex === startIndex ? { onMediaReady: () => setMediaReady(true) } : {})}
           />
         ))}

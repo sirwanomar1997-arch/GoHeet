@@ -81,11 +81,13 @@ export function MomentStage({
   onGone,
   fullscreen = false,
   onMediaReady,
+  onProfileOpen,
 }: {
   moment: MomentCard;
   onGone?: () => void;
   fullscreen?: boolean;
   onMediaReady?: () => void;
+  onProfileOpen?: () => void;
 }) {
   const qc = useQueryClient();
   const repost = useServerFn(toggleRepost);
@@ -626,8 +628,9 @@ export function MomentStage({
         <Link
           to="/u/$username"
           params={{ username: moment.author.username }}
+          onClick={onProfileOpen}
           aria-label={`Open @${moment.author.username}'s profile`}
-          className="relative z-10 flex w-fit max-w-[82%] items-center gap-3"
+          className="tap-target relative z-50 flex w-fit max-w-[82%] touch-manipulation items-center gap-3"
           data-no-translate
           translate="no"
         >
