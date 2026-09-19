@@ -624,13 +624,13 @@ export function MomentStage({
 
 
       {/* Bottom information band + reaction rail */}
-      <div className="absolute inset-x-0 bottom-0 z-40 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
         <Link
           to="/u/$username"
           params={{ username: moment.author.username }}
           onClick={onProfileOpen}
           aria-label={`Open @${moment.author.username}'s profile`}
-          className="tap-target relative z-50 flex w-fit max-w-[82%] touch-manipulation items-center gap-3"
+          className="tap-target pointer-events-auto relative z-50 flex w-fit max-w-[82%] touch-manipulation items-center gap-3"
           data-no-translate
           translate="no"
         >
@@ -667,7 +667,7 @@ export function MomentStage({
       </div>
 
       {/* Heet flame — intentionally large and clearly separated from the action rail */}
-      <div className="absolute bottom-[360px] right-2 z-20 flex w-12 flex-col items-center gap-1.5">
+      <div className="absolute bottom-[360px] right-2 z-50 flex w-12 flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={(e) => {
@@ -700,7 +700,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
-      <div className="absolute bottom-[24px] right-2 z-20 flex w-12 flex-col items-center gap-2.5">
+      <div className="absolute bottom-[24px] right-2 z-50 flex w-12 flex-col items-center gap-2.5">
 
         <RailAction
           label="Views"
