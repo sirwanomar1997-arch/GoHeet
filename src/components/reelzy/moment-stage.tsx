@@ -667,7 +667,7 @@ export function MomentStage({
       </div>
 
       {/* Heet flame — intentionally large and clearly separated from the action rail */}
-      <div className="absolute bottom-[360px] right-2 z-20 flex w-12 flex-col items-center gap-1.5">
+      <div className="absolute bottom-[360px] right-2 z-50 flex w-12 flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={(e) => {
