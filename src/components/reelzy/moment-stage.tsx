@@ -700,7 +700,7 @@ export function MomentStage({
       </div>
 
       {/* Right reaction rail — lower actions sit low, just above the bottom bar */}
-      <div className="absolute bottom-[24px] right-2 z-20 flex w-12 flex-col items-center gap-2.5">
+      <div className="absolute bottom-[24px] right-2 z-50 flex w-12 flex-col items-center gap-2.5">
 
         <RailAction
           label="Views"
