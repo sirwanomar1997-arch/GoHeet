@@ -624,13 +624,13 @@ export function MomentStage({
 
 
       {/* Bottom information band + reaction rail */}
-      <div className="absolute inset-x-0 bottom-0 z-40 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 bg-[linear-gradient(to_top,oklch(0.145_0.006_60/97%)_0%,oklch(0.145_0.006_60/78%)_45%,transparent_100%)] px-4 pb-5 pt-24">
         <Link
           to="/u/$username"
           params={{ username: moment.author.username }}
           onClick={onProfileOpen}
           aria-label={`Open @${moment.author.username}'s profile`}
-          className="tap-target relative z-50 flex w-fit max-w-[82%] touch-manipulation items-center gap-3"
+          className="tap-target pointer-events-auto relative z-50 flex w-fit max-w-[82%] touch-manipulation items-center gap-3"
           data-no-translate
           translate="no"
         >
