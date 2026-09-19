@@ -537,13 +537,13 @@ function ProfilePage() {
 
           return (
             <div>
-              <div className="grid grid-cols-2 gap-2.5 px-3">
+              <div className="grid grid-cols-3 gap-1.5 px-3">
                     {list.map((m, index) => (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => setOpenIndex(index)}
-                        className="group relative aspect-[9/16] touch-manipulation overflow-hidden rounded-2xl border border-border bg-surface text-left"
+                         className="group relative aspect-[4/5] touch-manipulation overflow-hidden rounded-xl border border-primary/35 bg-surface text-left shadow-[inset_0_0_0_1px_oklch(0.68_0.25_18/10%)] transition-[border-color,transform] duration-150 active:scale-[0.97] active:border-primary"
                       >
                         {m.posterUrl || m.mediaUrl ? (
                           <img
@@ -555,29 +555,30 @@ function ProfilePage() {
                           />
                         ) : null}
                         <span className="stage-vignette absolute inset-0" aria-hidden />
-                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
-                          <HeetFlame className="size-3.5" glow />
-                          <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
+                         <span className="absolute left-1.5 top-1.5 inline-flex h-5 items-center gap-0.5 rounded-full border border-primary/20 bg-background/70 px-1.5 backdrop-blur-md">
+                           <HeetFlame className="size-3" glow />
+                           <span className="data-figure text-[9px] font-semibold tabular-nums text-foreground">
                             {formatCount(m.likeCount)}
                           </span>
                         </span>
                         {m.kind !== "photo" ? (
-                          <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-background/55 backdrop-blur">
-                            <Play className="size-3 fill-current" />
+                           <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full border border-foreground/10 bg-background/70 backdrop-blur-md">
+                             <Play className="size-2.5 fill-current" />
                           </span>
                         ) : null}
-                        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/55 px-2 py-1 backdrop-blur">
+                         <span className="absolute bottom-1.5 left-1.5 inline-flex h-5 items-center gap-0.5 rounded-full border border-foreground/10 bg-background/70 px-1.5 backdrop-blur-md">
                           <Eye
-                            className="size-3.5"
+                             className="size-3"
                             style={{
                               color: "oklch(0.78 0.16 235)",
                               filter: "drop-shadow(0 0 5px oklch(0.7 0.2 235 / 75%))",
                             }}
                           />
-                          <span className="data-figure text-[10px] font-semibold tabular-nums text-white">
+                           <span className="data-figure text-[9px] font-semibold tabular-nums text-foreground">
                             {formatCount(m.viewCount)}
                           </span>
                         </span>
+                         <span className="fire-fill pointer-events-none absolute inset-x-3 bottom-0 h-0.5 rounded-t-full opacity-90" aria-hidden />
                       </button>
                     ))}
               </div>
